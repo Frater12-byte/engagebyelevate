@@ -40,6 +40,7 @@
       <div class="wizard-step active" data-step="1"></div>
       <div class="wizard-step" data-step="2"></div>
       <div class="wizard-step" data-step="3"></div>
+      <div class="wizard-step" data-step="4"></div>
     </div>
 
     <form id="signup-form">
@@ -50,12 +51,12 @@
         <h3 style="margin-bottom:24px">What type of organization?</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div class="card" style="cursor:pointer;text-align:center;padding:40px 20px" id="pick-hotel">
-            <div style="font-size:2.5rem;margin-bottom:12px">🏨</div>
+            <div style="font-size:2.5rem;margin-bottom:12px"><svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0v-2M5 21H3m2 0v-2m4-16v2m4-2v2m-4 4v2m4-2v2m-4 4v2m4-2v2"/></svg></div>
             <h4>Hotel</h4>
             <p style="font-size:13px;color:var(--ink-muted);margin-top:6px">Properties looking to meet agencies</p>
           </div>
           <div class="card" style="cursor:pointer;text-align:center;padding:40px 20px" id="pick-agent">
-            <div style="font-size:2.5rem;margin-bottom:12px">✈️</div>
+            <div style="font-size:2.5rem;margin-bottom:12px"><svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg></div>
             <h4>Agency</h4>
             <p style="font-size:13px;color:var(--ink-muted);margin-top:6px">Tour operators & travel agencies</p>
           </div>
@@ -110,7 +111,7 @@
             <div class="field">
               <label>Star Rating</label>
               <select name="star_rating">
-                <option value="">—</option>
+                <option value="">---</option>
                 <option value="3">3 stars</option>
                 <option value="4">4 stars</option>
                 <option value="5">5 stars</option>
@@ -157,24 +158,34 @@
           </div>
         </div>
 
-        <div class="form-grid">
-          <div class="field">
-            <label>Website</label>
-            <input name="website" type="url" placeholder="https://">
-          </div>
-          <div class="field">
-            <label>Company Logo (optional)</label>
-            <div class="logo-upload">
-              <img id="logo-preview" class="logo-upload-preview" src="" style="display:none">
-              <div id="logo-placeholder" class="logo-upload-preview" style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:11px">No logo</div>
-              <label class="logo-upload-btn" for="logo-file">Choose File</label>
-              <input type="file" id="logo-file" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none">
-            </div>
-          </div>
+        <div class="field">
+          <label>Website</label>
+          <input name="website" type="url" placeholder="https://">
         </div>
 
         <div class="wizard-nav">
           <button type="button" class="btn btn-ghost" id="back-to-2">Back</button>
+          <button type="button" class="btn" id="next-to-4">Next</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Logo upload -->
+      <div class="wizard-panel" data-panel="4">
+        <h3 style="margin-bottom:24px">Upload your logo</h3>
+
+        <div class="field">
+          <label>Company Logo (optional)</label>
+          <div class="logo-upload">
+            <img id="logo-preview" class="logo-upload-preview" src="" style="display:none">
+            <div id="logo-placeholder" class="logo-upload-preview" style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:11px">No logo</div>
+            <label class="logo-upload-btn" for="logo-file">Choose File</label>
+            <input type="file" id="logo-file" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none">
+          </div>
+          <p style="font-size:13px;color:var(--ink-muted);margin-top:8px">Recommended: square image, at least 200x200px. PNG or JPG.</p>
+        </div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" id="back-to-3">Back</button>
           <button type="submit" class="btn">Create Account</button>
         </div>
       </div>
@@ -230,7 +241,6 @@
   // Step 2 nav
   document.getElementById('back-to-1').addEventListener('click', () => goToStep(1));
   document.getElementById('next-to-3').addEventListener('click', () => {
-    // Validate required fields in step 2
     const required = form.querySelectorAll('[data-panel="2"] [required]');
     let valid = true;
     required.forEach(input => {
@@ -241,6 +251,10 @@
 
   // Step 3 nav
   document.getElementById('back-to-2').addEventListener('click', () => goToStep(2));
+  document.getElementById('next-to-4').addEventListener('click', () => goToStep(4));
+
+  // Step 4 nav
+  document.getElementById('back-to-3').addEventListener('click', () => goToStep(3));
 
   // Logo preview
   let logoFile = null;

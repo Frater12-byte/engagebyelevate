@@ -80,10 +80,10 @@
           </div>
           ${sessions.map(s => `
             <div class="agenda-item">
-              <div class="time">${fmtTime(s.start_time)}<small>— ${fmtTime(s.end_time)}</small></div>
+              <div class="time">${fmtTime(s.start_time)}<small>--- ${fmtTime(s.end_time)}</small></div>
               <div>
                 <h4>${escapeHtml(s.title)}</h4>
-                <div class="session-meta">${[s.speaker, s.organization, s.location].filter(Boolean).map(escapeHtml).join(' · ')}${s.is_hybrid ? ' · <span class="badge badge-gold">Hybrid</span>' : ''}${s.is_online ? ' · <span class="badge badge-ink">Online</span>' : ''}</div>
+                <div class="session-meta">${[s.speaker, s.organization].filter(Boolean).map(escapeHtml).join(' · ')}${s.location ? ' · <span class="badge badge-gold">' + escapeHtml(s.location) + '</span>' : ''}${s.is_hybrid ? ' · <span class="badge badge-gold">Hybrid</span>' : ''}${s.is_online ? ' · <span class="badge badge-ink">Online</span>' : ''}</div>
                 ${s.description ? `<p style="color:var(--ink-soft);font-size:14px;margin-top:6px">${escapeHtml(s.description)}</p>` : ''}
               </div>
               <div><span class="badge ${({'opening':'badge-gold','keynote':'badge-ink','tourism_board':'badge','networking':'badge-gold'})[s.type] || ''}">${({'opening':'Opening','keynote':'Keynote','tourism_board':'Open session','break':'Break','networking':'Networking'})[s.type] || s.type}</span></div>

@@ -34,6 +34,7 @@
         <div class="eyebrow" id="user-type"></div>
         <h1 id="user-org" style="margin-top:8px"></h1>
         <p class="text-muted" id="user-sub" style="margin-top:8px"></p>
+        <a href="#" id="edit-profile-link" style="font-size:13px;margin-top:8px;display:inline-block">Edit your profile</a>
       </div>
 
       <div class="dash-tabs">
@@ -106,6 +107,11 @@ let me = null, agenda = null, meetings = [];
       else if (tab.dataset.tab === 'book') renderBookTab();
       else if (tab.dataset.tab === 'profile') renderProfile();
     });
+  });
+
+  document.getElementById('edit-profile-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelector('[data-tab="profile"]').click();
   });
 
   document.getElementById('logout').addEventListener('click', async (e) => {

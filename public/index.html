@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#08080a">
-<title>Engage by Elevate — Hotel × Agency Matchmaking · June 2026</title>
+<title>Engage by Elevate — Hotel x Agency Matchmaking - June 2026</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
@@ -27,20 +27,20 @@
 </nav>
 
 <!-- HERO -->
-<section class="hero" style="padding:48px 0 40px">
+<section class="hero" style="padding:48px 0 36px">
   <!-- Ambient glows -->
   <div class="glow-orange" style="top:-100px;right:-100px"></div>
   <div class="glow-blue" style="bottom:-50px;left:-80px"></div>
   <div class="glow-purple" style="top:30%;left:40%"></div>
 
   <div class="container">
-    <div class="eyebrow" style="margin-bottom:14px">Exclusive Event · June 1–3, 2026 · Dubai</div>
+    <div class="eyebrow" style="margin-bottom:14px">Exclusive Event - June 1-3, 2026 - Dubai</div>
     <h1>Engage.<br><span class="accent">Connect.</span><br>Elevate.</h1>
     <p style="font-size:1.05rem;max-width:48ch;margin-top:18px;color:var(--ink-soft);line-height:1.8">
       Three days of curated one-to-one meetings bringing together 100+ hotels, 80 travel agencies, and 5 tourism boards.
     </p>
     <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
-      <a href="/signup.html" class="btn">Reserve Your Spot</a>
+      <a href="/signup.html" class="btn">Register Your Spot</a>
       <a href="/agenda" class="btn btn-ghost btn-inline">View Agenda</a>
     </div>
     <div class="stat-row" id="stats" style="margin-top:36px">
@@ -48,6 +48,21 @@
       <div><div class="stat-num" data-stat="agents">80</div><div class="stat-label">Agencies</div></div>
       <div><div class="stat-num" data-stat="boards">5</div><div class="stat-label">Tourism Boards</div></div>
       <div><div class="stat-num">3</div><div class="stat-label">Days</div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="gradient-line">
+
+<!-- COUNTDOWN -->
+<section class="tight">
+  <div class="container" style="text-align:center">
+    <div class="eyebrow" style="margin-bottom:8px">Event starts in</div>
+    <div class="countdown" id="countdown">
+      <div class="countdown-unit"><div class="countdown-num" data-cd="days">--</div><div class="countdown-label">Days</div></div>
+      <div class="countdown-unit"><div class="countdown-num" data-cd="hours">--</div><div class="countdown-label">Hours</div></div>
+      <div class="countdown-unit"><div class="countdown-num" data-cd="min">--</div><div class="countdown-label">Minutes</div></div>
+      <div class="countdown-unit"><div class="countdown-num" data-cd="sec">--</div><div class="countdown-label">Seconds</div></div>
     </div>
   </div>
 </section>
@@ -80,19 +95,22 @@
     <h2>Meet the Team.</h2>
     <div class="team-grid">
       <div class="team-card">
-        <img src="/img/team-samir.png" alt="Samir Hamadeh">
-        <h4>Samir Hamadeh</h4>
-        <div class="team-role">CEO & Founder</div>
-      </div>
-      <div class="team-card">
         <img src="/img/team-zeina.jpg" alt="Zeina El Sayegh">
         <h4>Zeina El Sayegh</h4>
         <div class="team-role">General Manager, Elevate DMC</div>
+        <a href="#" class="btn btn-ghost btn-small btn-inline schedule-meeting-btn" data-name="Zeina El Sayegh">Schedule a Meeting</a>
+      </div>
+      <div class="team-card">
+        <img src="/img/team-samir.png" alt="Samir Hamadeh">
+        <h4>Samir Hamadeh</h4>
+        <div class="team-role">CEO & Founder</div>
+        <a href="#" class="btn btn-ghost btn-small btn-inline schedule-meeting-btn" data-name="Samir Hamadeh">Schedule a Meeting</a>
       </div>
       <div class="team-card">
         <img src="/img/team-stuart.jpg" alt="Stuart Dale">
         <h4>Stuart Dale</h4>
         <div class="team-role">Chief Commercial Officer</div>
+        <a href="#" class="btn btn-ghost btn-small btn-inline schedule-meeting-btn" data-name="Stuart Dale">Schedule a Meeting</a>
       </div>
     </div>
   </div>
@@ -111,8 +129,18 @@
       <li><strong>You'll receive an access link</strong> to your dashboard where you can browse participants, book meetings, and manage your schedule.</li>
       <li><strong>Check your agenda regularly.</strong> Meeting slots lock 48 hours before start time.</li>
     </ul>
-    <div style="margin-top:40px;text-align:center">
-      <a href="/signup.html" class="btn btn-inline">Reserve Your Spot</a>
+  </div>
+</section>
+
+<hr class="gradient-line">
+
+<!-- FINAL CTA -->
+<section class="tight">
+  <div class="container" style="text-align:center;max-width:600px">
+    <h2>Ready to connect?</h2>
+    <p style="margin-top:16px;color:var(--ink-soft);max-width:44ch;margin-left:auto;margin-right:auto">Join 100+ hotels and 80 agencies for three days of curated matchmaking in Dubai.</p>
+    <div style="margin-top:28px">
+      <a href="/signup.html" class="btn btn-inline">Register Your Spot</a>
     </div>
   </div>
 </section>
@@ -154,6 +182,8 @@
   document.getElementById('nav-toggle').addEventListener('click', () => {
     document.getElementById('nav-links').classList.toggle('open');
   });
+
+  // Stats
   (async () => {
     try {
       const s = await api.get('/api/public/stats');
@@ -163,6 +193,32 @@
       if (s.boards > 0) set('boards', s.boards);
     } catch {}
   })();
+
+  // Countdown
+  function updateCountdown() {
+    const eventDate = new Date('2026-06-01T09:00:00+04:00');
+    const now = new Date();
+    const diff = eventDate - now;
+    if (diff <= 0) { document.getElementById('countdown').innerHTML = '<p style="color:var(--orange);font-weight:700">The event is live!</p>'; return; }
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    document.querySelector('[data-cd="days"]').textContent = days;
+    document.querySelector('[data-cd="hours"]').textContent = String(hours).padStart(2,'0');
+    document.querySelector('[data-cd="min"]').textContent = String(minutes).padStart(2,'0');
+    document.querySelector('[data-cd="sec"]').textContent = String(seconds).padStart(2,'0');
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // Schedule meeting buttons
+  document.querySelectorAll('.schedule-meeting-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/signup.html';
+    });
+  });
 </script>
 </body>
 </html>
