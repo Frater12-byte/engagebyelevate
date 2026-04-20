@@ -792,12 +792,13 @@ textarea { resize: vertical; min-height: 100px; }
 .nav-cta {
   background: var(--orange);
   color: var(--white) !important;
-  padding: 8px 20px;
+  padding: 10px 24px;
   border-radius: var(--radius-xs);
   font-size: 11px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   font-weight: 700;
+  white-space: nowrap;
   transition: all 0.2s;
 }
 .nav-cta:hover { background: var(--orange-hover); color: var(--white) !important; }
@@ -1085,9 +1086,8 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   text-decoration: none;
 }
 .brand img {
-  height: 24px;
+  height: 32px;
   width: auto;
-  margin-right: 8px;
 }
 .brand-name {
   font-family: var(--font-display);
