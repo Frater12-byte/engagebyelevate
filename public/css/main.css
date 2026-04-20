@@ -792,7 +792,7 @@ textarea { resize: vertical; min-height: 100px; }
 .nav-cta {
   background: var(--orange);
   color: var(--white) !important;
-  padding: 10px 24px;
+  padding: 10px 28px;
   border-radius: var(--radius-xs);
   font-size: 11px;
   letter-spacing: 0.8px;
@@ -800,6 +800,8 @@ textarea { resize: vertical; min-height: 100px; }
   font-weight: 700;
   white-space: nowrap;
   transition: all 0.2s;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 .nav-cta:hover { background: var(--orange-hover); color: var(--white) !important; }
 
