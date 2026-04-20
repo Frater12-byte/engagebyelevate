@@ -157,13 +157,6 @@ a:hover { color: var(--orange-light); }
   height: 100%;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  gap: 0;
-}
-.brand img { height: 28px; width: auto; }
 .brand-mark { display: none; } /* hidden, logo image replaces text */
 
 .nav-links { display: flex; gap: 28px; align-items: center; }
@@ -177,7 +170,21 @@ a:hover { color: var(--orange-light); }
   transition: color 0.2s;
   padding: 8px 0;
 }
-.nav-links a:hover, .nav-links a.active { color: var(--white); }
+.nav-links a:hover { color: var(--white); }
+.nav-links a.active {
+  color: var(--white);
+  position: relative;
+}
+.nav-links a.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--orange);
+  border-radius: 1px;
+}
 
 .nav-toggle {
   display: none;
@@ -541,7 +548,23 @@ textarea { resize: vertical; min-height: 100px; }
   transition: all 0.2s; -webkit-tap-highlight-color: transparent;
 }
 .dash-tab:hover { border-color: var(--ink-muted); color: var(--white); }
-.dash-tab.active { background: var(--orange); color: var(--white); border-color: var(--orange); box-shadow: 0 2px 12px var(--orange-dim); }
+.dash-tab.active {
+  background: transparent;
+  color: var(--white);
+  border-color: transparent;
+  position: relative;
+  box-shadow: none;
+}
+.dash-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: var(--orange);
+  border-radius: 1px;
+}
 
 /* ========== Slots ========== */
 .slot-grid {
@@ -998,44 +1021,34 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   pointer-events: none;
 }
 
-/* ========== Animated brand ========== */
-.brand-text {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--white);
-  text-decoration: none;
+/* ========== Brand: logo + cursive engage ========== */
+.brand {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  overflow: hidden;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
 }
-.brand-text .typing {
-  display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
-  border-right: 2px solid var(--orange);
-  animation: typing 1.5s steps(6) 0.5s forwards, blinkCaret 0.6s step-end 4;
-  width: 0;
+.brand img {
+  height: 28px;
+  width: auto;
 }
-.brand-text .brand-suffix {
-  color: var(--ink-soft);
+.brand-engage {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 20px;
   font-weight: 400;
-  font-size: 13px;
-  opacity: 0;
-  animation: fadeInSuffix 0.5s ease 2.2s forwards;
+  color: var(--white);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  display: inline-block;
 }
-@keyframes typing {
-  from { width: 0; }
-  to { width: 6ch; border-color: transparent; }
+.brand-engage span {
+  display: inline-block;
+  animation: writeIn 1.2s ease 0.3s both;
 }
-@keyframes blinkCaret {
-  50% { border-color: transparent; }
-}
-@keyframes fadeInSuffix {
-  from { opacity: 0; transform: translateX(-4px); }
-  to { opacity: 1; transform: translateX(0); }
+@keyframes writeIn {
+  from { opacity: 0; transform: translateX(-8px); letter-spacing: 0.15em; }
+  to { opacity: 1; transform: translateX(0); letter-spacing: 0.02em; }
 }
 
 /* ========== Oversized portrait ========== */
@@ -1085,14 +1098,14 @@ a, .btn, .dash-tab, .slot, .nav-links a {
 .sponsors-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 32px;
+  gap: 24px;
   align-items: center;
   justify-content: center;
-  margin-top: 32px;
+  margin-top: 40px;
 }
 .sponsor-slot {
-  width: 120px;
-  height: 60px;
+  width: 160px;
+  height: 80px;
   background: var(--bg-card);
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-sm);
@@ -1115,3 +1128,97 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   transition: filter 0.3s;
 }
 .sponsor-slot:hover img { filter: brightness(1) grayscale(0); }
+
+/* ========== Compact mobile filters for directory ========== */
+@media (max-width: 768px) {
+  .dash-tabs { gap: 4px; margin-bottom: 16px; }
+  .dash-tab { padding: 8px 14px; font-size: 11px; }
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.filter-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.filter-row select {
+  width: auto;
+  min-width: 100px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+@media (max-width: 768px) {
+  .filter-row { gap: 6px; }
+  .filter-row input { padding: 10px; font-size: 14px; }
+  .filter-row select { flex: 1; }
+}
+
+/* ========== Participant logos marquee ========== */
+.marquee-wrap {
+  overflow: hidden;
+  position: relative;
+  padding: 24px 0;
+}
+.marquee-wrap::before,
+.marquee-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+.marquee-wrap::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg), transparent);
+}
+.marquee-wrap::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg), transparent);
+}
+.marquee-track {
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  animation: marqueeScroll 30s linear infinite;
+  width: max-content;
+}
+.marquee-track img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0.6) grayscale(1);
+  transition: filter 0.3s;
+  flex-shrink: 0;
+}
+.marquee-track img:hover { filter: brightness(1) grayscale(0); }
+.marquee-track .marquee-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ========== Login prompt ========== */
+.login-prompt {
+  text-align: center;
+  padding: 32px 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  margin-top: 24px;
+}
+.login-prompt h3 { margin-bottom: 8px; }
+.login-prompt p { color: var(--ink-soft); margin-bottom: 16px; font-size: 14px; }

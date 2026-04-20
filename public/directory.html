@@ -12,7 +12,7 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="brand brand-text"><span class="typing">Engage</span><span class="brand-suffix">by Elevate</span></a>
+    <a href="/" class="brand"><img src="/img/logo.png" alt="Elevate"><span class="brand-engage"><span>engage</span></span></a>
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory" class="active">Directory</a>
@@ -25,7 +25,7 @@
   </div>
 </nav>
 
-<section class="hero" style="padding:48px 0 40px">
+<section class="hero" style="padding:32px 0 20px">
   <div class="container">
     <div class="eyebrow" style="margin-bottom:12px">Participants</div>
     <h1 style="font-size:clamp(2rem,7vw,3.5rem)">Directory.</h1>
@@ -35,15 +35,15 @@
 
 <section style="padding-top:0">
   <div class="container">
-    <div style="display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px">
+    <div class="dash-tabs">
       <button class="dash-tab active" data-view="hotels">Hotels</button>
       <button class="dash-tab" data-view="agents">Agencies</button>
       <button class="dash-tab" data-view="boards">Tourism Boards</button>
     </div>
 
-    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:24px">
-      <input id="search" placeholder="Search by name, country..." style="max-width:340px;flex:1;min-width:180px">
-      <select id="filter-region" style="max-width:160px">
+    <div class="filter-row">
+      <input id="search" placeholder="Search by name, country...">
+      <select id="filter-region">
         <option value="">All regions</option>
         <option value="UAE">UAE</option>
         <option value="INTL">International</option>
@@ -60,7 +60,7 @@
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
     <a href="/"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span>Home</span></a>
-    <a href="/agenda"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Agenda</span></a>
+    <a href="/agenda"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Events</span></a>
     <a href="/directory" class="active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><span>Directory</span></a>
     <a href="/dashboard"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg><span>Profile</span></a>
   </div>
