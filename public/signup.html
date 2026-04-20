@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — Engage by Elevate</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">Engage <span class="brand-mark">by Elevate</span></a>
+    <div class="nav-links">
+      <a href="/agenda">Agenda</a>
+      <a href="/directory">Directory</a>
+      <a href="/login.html">Sign in</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container-narrow">
+    <div class="eyebrow">Registration</div>
+    <h1 style="margin-top:12px">Join the event.</h1>
+    <p class="text-muted" style="margin-top:16px;font-size:1.1rem">Select your role and tell us about your organization. We'll email you an access link within seconds.</p>
+
+    <div style="display:flex;gap:12px;margin-top:40px;border-bottom:1px solid var(--line)">
+      <button class="dash-tab active" data-type="hotel">I'm a Hotel</button>
+      <button class="dash-tab" data-type="agent">I'm an Agency</button>
+    </div>
+
+    <form id="signup-form" style="margin-top:32px">
+      <input type="hidden" name="type" value="hotel">
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Organization Name *</label>
+          <input name="org_name" required placeholder="e.g. Atlantis The Palm">
+        </div>
+        <div class="field">
+          <label>Website</label>
+          <input name="website" type="url" placeholder="https://">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Contact Name *</label>
+          <input name="contact_name" required>
+        </div>
+        <div class="field">
+          <label>Email *</label>
+          <input name="email" type="email" required>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Phone</label>
+          <input name="phone" type="tel">
+        </div>
+        <div class="field">
+          <label>Country *</label>
+          <input name="country" required placeholder="e.g. United Arab Emirates">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>City</label>
+          <input name="city">
+        </div>
+        <div class="field hotel-only">
+          <label>Star Rating</label>
+          <select name="star_rating">
+            <option value="">—</option>
+            <option value="3">3 stars</option>
+            <option value="4">4 stars</option>
+            <option value="5">5 stars</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid hotel-only">
+        <div class="field">
+          <label>Room Count</label>
+          <input name="room_count" type="number" min="1">
+        </div>
+        <div class="field">
+          <label>Region</label>
+          <select name="region">
+            <option value="">Auto-detect from country</option>
+            <option value="UAE">UAE (Days 1 & 2)</option>
+            <option value="INTL">International (Day 3)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Short Description (shown publicly)</label>
+        <textarea name="description" rows="3" placeholder="A sentence or two about your property or agency."></textarea>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label class="hotel-label">Specialties (comma-separated)</label>
+          <input name="specialties" placeholder="e.g. Luxury, Family, MICE, Beach">
+        </div>
+        <div class="field">
+          <label class="agent-label" style="display:none">Target Markets (comma-separated)</label>
+          <label class="hotel-label-alt">Target Markets (comma-separated)</label>
+          <input name="target_markets" placeholder="e.g. UK, Germany, India">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-gold" style="margin-top:20px">Create account & send login link</button>
+      <p class="text-muted" style="margin-top:12px;font-size:13px">By registering you agree to be contacted about this event. We won't share your details with anyone except matched meeting partners.</p>
+    </form>
+
+    <div id="result" style="display:none;margin-top:40px;padding:32px;border-left:3px solid var(--sage);background:var(--bone)"></div>
+  </div>
+</section>
+
+<script src="/js/common.js"></script>
+<script>
+  const tabs = document.querySelectorAll('.dash-tab');
+  const form = document.getElementById('signup-form');
+  const typeInput = form.querySelector('[name=type]');
+
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const type = t.dataset.type;
+    typeInput.value = type;
+    document.querySelectorAll('.hotel-only').forEach(el => el.style.display = type === 'hotel' ? '' : 'none');
+  }));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Creating account...';
+
+    const fd = new FormData(form);
+    const body = Object.fromEntries(fd.entries());
+    // normalize arrays
+    if (body.specialties) body.specialties = body.specialties.split(',').map(s => s.trim()).filter(Boolean);
+    if (body.target_markets) body.target_markets = body.target_markets.split(',').map(s => s.trim()).filter(Boolean);
+    if (body.room_count) body.room_count = parseInt(body.room_count, 10);
+    if (body.star_rating) body.star_rating = parseInt(body.star_rating, 10);
+
+    try {
+      const data = await api.post('/auth/signup', body);
+      form.style.display = 'none';
+      const result = document.getElementById('result');
+      result.innerHTML = `
+        <div class="eyebrow" style="color:var(--sage)">✓ Registered</div>
+        <h3 style="margin-top:12px">Check your inbox.</h3>
+        <p style="margin-top:12px">We sent a login link to <strong>${body.email}</strong>. Click it to access your dashboard and start booking meetings.</p>
+        <p class="text-muted" style="margin-top:16px;font-size:13px">If you don't see the email in a minute, check spam or <a href="/login.html">request a new link</a>.</p>
+      `;
+      result.style.display = 'block';
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Create account & send login link';
+    }
+  });
+</script>
+
+</body>
+</html>

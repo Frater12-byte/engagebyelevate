@@ -1,0 +1,88 @@
+{
+  "name": "Engage - Meeting Reminder (24h before)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "trigger-cron",
+      "name": "Daily at 9am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://engagebyelevate.com/api/n8n/meetings-tomorrow",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-N8N-Secret", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" }
+          ]
+        }
+      },
+      "id": "get-meetings",
+      "name": "Fetch tomorrow's meetings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "meetings",
+        "options": {}
+      },
+      "id": "split",
+      "name": "For each meeting",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@engagebyelevate.com",
+        "toEmail": "={{ $json.requester_email }}",
+        "subject": "=Reminder: Meeting with {{ $json.recipient_org }} tomorrow",
+        "emailFormat": "html",
+        "html": "=<h2>Meeting reminder</h2><p>Your meeting with <strong>{{ $json.recipient_org }}</strong> is tomorrow at {{ $json.start_time_formatted }}.</p><p><a href=\"{{ $json.teams_join_url }}\">Join via Teams</a></p>"
+      },
+      "id": "email-requester",
+      "name": "Email requester",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@engagebyelevate.com",
+        "toEmail": "={{ $json.recipient_email }}",
+        "subject": "=Reminder: Meeting with {{ $json.requester_org }} tomorrow",
+        "emailFormat": "html",
+        "html": "=<h2>Meeting reminder</h2><p>Your meeting with <strong>{{ $json.requester_org }}</strong> is tomorrow at {{ $json.start_time_formatted }}.</p><p><a href=\"{{ $json.teams_join_url }}\">Join via Teams</a></p>"
+      },
+      "id": "email-recipient",
+      "name": "Email recipient",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [960, 400]
+    }
+  ],
+  "connections": {
+    "Daily at 9am": { "main": [[ { "node": "Fetch tomorrow's meetings", "type": "main", "index": 0 } ]] },
+    "Fetch tomorrow's meetings": { "main": [[ { "node": "For each meeting", "type": "main", "index": 0 } ]] },
+    "For each meeting": { "main": [[
+      { "node": "Email requester", "type": "main", "index": 0 },
+      { "node": "Email recipient", "type": "main", "index": 0 }
+    ]] }
+  }
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — Engage by Elevate</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">Engage <span class="brand-mark">by Elevate</span></a>
+    <div class="nav-links">
+      <a href="/agenda">Agenda</a>
+      <a href="/directory">Directory</a>
+      <a href="/signup.html">Register</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container-narrow" style="max-width:480px">
+    <div class="eyebrow">Sign in</div>
+    <h1 style="margin-top:12px;font-size:2.5rem">Login link.</h1>
+    <p class="text-muted" style="margin-top:16px">Enter your registered email. We'll send you a link to access your dashboard — no password needed.</p>
+
+    <form id="login-form" style="margin-top:40px">
+      <div class="field">
+        <label>Email</label>
+        <input name="email" type="email" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%">Send login link</button>
+    </form>
+
+    <div id="result" style="display:none;margin-top:32px;padding:24px;border-left:3px solid var(--sage);background:var(--bone)"></div>
+
+    <p class="text-muted" style="margin-top:32px;font-size:13px;text-align:center">
+      Not registered yet? <a href="/signup.html">Create an account</a>.
+    </p>
+  </div>
+</section>
+
+<script src="/js/common.js"></script>
+<script>
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    const email = e.target.email.value;
+    try {
+      await api.post('/auth/magic', { email });
+      e.target.style.display = 'none';
+      document.getElementById('result').innerHTML = `
+        <div class="eyebrow" style="color:var(--sage)">✓ Check your inbox</div>
+        <p style="margin-top:12px">If <strong>${email}</strong> is registered, a login link is on its way.</p>
+      `;
+      document.getElementById('result').style.display = 'block';
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Send login link';
+    }
+  });
+</script>
+
+</body>
+</html>

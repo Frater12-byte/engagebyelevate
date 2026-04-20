@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda — Engage by Elevate</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">Engage <span class="brand-mark">by Elevate</span></a>
+    <div class="nav-links">
+      <a href="/agenda" class="active">Agenda</a>
+      <a href="/directory">Directory</a>
+      <a id="nav-auth-link" href="/login.html">Sign in</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div class="eyebrow">Event Schedule</div>
+    <h1 style="margin-top:12px">Agenda.</h1>
+    <p class="text-muted" style="margin-top:16px;max-width:60ch">The full three-day programme — opening keynote, tour operator sessions, tourism board presentations, and 1:1 meeting blocks.</p>
+
+    <div id="agenda-content" style="margin-top:64px">
+      <div class="loader" style="margin:80px auto;display:block"></div>
+    </div>
+  </div>
+</section>
+
+<script src="/js/common.js"></script>
+<script>
+  const DAY_THEMES = {
+    1: 'UAE Hotels · Opening',
+    2: 'UAE Hotels · Continued',
+    3: 'International Hotels'
+  };
+
+  (async () => {
+    const me = await getMe();
+    if (me) {
+      document.getElementById('nav-auth-link').textContent = 'Dashboard';
+      document.getElementById('nav-auth-link').href = '/dashboard';
+    }
+
+    const { agenda } = await api.get('/api/public/agenda');
+    const container = document.getElementById('agenda-content');
+    const days = Object.keys(agenda).sort();
+
+    if (days.length === 0) {
+      container.innerHTML = `<div class="empty-state"><h3>Agenda coming soon</h3><p>The schedule will be published here.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = days.map((day, idx) => {
+      const sessions = agenda[day];
+      const d = new Date(day);
+      const dateStr = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+      return `
+        <div class="agenda-day">
+          <div class="agenda-day-head">
+            <div class="day-num">${String(idx + 1).padStart(2, '0')}</div>
+            <div class="day-date">${dateStr}</div>
+            <div class="day-theme">${DAY_THEMES[idx+1] || ''}</div>
+          </div>
+          ${sessions.map(s => `
+            <div class="agenda-item">
+              <div class="time">
+                ${fmtTime(s.start_time)}
+                <small>— ${fmtTime(s.end_time)}</small>
+              </div>
+              <div>
+                <h4>${escapeHtml(s.title)}</h4>
+                <div class="session-meta">
+                  ${s.speaker ? escapeHtml(s.speaker) + ' · ' : ''}
+                  ${s.organization ? escapeHtml(s.organization) + ' · ' : ''}
+                  ${s.location || ''}
+                  ${s.is_hybrid ? ' · <span class="badge badge-gold">Hybrid</span>' : ''}
+                  ${s.is_online ? ' · <span class="badge badge-ink">Online</span>' : ''}
+                </div>
+                ${s.description ? `<p style="color:var(--ink-soft);font-size:13px;margin-top:8px">${escapeHtml(s.description)}</p>` : ''}
+              </div>
+              <div style="text-align:right">
+                <span class="badge ${sessionBadge(s.type)}">${sessionLabel(s.type)}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }).join('');
+
+    // Insert meeting blocks note
+    container.insertAdjacentHTML('beforeend', `
+      <div style="margin-top:40px;padding:32px;background:var(--bone);border-left:3px solid var(--gold-deep)">
+        <div class="eyebrow">Meeting Blocks</div>
+        <h3 style="margin-top:12px">1:1 meetings run between sessions</h3>
+        <p style="margin-top:12px;color:var(--ink-soft)">Each meeting is 20 minutes. Open your dashboard to book a slot with any hotel or agency. Slots lock 48 hours before the meeting start.</p>
+      </div>
+    `);
+  })();
+
+  function sessionBadge(type) {
+    return {
+      'opening': 'badge-gold',
+      'keynote': 'badge-ink',
+      'tourism_board': 'badge',
+      'break': '',
+      'networking': 'badge-gold'
+    }[type] || '';
+  }
+  function sessionLabel(type) {
+    return {
+      'opening': 'Opening',
+      'keynote': 'Keynote',
+      'tourism_board': 'Open session',
+      'break': 'Break',
+      'networking': 'Networking'
+    }[type] || type;
+  }
+</script>
+
+</body>
+</html>

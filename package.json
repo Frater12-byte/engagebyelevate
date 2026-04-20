@@ -1,0 +1,33 @@
+{
+  "name": "engage-by-elevate",
+  "version": "1.0.0",
+  "description": "Matchmaking platform for hotels and travel agencies - Engage by Elevate 2026",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "init-db": "node server/db/init.js",
+    "seed": "node server/db/seed.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^8.0.0",
+    "cors": "^2.8.5",
+    "cookie-parser": "^1.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.15",
+    "dotenv": "^16.4.5",
+    "multer": "^1.4.5-lts.1",
+    "dayjs": "^1.11.13",
+    "axios": "^1.7.7",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

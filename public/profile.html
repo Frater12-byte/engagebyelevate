@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — Engage by Elevate</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">Engage <span class="brand-mark">by Elevate</span></a>
+    <div class="nav-links">
+      <a href="/agenda">Agenda</a>
+      <a href="/directory" class="active">Directory</a>
+      <a id="nav-auth-link" href="/login.html">Sign in</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container-narrow">
+    <a href="/directory" style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);text-decoration:none">← Back to directory</a>
+    <div id="content" style="margin-top:32px">
+      <div class="loader" style="margin:80px auto;display:block"></div>
+    </div>
+  </div>
+</section>
+
+<script src="/js/common.js"></script>
+<script>
+(async () => {
+  const me = await getMe();
+  if (me) {
+    document.getElementById('nav-auth-link').textContent = 'Dashboard';
+    document.getElementById('nav-auth-link').href = '/dashboard';
+  }
+
+  const id = new URLSearchParams(location.search).get('id');
+  if (!id) return location.href = '/directory';
+
+  const content = document.getElementById('content');
+
+  try {
+    const { profile: p } = await api.get(`/api/public/profile/${id}`);
+    const canBook = me && me.type !== p.type && ['hotel','agent'].includes(me.type) && ['hotel','agent'].includes(p.type);
+
+    content.innerHTML = `
+      <div class="eyebrow">${p.type === 'hotel' ? 'Hotel' : p.type === 'agent' ? 'Agency' : ''}${p.star_rating ? ' · ' + p.star_rating + ' Stars' : ''}${p.region ? ' · ' + p.region : ''}</div>
+      <h1 style="margin-top:12px">${escapeHtml(p.org_name)}</h1>
+      <p class="text-muted" style="margin-top:8px;font-size:1.1rem">${escapeHtml([p.city, p.country].filter(Boolean).join(', '))}</p>
+
+      ${p.description ? `<p style="margin-top:24px;font-size:1.05rem;line-height:1.7;max-width:60ch">${escapeHtml(p.description)}</p>` : ''}
+
+      ${p.website ? `<p style="margin-top:16px"><a href="${escapeHtml(p.website)}" target="_blank">${escapeHtml(p.website)}</a></p>` : ''}
+
+      <hr class="rule-gold">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px">
+        ${p.specialties && p.specialties.length ? `
+          <div>
+            <div class="eyebrow">Specialties</div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+              ${p.specialties.map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}
+            </div>
+          </div>` : ''}
+        ${p.target_markets && p.target_markets.length ? `
+          <div>
+            <div class="eyebrow">Target Markets</div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+              ${p.target_markets.map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}
+            </div>
+          </div>` : ''}
+        ${p.room_count ? `
+          <div>
+            <div class="eyebrow">Rooms</div>
+            <div style="margin-top:8px;font-family:var(--font-display);font-size:2rem">${p.room_count}</div>
+          </div>` : ''}
+      </div>
+
+      ${canBook ? `
+        <hr class="rule">
+        <div style="text-align:center;padding:32px;background:var(--bone);border:1px solid var(--line)">
+          <h3>Want to meet?</h3>
+          <p class="text-muted" style="margin-top:8px">Open your dashboard to view availability and request a 20-minute slot.</p>
+          <a href="/dashboard" class="btn btn-gold" style="margin-top:16px">Book a meeting</a>
+        </div>
+      ` : !me ? `
+        <hr class="rule">
+        <div style="text-align:center;padding:32px;background:var(--bone);border:1px solid var(--line)">
+          <h3>Want to meet ${escapeHtml(p.org_name)}?</h3>
+          <p class="text-muted" style="margin-top:8px">Register or sign in to request a meeting.</p>
+          <div style="margin-top:16px;display:flex;gap:12px;justify-content:center">
+            <a href="/signup.html" class="btn btn-gold">Register</a>
+            <a href="/login.html" class="btn btn-ghost">Sign in</a>
+          </div>
+        </div>
+      ` : ''}
+    `;
+  } catch (err) {
+    content.innerHTML = `<div class="empty-state"><h3>Profile not found</h3><p>This organization may have been removed.</p></div>`;
+  }
+})();
+</script>
+
+</body>
+</html>

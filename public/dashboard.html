@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Engage by Elevate</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">Engage <span class="brand-mark">by Elevate</span></a>
+    <div class="nav-links">
+      <a href="/agenda">Agenda</a>
+      <a href="/directory">Directory</a>
+      <a href="/dashboard" class="active">Dashboard</a>
+      <a href="#" id="logout">Sign out</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div id="loader"><div class="loader" style="margin:80px auto;display:block"></div></div>
+    <div id="app" style="display:none">
+      <div class="dash-header">
+        <div class="eyebrow" id="user-type"></div>
+        <h1 id="user-org" style="margin-top:8px"></h1>
+        <p class="text-muted" id="user-sub" style="margin-top:8px"></p>
+      </div>
+
+      <div class="dash-tabs">
+        <button class="dash-tab active" data-tab="agenda">My Schedule</button>
+        <button class="dash-tab" data-tab="meetings">Meetings <span id="badge-pending" class="badge badge-gold" style="display:none"></span></button>
+        <button class="dash-tab" data-tab="book">Book New</button>
+        <button class="dash-tab" data-tab="profile">Profile</button>
+      </div>
+
+      <div id="tab-agenda" class="tab-content"></div>
+      <div id="tab-meetings" class="tab-content" style="display:none"></div>
+      <div id="tab-book" class="tab-content" style="display:none"></div>
+      <div id="tab-profile" class="tab-content" style="display:none"></div>
+    </div>
+  </div>
+</section>
+
+<script src="/js/common.js"></script>
+<script>
+let me = null, agenda = null, meetings = [];
+
+(async () => {
+  me = await getMe();
+  if (!me) return location.href = '/login.html';
+
+  document.getElementById('user-type').textContent = me.type === 'hotel' ? 'Hotel' : me.type === 'agent' ? 'Agency' : me.type;
+  document.getElementById('user-org').textContent = me.org_name;
+  document.getElementById('user-sub').textContent = `${me.contact_name} · ${me.email}${me.region ? ' · ' + me.region : ''}`;
+
+  await loadAll();
+  renderAgenda();
+
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // Tab switching
+  document.querySelectorAll('.dash-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      const target = 'tab-' + tab.dataset.tab;
+      document.getElementById(target).style.display = 'block';
+      if (tab.dataset.tab === 'agenda') renderAgenda();
+      else if (tab.dataset.tab === 'meetings') renderMeetings();
+      else if (tab.dataset.tab === 'book') renderBookTab();
+      else if (tab.dataset.tab === 'profile') renderProfile();
+    });
+  });
+
+  document.getElementById('logout').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await api.post('/auth/logout');
+    location.href = '/';
+  });
+
+  // Auto-refresh meetings every 30s (live availability)
+  setInterval(loadAll, 30000);
+})();
+
+async function loadAll() {
+  try {
+    const [a, m] = await Promise.all([
+      api.get('/api/me/agenda'),
+      api.get('/api/me/meetings')
+    ]);
+    agenda = a;
+    meetings = m.meetings;
+    const pending = meetings.filter(x => x.status === 'pending' && x.recipient_id === me.id).length;
+    const badge = document.getElementById('badge-pending');
+    if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
+    else badge.style.display = 'none';
+  } catch (err) { console.error(err); }
+}
+
+// ---------- AGENDA TAB ----------
+function renderAgenda() {
+  const el = document.getElementById('tab-agenda');
+  if (!agenda || Object.keys(agenda.agenda).length === 0) {
+    el.innerHTML = `<div class="empty-state"><h3>No schedule yet</h3><p>Your slots will appear here once the event dates are active.</p></div>`;
+    return;
+  }
+
+  const days = Object.keys(agenda.agenda).sort();
+  el.innerHTML = days.map(day => {
+    const slots = agenda.agenda[day];
+    return `
+      <div style="margin-bottom:48px">
+        <div class="agenda-day-head">
+          <div class="day-date">${fmtDate(day)}</div>
+          <div class="day-theme">${slots.filter(s => s.status === 'booked').length} booked · ${slots.filter(s => s.status === 'free').length} free</div>
+        </div>
+        <div class="slot-grid">
+          ${slots.map(s => {
+            const locked = isLocked(s.start_time);
+            const cls = `slot ${s.status}${locked ? ' locked' : ''}`;
+            const label = s.status === 'booked' ? (s.other_org || 'Meeting') :
+                          s.status === 'held' ? 'Pending' :
+                          s.status === 'blocked' ? 'Session' :
+                          s.status === 'free' ? (locked ? 'Locked' : 'Free') : s.status;
+            return `<div class="${cls}" ${s.meeting_id_full ? `onclick="showMeetingDetail(${s.meeting_id_full})"` : ''}>
+              <div class="slot-time">${fmtTime(s.start_time)}</div>
+              <div class="slot-status">${escapeHtml(label)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function isLocked(startTime) {
+  const hrs = (new Date(startTime) - new Date()) / 3600000;
+  return hrs < 48;
+}
+
+// ---------- MEETINGS TAB ----------
+function renderMeetings() {
+  const el = document.getElementById('tab-meetings');
+  if (!meetings.length) {
+    el.innerHTML = `<div class="empty-state"><h3>No meetings yet</h3><p>Browse the directory and request meetings with hotels or agencies.</p><a href="/directory" class="btn btn-gold" style="margin-top:20px">Open Directory</a></div>`;
+    return;
+  }
+
+  const grouped = { pending_incoming: [], pending_outgoing: [], approved: [], past: [], other: [] };
+  const now = new Date();
+  for (const m of meetings) {
+    const isPast = new Date(m.start_time) < now;
+    if (m.status === 'pending' && m.recipient_id === me.id) grouped.pending_incoming.push(m);
+    else if (m.status === 'pending' && m.requester_id === me.id) grouped.pending_outgoing.push(m);
+    else if (m.status === 'approved' && !isPast) grouped.approved.push(m);
+    else if (m.status === 'approved' && isPast) grouped.past.push(m);
+    else grouped.other.push(m);
+  }
+
+  el.innerHTML = `
+    ${section('Awaiting your response', grouped.pending_incoming, 'incoming')}
+    ${section('Waiting on them', grouped.pending_outgoing, 'outgoing')}
+    ${section('Confirmed meetings', grouped.approved, 'approved')}
+    ${section('Past meetings', grouped.past, 'past')}
+    ${section('Declined / cancelled / expired', grouped.other, 'other')}
+  `;
+
+  // Wire up action buttons
+  el.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      btn.disabled = true; btn.textContent = '...';
+      try {
+        if (action === 'approve') await api.post(`/api/meetings/${id}/approve`);
+        else if (action === 'decline') {
+          const reason = prompt('Optional: reason for declining?') || '';
+          await api.post(`/api/meetings/${id}/decline`, { reason });
+        }
+        else if (action === 'cancel') {
+          if (!confirm('Cancel this meeting? The slot will be freed for both sides.')) {
+            btn.disabled = false; btn.textContent = 'Cancel';
+            return;
+          }
+          await api.post(`/api/meetings/${id}/cancel`);
+        }
+        toast('Done', 'success');
+        await loadAll();
+        renderMeetings();
+        renderAgenda();
+      } catch (err) {
+        toast(err.message, 'error');
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function section(title, list, kind) {
+  if (!list.length) return '';
+  return `
+    <div style="margin-bottom:40px">
+      <h3 style="margin-bottom:16px">${title} <span class="text-muted" style="font-family:var(--font-body);font-size:14px">(${list.length})</span></h3>
+      ${list.map(m => meetingCard(m, kind)).join('')}
+    </div>
+  `;
+}
+
+function meetingCard(m, kind) {
+  const otherOrg = m.requester_id === me.id ? m.recipient_org : m.requester_org;
+  const otherName = m.requester_id === me.id ? m.recipient_name : m.requester_name;
+  const locked = isLocked(m.start_time);
+
+  let actions = '';
+  if (kind === 'incoming') {
+    actions = `
+      <button class="btn btn-small btn-success" data-action="approve" data-id="${m.id}" ${locked ? 'disabled' : ''}>Approve</button>
+      <button class="btn btn-small btn-danger" data-action="decline" data-id="${m.id}">Decline</button>
+    `;
+  } else if (kind === 'outgoing') {
+    actions = `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>`;
+  } else if (kind === 'approved') {
+    actions = `
+      ${m.teams_join_url ? `<a class="btn btn-small btn-gold" href="${m.teams_join_url}" target="_blank">Join Teams</a>` : '<span class="badge badge-warn">Link pending</span>'}
+      ${!locked ? `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>` : ''}
+    `;
+  }
+
+  const statusBadge = {
+    pending: 'badge-warn', approved: 'badge-success',
+    declined: 'badge-danger', cancelled: 'badge-danger', expired: ''
+  }[m.status] || '';
+
+  return `
+    <div class="meeting-card">
+      <div>
+        <div class="eyebrow">${fmtDate(m.start_time)} · ${fmtTime(m.start_time)} – ${fmtTime(m.end_time)}</div>
+        <h4 style="margin-top:6px">${escapeHtml(otherOrg)}</h4>
+        <div class="meeting-meta">${escapeHtml(otherName || '')} · <span class="badge ${statusBadge}">${m.status}</span>${locked ? ' · <span class="badge">Locked</span>' : ''}</div>
+        ${m.message && kind === 'incoming' ? `<div style="margin-top:12px;padding:12px;background:var(--bone);border-left:3px solid var(--gold-deep);font-size:13px;font-style:italic">"${escapeHtml(m.message)}"</div>` : ''}
+        ${m.decline_reason ? `<div style="margin-top:8px;font-size:13px;color:var(--ink-soft)">Reason: ${escapeHtml(m.decline_reason)}</div>` : ''}
+      </div>
+      <div class="meeting-actions">${actions}</div>
+    </div>
+  `;
+}
+
+// ---------- BOOK TAB ----------
+async function renderBookTab() {
+  const el = document.getElementById('tab-book');
+  el.innerHTML = '<div class="loader" style="margin:40px auto;display:block"></div>';
+
+  const targetType = me.type === 'hotel' ? 'agents' : 'hotels';
+  const { [targetType]: others } = await api.get(`/api/public/${targetType}`);
+
+  el.innerHTML = `
+    <h3 style="margin-bottom:8px">Book a meeting with ${targetType === 'hotels' ? 'a hotel' : 'an agency'}</h3>
+    <p class="text-muted" style="margin-bottom:24px">Select who you'd like to meet. You'll see their live availability alongside yours — only slots where you're both free can be booked.</p>
+    <input id="book-search" placeholder="Search by name or country..." style="max-width:360px;margin-bottom:24px">
+    <div id="book-list" class="directory-grid"></div>
+  `;
+
+  const list = document.getElementById('book-list');
+  const renderList = () => {
+    const q = document.getElementById('book-search').value.toLowerCase();
+    const filtered = others.filter(o =>
+      (o.org_name || '').toLowerCase().includes(q) ||
+      (o.country || '').toLowerCase().includes(q)
+    );
+    list.innerHTML = filtered.map(o => `
+      <div class="org-card" onclick="openAvailabilityModal(${o.id})" style="cursor:pointer">
+        <div class="eyebrow">${o.country || ''}</div>
+        <h3>${escapeHtml(o.org_name)}</h3>
+        <div class="org-desc">${escapeHtml(o.description || '')}</div>
+        <div style="margin-top:16px"><span class="btn btn-small btn-ghost">View availability →</span></div>
+      </div>
+    `).join('');
+  };
+  document.getElementById('book-search').addEventListener('input', renderList);
+  renderList();
+}
+
+window.openAvailabilityModal = async function(otherId) {
+  try {
+    const { other, slots } = await api.get(`/api/users/${otherId}/availability`);
+    const modal = document.createElement('div');
+    const grouped = {};
+    for (const s of slots) {
+      if (!grouped[s.day]) grouped[s.day] = [];
+      grouped[s.day].push(s);
+    }
+
+    modal.innerHTML = `
+      <div class="eyebrow">${other.type === 'hotel' ? 'Hotel' : 'Agency'}</div>
+      <h3 style="margin-top:8px">${escapeHtml(other.org_name)}</h3>
+      <p class="text-muted" style="font-size:13px;margin-bottom:20px">${escapeHtml(other.contact_name || '')} · ${escapeHtml(other.country || '')}</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Pick an available slot to request a 20-minute meeting. Both sides must have the slot free.</p>
+      ${Object.keys(grouped).sort().map(day => {
+        const daySlots = grouped[day];
+        const anyAvailable = daySlots.some(s => s.available && !isLocked(s.start_time));
+        return `
+          <div style="margin-bottom:20px">
+            <div class="eyebrow" style="margin-bottom:8px">${fmtDate(day)}</div>
+            ${!anyAvailable ? '<p class="text-muted" style="font-size:13px">No available slots on this day.</p>' : ''}
+            <div class="slot-grid">
+              ${daySlots.map(s => {
+                const locked = isLocked(s.start_time);
+                const cls = s.available && !locked ? 'free' :
+                            s.my_status !== 'free' ? 'held' : 'blocked';
+                const clickable = s.available && !locked;
+                return `<div class="slot ${cls}${locked ? ' locked' : ''}" ${clickable ? `onclick="requestMeetingModal(${otherId}, '${s.start_time}', '${escapeHtml(other.org_name)}')"` : ''} style="${clickable ? 'cursor:pointer' : 'cursor:not-allowed'}">
+                  <div class="slot-time">${fmtTime(s.start_time)}</div>
+                  <div class="slot-status">${locked ? 'Locked' : s.available ? 'Available' : s.my_status === 'booked' ? 'You busy' : s.their_status !== 'free' ? 'They busy' : 'Blocked'}</div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    `;
+    openModal(modal);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+};
+
+window.requestMeetingModal = function(otherId, startTime, orgName) {
+  document.querySelectorAll('.modal-backdrop').forEach(m => m.remove());
+  const modal = document.createElement('div');
+  modal.innerHTML = `
+    <h3>Request meeting</h3>
+    <p class="text-muted" style="margin-top:8px;margin-bottom:20px">With <strong>${orgName}</strong> on ${fmtDate(startTime)} at ${fmtTime(startTime)}</p>
+    <div class="field">
+      <label>Optional message</label>
+      <textarea id="req-message" placeholder="Introduce yourself or mention what you'd like to discuss..." rows="4"></textarea>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
+      <button class="btn btn-ghost btn-small" onclick="document.querySelectorAll('.modal-backdrop').forEach(m => m.remove())">Cancel</button>
+      <button class="btn btn-gold btn-small" id="req-send">Send request</button>
+    </div>
+  `;
+  openModal(modal);
+  document.getElementById('req-send').addEventListener('click', async () => {
+    const btn = document.getElementById('req-send');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try {
+      await api.post('/api/meetings', {
+        recipient_id: otherId,
+        start_time: startTime,
+        message: document.getElementById('req-message').value
+      });
+      document.querySelectorAll('.modal-backdrop').forEach(m => m.remove());
+      toast('Request sent', 'success');
+      await loadAll();
+      renderMeetings();
+      renderAgenda();
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Send request';
+    }
+  });
+};
+
+window.showMeetingDetail = function(meetingId) {
+  const m = meetings.find(x => x.id === meetingId);
+  if (!m) return;
+  // Switch to meetings tab and scroll to it
+  document.querySelector('[data-tab="meetings"]').click();
+};
+
+// ---------- PROFILE TAB ----------
+async function renderProfile() {
+  const el = document.getElementById('tab-profile');
+  const { user: full } = await api.get('/auth/me');
+  // Fetch full profile
+  const res = await api.get(`/api/public/profile/${me.id}`);
+  const p = res.profile;
+
+  el.innerHTML = `
+    <h3 style="margin-bottom:8px">Your public profile</h3>
+    <p class="text-muted" style="margin-bottom:24px">This is what everyone else sees in the directory.</p>
+    <form id="profile-form">
+      <div class="form-grid">
+        <div class="field"><label>Organization</label><input name="org_name" value="${escapeHtml(p.org_name)}" required></div>
+        <div class="field"><label>Website</label><input name="website" value="${escapeHtml(p.website || '')}"></div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>Country</label><input name="country" value="${escapeHtml(p.country || '')}"></div>
+        <div class="field"><label>City</label><input name="city" value="${escapeHtml(p.city || '')}"></div>
+      </div>
+      <div class="field"><label>Description</label><textarea name="description" rows="4">${escapeHtml(p.description || '')}</textarea></div>
+      <div class="form-grid">
+        <div class="field"><label>Specialties (comma-separated)</label><input name="specialties" value="${(p.specialties || []).join(', ')}"></div>
+        <div class="field"><label>Target Markets (comma-separated)</label><input name="target_markets" value="${(p.target_markets || []).join(', ')}"></div>
+      </div>
+      ${me.type === 'hotel' ? `
+        <div class="form-grid">
+          <div class="field"><label>Room Count</label><input name="room_count" type="number" value="${p.room_count || ''}"></div>
+          <div class="field"><label>Star Rating</label>
+            <select name="star_rating">
+              <option value="">—</option>
+              ${[3,4,5].map(n => `<option value="${n}" ${p.star_rating == n ? 'selected' : ''}>${n} stars</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      ` : ''}
+      <button type="submit" class="btn btn-gold">Save profile</button>
+    </form>
+  `;
+
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    const fd = new FormData(e.target);
+    const body = Object.fromEntries(fd.entries());
+    if (body.specialties) body.specialties = body.specialties.split(',').map(s => s.trim()).filter(Boolean);
+    if (body.target_markets) body.target_markets = body.target_markets.split(',').map(s => s.trim()).filter(Boolean);
+    if (body.room_count) body.room_count = parseInt(body.room_count, 10);
+    if (body.star_rating) body.star_rating = parseInt(body.star_rating, 10);
+    try {
+      await api.put('/api/me/profile', body);
+      toast('Profile saved', 'success');
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save profile';
+    }
+  });
+}
+</script>
+
+</body>
+</html>

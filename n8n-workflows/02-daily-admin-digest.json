@@ -1,0 +1,54 @@
+{
+  "name": "Engage - Daily Admin Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 18 * * *" }
+          ]
+        }
+      },
+      "id": "trigger",
+      "name": "Daily at 6pm",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://engagebyelevate.com/api/n8n/daily-stats",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-N8N-Secret", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" }
+          ]
+        }
+      },
+      "id": "fetch",
+      "name": "Fetch daily stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@engagebyelevate.com",
+        "toEmail": "admin@engagebyelevate.com",
+        "subject": "=Engage Daily Digest · {{ $json.date }}",
+        "emailFormat": "html",
+        "html": "=<h2>Engage by Elevate · Daily Summary</h2><ul><li>Total hotels: <strong>{{ $json.hotels_total }}</strong> (+{{ $json.hotels_new_today }} today)</li><li>Total agencies: <strong>{{ $json.agents_total }}</strong> (+{{ $json.agents_new_today }} today)</li><li>Meetings requested today: <strong>{{ $json.meetings_requested_today }}</strong></li><li>Meetings approved today: <strong>{{ $json.meetings_approved_today }}</strong></li><li>Meetings declined today: <strong>{{ $json.meetings_declined_today }}</strong></li><li>Total confirmed meetings: <strong>{{ $json.meetings_approved_total }}</strong></li></ul>"
+      },
+      "id": "email",
+      "name": "Email admin",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Daily at 6pm": { "main": [[ { "node": "Fetch daily stats", "type": "main", "index": 0 } ]] },
+    "Fetch daily stats": { "main": [[ { "node": "Email admin", "type": "main", "index": 0 } ]] }
+  }
+}

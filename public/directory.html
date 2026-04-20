@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Directory — Engage by Elevate</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">Engage <span class="brand-mark">by Elevate</span></a>
+    <div class="nav-links">
+      <a href="/agenda">Agenda</a>
+      <a href="/directory" class="active">Directory</a>
+      <a id="nav-auth-link" href="/login.html">Sign in</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div class="eyebrow">Participants</div>
+    <h1 style="margin-top:12px">Directory.</h1>
+    <p class="text-muted" style="margin-top:16px;max-width:60ch">Everyone attending Engage by Elevate 2026 — searchable, filterable, and all ready to meet.</p>
+
+    <div style="display:flex;gap:12px;margin-top:40px;border-bottom:1px solid var(--line);flex-wrap:wrap">
+      <button class="dash-tab active" data-view="hotels">Hotels</button>
+      <button class="dash-tab" data-view="agents">Agencies</button>
+      <button class="dash-tab" data-view="boards">Tourism Boards</button>
+    </div>
+
+    <div style="margin-top:24px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      <input id="search" placeholder="Search by name, country..." style="max-width:360px">
+      <select id="filter-region" style="max-width:200px">
+        <option value="">All regions</option>
+        <option value="UAE">UAE</option>
+        <option value="INTL">International</option>
+      </select>
+      <div class="text-muted" id="result-count" style="font-size:13px;margin-left:auto"></div>
+    </div>
+
+    <div id="directory-content" style="margin-top:32px">
+      <div class="loader" style="margin:80px auto;display:block"></div>
+    </div>
+  </div>
+</section>
+
+<script src="/js/common.js"></script>
+<script>
+  let me = null;
+  let currentView = 'hotels';
+  let data = { hotels: [], agents: [], boards: [] };
+
+  async function init() {
+    me = await getMe();
+    if (me) {
+      document.getElementById('nav-auth-link').textContent = 'Dashboard';
+      document.getElementById('nav-auth-link').href = '/dashboard';
+    }
+    await Promise.all([loadHotels(), loadAgents(), loadBoards()]);
+    render();
+  }
+
+  async function loadHotels() {
+    try { data.hotels = (await api.get('/api/public/hotels')).hotels; } catch {}
+  }
+  async function loadAgents() {
+    try { data.agents = (await api.get('/api/public/agents')).agents; } catch {}
+  }
+  async function loadBoards() {
+    try { data.boards = (await api.get('/api/public/tourism-boards')).boards; } catch {}
+  }
+
+  document.querySelectorAll('.dash-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.dash-tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      currentView = t.dataset.view;
+      render();
+    });
+  });
+  document.getElementById('search').addEventListener('input', render);
+  document.getElementById('filter-region').addEventListener('change', render);
+
+  function matches(item, query, region) {
+    if (region && item.region && item.region !== region) return false;
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return (item.org_name || item.name || '').toLowerCase().includes(q) ||
+           (item.country || '').toLowerCase().includes(q) ||
+           (item.city || '').toLowerCase().includes(q);
+  }
+
+  function render() {
+    const container = document.getElementById('directory-content');
+    const q = document.getElementById('search').value;
+    const region = document.getElementById('filter-region').value;
+
+    let items, empty;
+    if (currentView === 'hotels') {
+      items = data.hotels.filter(h => matches(h, q, region));
+      empty = 'No hotels yet. Be the first to register.';
+    } else if (currentView === 'agents') {
+      items = data.agents.filter(a => matches(a, q, region));
+      empty = 'No agencies yet. Be the first to register.';
+    } else {
+      items = data.boards.filter(b => matches(b, q, null));
+      empty = 'Tourism boards will be announced soon.';
+    }
+
+    document.getElementById('result-count').textContent = `${items.length} listed`;
+
+    if (items.length === 0) {
+      container.innerHTML = `<div class="empty-state"><h3>Nothing here yet</h3><p>${empty}</p></div>`;
+      return;
+    }
+
+    if (currentView === 'boards') {
+      container.innerHTML = `<div class="directory-grid">${items.map(b => `
+        <div class="org-card">
+          <div class="eyebrow">Tourism Board</div>
+          <h3>${escapeHtml(b.name)}</h3>
+          <div class="org-meta">${escapeHtml(b.country || '')}</div>
+          <div class="org-desc">${escapeHtml(b.description || '')}</div>
+          ${b.session_title ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--gold-deep)">
+            Session: ${escapeHtml(b.session_title)}
+          </div>` : ''}
+        </div>
+      `).join('')}</div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="directory-grid">${items.map(o => `
+      <a class="org-card" href="/profile.html?id=${o.id}">
+        <div class="eyebrow">${o.type === 'hotel' ? (o.star_rating ? `${o.star_rating} Stars · ` : '') + (o.region || '') : 'Agency'}</div>
+        <h3>${escapeHtml(o.org_name)}</h3>
+        <div class="org-meta">${escapeHtml([o.city, o.country].filter(Boolean).join(', '))}</div>
+        <div class="org-desc">${escapeHtml(o.description || '')}</div>
+        ${(o.specialties && o.specialties.length) ? `<div class="tags">${o.specialties.slice(0,4).map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}</div>` : ''}
+      </a>
+    `).join('')}</div>`;
+  }
+
+  init();
+</script>
+
+</body>
+</html>
