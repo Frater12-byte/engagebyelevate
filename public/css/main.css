@@ -5,7 +5,7 @@
    Type: Archivo (display) + Manrope (body).
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Caveat:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Dancing+Script:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap');
 
 :root {
   --black: #000000;
@@ -150,7 +150,7 @@ a:hover { color: var(--orange-light); }
 .nav-inner {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1063,21 +1063,26 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   width: auto;
 }
 .brand-engage {
-  font-family: 'Caveat', cursive;
-  font-size: 24px;
-  font-weight: 400;
+  font-family: 'Dancing Script', cursive;
+  font-size: 26px;
+  font-weight: 600;
   color: var(--white);
-  letter-spacing: 0.02em;
-  overflow: hidden;
+  letter-spacing: 0.01em;
   display: inline-block;
+  position: relative;
 }
 .brand-engage span {
   display: inline-block;
-  animation: writeIn 1.2s ease 0.3s both;
+  background: linear-gradient(90deg, var(--white) 50%, transparent 50%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: handwrite 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s both;
 }
-@keyframes writeIn {
-  from { opacity: 0; transform: translateX(-8px); letter-spacing: 0.15em; }
-  to { opacity: 1; transform: translateX(0); letter-spacing: 0.02em; }
+@keyframes handwrite {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
 }
 
 /* ========== Oversized portrait ========== */

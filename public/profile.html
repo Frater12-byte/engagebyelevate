@@ -71,48 +71,46 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 
     content.innerHTML = `
       <!-- Profile header -->
-      <div class="profile-hero">
+      <div style="text-align:center;margin-bottom:40px">
         ${p.logo_url
-          ? `<img src="${escapeHtml(p.logo_url)}" alt="${escapeHtml(p.org_name)} logo" class="profile-logo">`
-          : `<div class="profile-logo-placeholder">${initials}</div>`
+          ? `<img src="${escapeHtml(p.logo_url)}" alt="${escapeHtml(p.org_name)}" style="width:100px;height:100px;border-radius:var(--radius-sm);object-fit:contain;background:var(--bg-elevated);margin-bottom:20px">`
+          : `<div style="width:100px;height:100px;border-radius:var(--radius-sm);background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:32px;color:var(--orange);margin:0 auto 20px">${initials}</div>`
         }
-        <div>
-          <div class="eyebrow">${p.type === 'hotel' ? 'Hotel' : 'Agency'}${p.star_rating ? ' · ' + p.star_rating + ' Stars' : ''}${p.region ? ' · ' + p.region : ''}</div>
-          <h1 style="margin-top:8px;font-size:clamp(1.5rem,5vw,2.5rem)">${escapeHtml(p.org_name)}</h1>
-          <p class="text-muted" style="margin-top:6px;font-size:1rem">${escapeHtml([p.city, p.country].filter(Boolean).join(', '))}</p>
-        </div>
+        <div class="eyebrow" style="margin-bottom:8px">${p.type === 'hotel' ? 'Hotel' : 'Agency'}${p.star_rating ? ' · ' + p.star_rating + ' Stars' : ''}${p.region ? ' · ' + p.region : ''}</div>
+        <h1 style="font-size:clamp(1.8rem,6vw,3rem)">${escapeHtml(p.org_name)}</h1>
+        <p class="text-muted" style="margin-top:8px;font-size:1.05rem">${escapeHtml([p.city, p.country].filter(Boolean).join(', '))}</p>
+        ${p.website ? `<p style="margin-top:12px"><a href="${escapeHtml(p.website)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:14px">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          ${escapeHtml(p.website.replace(/^https?:\/\//, ''))}
+        </a></p>` : ''}
       </div>
 
       ${p.description ? `
-        <p style="font-size:1.05rem;line-height:1.8;color:var(--ink-soft);margin-top:24px;max-width:60ch">${escapeHtml(p.description)}</p>
+        <hr class="gradient-line" style="margin:0 0 32px">
+        <p style="font-size:1rem;line-height:1.8;color:var(--ink-soft);max-width:56ch;margin:0 auto 32px;text-align:center">${escapeHtml(p.description)}</p>
       ` : ''}
-
-      ${p.website ? `<p style="margin-top:16px"><a href="${escapeHtml(p.website)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px">
-        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-        ${escapeHtml(p.website.replace(/^https?:\/\//, ''))}
-      </a></p>` : ''}
 
       <!-- Stats -->
       <div class="profile-stats">
         ${p.room_count ? `<div class="profile-stat"><div class="stat-value">${p.room_count}</div><div class="stat-label">Rooms</div></div>` : ''}
-        ${p.star_rating ? `<div class="profile-stat"><div class="stat-value">${p.star_rating}</div><div class="stat-label">Star Rating</div></div>` : ''}
+        ${p.star_rating ? `<div class="profile-stat"><div class="stat-value">${'*'.repeat(p.star_rating)}</div><div class="stat-label">Rating</div></div>` : ''}
         ${p.specialties && p.specialties.length ? `<div class="profile-stat"><div class="stat-value">${p.specialties.length}</div><div class="stat-label">Specialties</div></div>` : ''}
         ${p.target_markets && p.target_markets.length ? `<div class="profile-stat"><div class="stat-value">${p.target_markets.length}</div><div class="stat-label">Markets</div></div>` : ''}
       </div>
 
       <!-- Details -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px">
         ${p.specialties && p.specialties.length ? `
           <div>
-            <div class="eyebrow" style="margin-bottom:12px">Specialties</div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <div class="eyebrow" style="margin-bottom:10px">Specialties</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
               ${p.specialties.map(s => `<span class="badge badge-gold">${escapeHtml(s)}</span>`).join('')}
             </div>
           </div>` : ''}
         ${p.target_markets && p.target_markets.length ? `
           <div>
-            <div class="eyebrow" style="margin-bottom:12px">Target Markets</div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <div class="eyebrow" style="margin-bottom:10px">Target Markets</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
               ${p.target_markets.map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}
             </div>
           </div>` : ''}
@@ -120,10 +118,10 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 
       <!-- CTA -->
       ${canBook ? `
-        <div style="margin-top:48px;padding:32px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);text-align:center">
+        <div style="margin-top:48px;text-align:center">
           <h3>Interested in a meeting?</h3>
-          <p class="text-muted" style="margin-top:8px">Open your dashboard to view availability and request a 20-minute slot.</p>
-          <a href="/dashboard" class="btn" style="margin-top:20px">Book a Meeting</a>
+          <p class="text-muted" style="margin-top:8px">View availability and request a 20-minute slot.</p>
+          <a href="/dashboard" class="btn btn-inline" style="margin-top:20px">Book a Meeting</a>
         </div>
       ` : !me ? `
         <div style="margin-top:48px;padding:32px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);text-align:center">

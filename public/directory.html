@@ -119,7 +119,8 @@
     else if (currentView === 'agents') { items = data.agents.filter(a => matches(a, q, region)); empty = 'No agencies yet.'; }
     else { items = data.boards.filter(b => matches(b, q, null)); empty = 'Tourism boards coming soon.'; }
 
-    document.getElementById('result-count').textContent = `${items.length} listed`;
+    const typeLabel = currentView === 'hotels' ? 'Hotels' : currentView === 'agents' ? 'Agencies' : 'Tourism Boards';
+    document.getElementById('result-count').textContent = `${items.length} ${typeLabel}`;
 
     if (!items.length) {
       container.innerHTML = `<div class="empty-state"><h3>Nothing here yet</h3><p>${empty}</p></div>`;
