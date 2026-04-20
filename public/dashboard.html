@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0f1a">
 <title>Dashboard — Engage by Elevate</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
@@ -11,12 +14,15 @@
 <nav class="nav">
   <div class="nav-inner">
     <a href="/" class="brand">Engage <span class="brand-mark">by Elevate</span></a>
-    <div class="nav-links">
+    <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
       <a href="/dashboard" class="active">Dashboard</a>
       <a href="#" id="logout">Sign out</a>
     </div>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
   </div>
 </nav>
 
@@ -45,8 +51,33 @@
   </div>
 </section>
 
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="/">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="/agenda">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <span>Agenda</span>
+    </a>
+    <a href="/directory">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <span>Directory</span>
+    </a>
+    <a href="/dashboard" class="active">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      <span>Profile</span>
+    </a>
+  </div>
+</nav>
+
 <script src="/js/common.js"></script>
 <script>
+document.getElementById('nav-toggle').addEventListener('click', () => {
+  document.getElementById('nav-links').classList.toggle('open');
+});
+
 let me = null, agenda = null, meetings = [];
 
 (async () => {
@@ -84,7 +115,6 @@ let me = null, agenda = null, meetings = [];
     location.href = '/';
   });
 
-  // Auto-refresh meetings every 30s (live availability)
   setInterval(loadAll, 30000);
 })();
 
@@ -115,7 +145,7 @@ function renderAgenda() {
   el.innerHTML = days.map(day => {
     const slots = agenda.agenda[day];
     return `
-      <div style="margin-bottom:48px">
+      <div style="margin-bottom:40px">
         <div class="agenda-day-head">
           <div class="day-date">${fmtDate(day)}</div>
           <div class="day-theme">${slots.filter(s => s.status === 'booked').length} booked · ${slots.filter(s => s.status === 'free').length} free</div>
@@ -171,7 +201,6 @@ function renderMeetings() {
     ${section('Declined / cancelled / expired', grouped.other, 'other')}
   `;
 
-  // Wire up action buttons
   el.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const action = btn.dataset.action;
@@ -205,8 +234,8 @@ function renderMeetings() {
 function section(title, list, kind) {
   if (!list.length) return '';
   return `
-    <div style="margin-bottom:40px">
-      <h3 style="margin-bottom:16px">${title} <span class="text-muted" style="font-family:var(--font-body);font-size:14px">(${list.length})</span></h3>
+    <div style="margin-bottom:32px">
+      <h3 style="margin-bottom:12px">${title} <span class="text-muted" style="font-family:var(--font-body);font-size:14px">(${list.length})</span></h3>
       ${list.map(m => meetingCard(m, kind)).join('')}
     </div>
   `;
@@ -243,8 +272,8 @@ function meetingCard(m, kind) {
         <div class="eyebrow">${fmtDate(m.start_time)} · ${fmtTime(m.start_time)} – ${fmtTime(m.end_time)}</div>
         <h4 style="margin-top:6px">${escapeHtml(otherOrg)}</h4>
         <div class="meeting-meta">${escapeHtml(otherName || '')} · <span class="badge ${statusBadge}">${m.status}</span>${locked ? ' · <span class="badge">Locked</span>' : ''}</div>
-        ${m.message && kind === 'incoming' ? `<div style="margin-top:12px;padding:12px;background:var(--bone);border-left:3px solid var(--gold-deep);font-size:13px;font-style:italic">"${escapeHtml(m.message)}"</div>` : ''}
-        ${m.decline_reason ? `<div style="margin-top:8px;font-size:13px;color:var(--ink-soft)">Reason: ${escapeHtml(m.decline_reason)}</div>` : ''}
+        ${m.message && kind === 'incoming' ? `<div style="margin-top:12px;padding:12px;background:var(--bg-elevated);border-left:3px solid var(--gold);border-radius:var(--radius-sm);font-size:13px;font-style:italic;color:var(--ink-soft)">"${escapeHtml(m.message)}"</div>` : ''}
+        ${m.decline_reason ? `<div style="margin-top:8px;font-size:13px;color:var(--ink-muted)">Reason: ${escapeHtml(m.decline_reason)}</div>` : ''}
       </div>
       <div class="meeting-actions">${actions}</div>
     </div>
@@ -261,8 +290,8 @@ async function renderBookTab() {
 
   el.innerHTML = `
     <h3 style="margin-bottom:8px">Book a meeting with ${targetType === 'hotels' ? 'a hotel' : 'an agency'}</h3>
-    <p class="text-muted" style="margin-bottom:24px">Select who you'd like to meet. You'll see their live availability alongside yours — only slots where you're both free can be booked.</p>
-    <input id="book-search" placeholder="Search by name or country..." style="max-width:360px;margin-bottom:24px">
+    <p class="text-muted" style="margin-bottom:20px">Select who you'd like to meet. You'll see their live availability alongside yours.</p>
+    <input id="book-search" placeholder="Search by name or country..." style="max-width:360px;margin-bottom:20px">
     <div id="book-list" class="directory-grid"></div>
   `;
 
@@ -274,11 +303,11 @@ async function renderBookTab() {
       (o.country || '').toLowerCase().includes(q)
     );
     list.innerHTML = filtered.map(o => `
-      <div class="org-card" onclick="openAvailabilityModal(${o.id})" style="cursor:pointer">
+      <div class="org-card" onclick="openAvailabilityModal(${o.id})">
         <div class="eyebrow">${o.country || ''}</div>
         <h3>${escapeHtml(o.org_name)}</h3>
         <div class="org-desc">${escapeHtml(o.description || '')}</div>
-        <div style="margin-top:16px"><span class="btn btn-small btn-ghost">View availability →</span></div>
+        <div style="margin-top:16px"><span class="btn btn-small btn-ghost">View availability</span></div>
       </div>
     `).join('');
   };
@@ -300,7 +329,7 @@ window.openAvailabilityModal = async function(otherId) {
       <div class="eyebrow">${other.type === 'hotel' ? 'Hotel' : 'Agency'}</div>
       <h3 style="margin-top:8px">${escapeHtml(other.org_name)}</h3>
       <p class="text-muted" style="font-size:13px;margin-bottom:20px">${escapeHtml(other.contact_name || '')} · ${escapeHtml(other.country || '')}</p>
-      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Pick an available slot to request a 20-minute meeting. Both sides must have the slot free.</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Pick an available slot to request a 20-minute meeting.</p>
       ${Object.keys(grouped).sort().map(day => {
         const daySlots = grouped[day];
         const anyAvailable = daySlots.some(s => s.available && !isLocked(s.start_time));
@@ -370,7 +399,6 @@ window.requestMeetingModal = function(otherId, startTime, orgName) {
 window.showMeetingDetail = function(meetingId) {
   const m = meetings.find(x => x.id === meetingId);
   if (!m) return;
-  // Switch to meetings tab and scroll to it
   document.querySelector('[data-tab="meetings"]').click();
 };
 
@@ -378,7 +406,6 @@ window.showMeetingDetail = function(meetingId) {
 async function renderProfile() {
   const el = document.getElementById('tab-profile');
   const { user: full } = await api.get('/auth/me');
-  // Fetch full profile
   const res = await api.get(`/api/public/profile/${me.id}`);
   const p = res.profile;
 
@@ -410,7 +437,7 @@ async function renderProfile() {
           </div>
         </div>
       ` : ''}
-      <button type="submit" class="btn btn-gold">Save profile</button>
+      <button type="submit" class="btn btn-gold" style="width:100%;margin-top:8px">Save profile</button>
     </form>
   `;
 
