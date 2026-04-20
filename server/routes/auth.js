@@ -17,6 +17,21 @@ const email = require('../services/email');
 
 const router = express.Router();
 
+// Free email providers that are NOT allowed
+const FREE_EMAIL_DOMAINS = [
+  'gmail.com', 'yahoo.com', 'yahoo.co.uk', 'hotmail.com', 'outlook.com',
+  'live.com', 'aol.com', 'icloud.com', 'me.com', 'mail.com', 'protonmail.com',
+  'proton.me', 'zoho.com', 'yandex.com', 'gmx.com', 'gmx.net',
+  'tutanota.com', 'fastmail.com', 'hey.com', 'msn.com',
+  'hotmail.co.uk', 'yahoo.fr', 'yahoo.de', 'web.de', 'mail.ru'
+];
+
+function isCompanyEmail(emailAddr) {
+  const domain = emailAddr.split('@')[1];
+  if (!domain) return false;
+  return !FREE_EMAIL_DOMAINS.includes(domain.toLowerCase());
+}
+
 // ---------- Signup ----------
 router.post('/signup', (req, res) => {
   const db = getDb();
@@ -35,6 +50,10 @@ router.post('/signup', (req, res) => {
   }
 
   const emailNorm = String(emailAddr).toLowerCase().trim();
+
+  if (!isCompanyEmail(emailNorm)) {
+    return res.status(400).json({ error: 'Please use your company email address. Personal emails (Gmail, Yahoo, Outlook, etc.) are not accepted.' });
+  }
 
   // Determine region automatically for hotels if not provided
   let userRegion = region;

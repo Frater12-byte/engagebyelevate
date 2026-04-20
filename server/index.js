@@ -4,14 +4,38 @@
 
 require('dotenv').config();
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
+const jwt = require('jsonwebtoken');
 
 const { getDb } = require('./db/connection');
 const meetingsService = require('./services/meetings');
+
+// Logo upload config
+const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: uploadsDir,
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `logo-${Date.now()}-${Math.random().toString(36).slice(2,8)}${ext}`);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.png', '.jpg', '.jpeg', '.svg', '.webp'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, allowed.includes(ext));
+  }
+});
 
 const app = express();
 
@@ -37,6 +61,21 @@ app.use('/auth', require('./routes/auth'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/n8n', require('./routes/n8n'));
 app.use('/api', require('./routes/meetings'));
+
+// Logo upload endpoint (requires auth)
+app.post('/api/upload-logo', upload.single('logo'), (req, res) => {
+  const token = req.cookies?.session;
+  if (!token) return res.status(401).json({ error: 'Not authenticated' });
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (!req.file) return res.status(400).json({ error: 'No valid image file provided (max 2MB, PNG/JPG/SVG/WebP)' });
+    const logoUrl = `/uploads/${req.file.filename}`;
+    getDb().prepare('UPDATE users SET logo_url = ?, updated_at = datetime("now") WHERE id = ?').run(logoUrl, payload.uid);
+    res.json({ ok: true, logo_url: logoUrl });
+  } catch {
+    res.status(401).json({ error: 'Not authenticated' });
+  }
+});
 
 // Static files
 app.use(express.static(path.join(__dirname, '..', 'public')));

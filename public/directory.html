@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0A0A0A">
+<meta name="theme-color" content="#0a0a0a">
 <title>Directory — Engage by Elevate</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
@@ -23,32 +23,30 @@
   </div>
 </nav>
 
-<section class="hero" style="padding:64px 0 48px">
+<section class="hero" style="padding:48px 0 40px">
   <div class="container">
     <div class="eyebrow" style="margin-bottom:12px">Participants</div>
-    <h1 style="font-size:clamp(2rem,6vw,3.5rem)">Directory.</h1>
-    <p style="margin-top:12px;color:rgba(255,255,255,0.6);max-width:56ch">Everyone attending Engage by Elevate 2026 — searchable, filterable, and all ready to meet.</p>
+    <h1 style="font-size:clamp(2rem,7vw,3.5rem)">Directory.</h1>
+    <p style="margin-top:8px;color:var(--ink-soft);max-width:50ch">Everyone attending Engage by Elevate 2026.</p>
   </div>
 </section>
 
-<div class="triangle-accent"></div>
-
-<section style="background:var(--cream)">
+<section style="padding-top:0">
   <div class="container">
-    <div style="display:flex;gap:8px;margin-bottom:24px;overflow-x:auto;padding-bottom:4px">
+    <div style="display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px">
       <button class="dash-tab active" data-view="hotels">Hotels</button>
       <button class="dash-tab" data-view="agents">Agencies</button>
       <button class="dash-tab" data-view="boards">Tourism Boards</button>
     </div>
 
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:24px">
-      <input id="search" placeholder="Search by name, country..." style="max-width:360px;flex:1;min-width:200px">
-      <select id="filter-region" style="max-width:180px">
+      <input id="search" placeholder="Search by name, country..." style="max-width:340px;flex:1;min-width:180px">
+      <select id="filter-region" style="max-width:160px">
         <option value="">All regions</option>
         <option value="UAE">UAE</option>
         <option value="INTL">International</option>
       </select>
-      <div class="text-muted" id="result-count" style="font-size:13px;margin-left:auto"></div>
+      <div class="text-muted" id="result-count" style="font-size:12px;margin-left:auto"></div>
     </div>
 
     <div id="directory-content">
@@ -59,22 +57,10 @@
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
-    <a href="/">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-      <span>Home</span>
-    </a>
-    <a href="/agenda">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      <span>Agenda</span>
-    </a>
-    <a href="/directory" class="active">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      <span>Directory</span>
-    </a>
-    <a href="/dashboard">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-      <span>Profile</span>
-    </a>
+    <a href="/"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span>Home</span></a>
+    <a href="/agenda"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Agenda</span></a>
+    <a href="/directory" class="active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><span>Directory</span></a>
+    <a href="/dashboard"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg><span>Profile</span></a>
   </div>
 </nav>
 
@@ -84,8 +70,7 @@
     document.getElementById('nav-links').classList.toggle('open');
   });
 
-  let me = null;
-  let currentView = 'hotels';
+  let me = null, currentView = 'hotels';
   let data = { hotels: [], agents: [], boards: [] };
 
   async function init() {
@@ -98,15 +83,9 @@
     render();
   }
 
-  async function loadHotels() {
-    try { data.hotels = (await api.get('/api/public/hotels')).hotels; } catch {}
-  }
-  async function loadAgents() {
-    try { data.agents = (await api.get('/api/public/agents')).agents; } catch {}
-  }
-  async function loadBoards() {
-    try { data.boards = (await api.get('/api/public/tourism-boards')).boards; } catch {}
-  }
+  async function loadHotels() { try { data.hotels = (await api.get('/api/public/hotels')).hotels; } catch {} }
+  async function loadAgents() { try { data.agents = (await api.get('/api/public/agents')).agents; } catch {} }
+  async function loadBoards() { try { data.boards = (await api.get('/api/public/tourism-boards')).boards; } catch {} }
 
   document.querySelectorAll('.dash-tab').forEach(t => {
     t.addEventListener('click', () => {
@@ -134,20 +113,13 @@
     const region = document.getElementById('filter-region').value;
 
     let items, empty;
-    if (currentView === 'hotels') {
-      items = data.hotels.filter(h => matches(h, q, region));
-      empty = 'No hotels yet. Be the first to register.';
-    } else if (currentView === 'agents') {
-      items = data.agents.filter(a => matches(a, q, region));
-      empty = 'No agencies yet. Be the first to register.';
-    } else {
-      items = data.boards.filter(b => matches(b, q, null));
-      empty = 'Tourism boards will be announced soon.';
-    }
+    if (currentView === 'hotels') { items = data.hotels.filter(h => matches(h, q, region)); empty = 'No hotels yet.'; }
+    else if (currentView === 'agents') { items = data.agents.filter(a => matches(a, q, region)); empty = 'No agencies yet.'; }
+    else { items = data.boards.filter(b => matches(b, q, null)); empty = 'Tourism boards coming soon.'; }
 
     document.getElementById('result-count').textContent = `${items.length} listed`;
 
-    if (items.length === 0) {
+    if (!items.length) {
       container.innerHTML = `<div class="empty-state"><h3>Nothing here yet</h3><p>${empty}</p></div>`;
       return;
     }
@@ -159,27 +131,29 @@
           <h3>${escapeHtml(b.name)}</h3>
           <div class="org-meta">${escapeHtml(b.country || '')}</div>
           <div class="org-desc">${escapeHtml(b.description || '')}</div>
-          ${b.session_title ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--rust)">
-            Session: ${escapeHtml(b.session_title)}
-          </div>` : ''}
         </div>
       `).join('')}</div>`;
       return;
     }
 
-    container.innerHTML = `<div class="directory-grid">${items.map(o => `
-      <a class="org-card" href="/profile.html?id=${o.id}">
-        <div class="eyebrow">${o.type === 'hotel' ? (o.star_rating ? `${o.star_rating} Stars · ` : '') + (o.region || '') : 'Agency'}</div>
-        <h3>${escapeHtml(o.org_name)}</h3>
-        <div class="org-meta">${escapeHtml([o.city, o.country].filter(Boolean).join(', '))}</div>
-        <div class="org-desc">${escapeHtml(o.description || '')}</div>
-        ${(o.specialties && o.specialties.length) ? `<div class="tags">${o.specialties.slice(0,4).map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}</div>` : ''}
-      </a>
-    `).join('')}</div>`;
+    container.innerHTML = `<div class="directory-grid">${items.map(o => {
+      const initials = (o.org_name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      return `
+        <a class="org-card" href="/profile.html?id=${o.id}">
+          ${o.logo_url
+            ? `<img class="org-logo" src="${escapeHtml(o.logo_url)}" alt="">`
+            : `<div class="org-logo" style="display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--orange);font-size:16px">${initials}</div>`
+          }
+          <div class="eyebrow">${o.type === 'hotel' ? (o.star_rating ? o.star_rating + '★ · ' : '') + (o.region || '') : 'Agency'}</div>
+          <h3>${escapeHtml(o.org_name)}</h3>
+          <div class="org-meta">${escapeHtml([o.city, o.country].filter(Boolean).join(', '))}</div>
+          <div class="org-desc">${escapeHtml(o.description || '')}</div>
+          ${(o.specialties && o.specialties.length) ? `<div class="tags">${o.specialties.slice(0,3).map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}</div>` : ''}
+        </a>`;
+    }).join('')}</div>`;
   }
 
   init();
 </script>
-
 </body>
 </html>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0A0A0A">
+<meta name="theme-color" content="#0a0a0a">
 <title>Dashboard — Engage by Elevate</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
@@ -26,7 +26,7 @@
   </div>
 </nav>
 
-<section style="background:var(--cream)">
+<section>
   <div class="container">
     <div id="loader"><div class="loader" style="margin:80px auto;display:block"></div></div>
     <div id="app" style="display:none">
@@ -407,6 +407,21 @@ async function renderProfile() {
   el.innerHTML = `
     <h3 style="margin-bottom:8px">Your Public Profile</h3>
     <p class="text-muted" style="margin-bottom:24px">This is what everyone else sees in the directory.</p>
+
+    <!-- Logo upload -->
+    <div class="field">
+      <label>Company Logo</label>
+      <div class="logo-upload">
+        ${p.logo_url
+          ? `<img id="profile-logo-preview" class="logo-upload-preview" src="${escapeHtml(p.logo_url)}">`
+          : `<img id="profile-logo-preview" class="logo-upload-preview" src="" style="display:none">
+             <div id="profile-logo-placeholder" class="logo-upload-preview" style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:11px">No logo</div>`
+        }
+        <label class="logo-upload-btn" for="profile-logo-file">Upload Logo</label>
+        <input type="file" id="profile-logo-file" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none">
+      </div>
+    </div>
+
     <form id="profile-form">
       <div class="form-grid">
         <div class="field"><label>Organization</label><input name="org_name" value="${escapeHtml(p.org_name)}" required></div>
@@ -435,6 +450,25 @@ async function renderProfile() {
       <button type="submit" class="btn" style="width:100%;margin-top:8px">Save Profile</button>
     </form>
   `;
+
+  // Logo upload handler
+  document.getElementById('profile-logo-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('logo', file);
+    try {
+      const res = await fetch('/api/upload-logo', { method: 'POST', credentials: 'include', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const preview = document.getElementById('profile-logo-preview');
+      preview.src = data.logo_url;
+      preview.style.display = 'block';
+      const placeholder = document.getElementById('profile-logo-placeholder');
+      if (placeholder) placeholder.style.display = 'none';
+      toast('Logo uploaded', 'success');
+    } catch (err) { toast(err.message, 'error'); }
+  });
 
   document.getElementById('profile-form').addEventListener('submit', async (e) => {
     e.preventDefault();

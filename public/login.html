@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0A0A0A">
+<meta name="theme-color" content="#0a0a0a">
 <title>Sign in — Engage by Elevate</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
@@ -26,25 +26,23 @@
 <section class="hero" style="padding:64px 0 48px">
   <div class="container-narrow" style="max-width:480px">
     <div class="eyebrow" style="margin-bottom:12px">Sign In</div>
-    <h1 style="font-size:clamp(2rem,6vw,3rem)">Access Your Dashboard.</h1>
-    <p style="margin-top:16px;color:rgba(255,255,255,0.65)">Enter your registered email. We'll send you a secure link — no password needed.</p>
+    <h1 style="font-size:clamp(2rem,7vw,3rem)">Access Your Dashboard.</h1>
+    <p style="margin-top:16px;color:var(--ink-soft)">Enter your registered email. We'll send you a secure link — no password needed.</p>
   </div>
 </section>
 
-<div class="triangle-accent"></div>
-
-<section style="background:var(--cream);padding-top:48px">
+<section style="padding-top:40px">
   <div class="container-narrow" style="max-width:480px">
     <form id="login-form">
       <div class="field">
-        <label>Email</label>
-        <input name="email" type="email" required autofocus placeholder="you@company.com">
-        <p class="text-muted" style="font-size:13px;margin-top:8px">This should be the email you registered with for the event.</p>
+        <label>Company Email</label>
+        <input name="email" type="email" required autofocus placeholder="you@yourcompany.com">
+        <p class="text-muted" style="font-size:13px;margin-top:8px">This should be the company email you registered with for the event.</p>
       </div>
       <button type="submit" class="btn" style="width:100%">Send Login Link</button>
     </form>
 
-    <div id="result" style="display:none;margin-top:32px;padding:24px;background:rgba(45,138,78,0.06);border-left:3px solid var(--success);border-radius:var(--radius)"></div>
+    <div id="result" style="display:none;margin-top:32px;padding:24px;background:rgba(0,210,106,0.06);border:1px solid rgba(0,210,106,0.2);border-radius:var(--radius-sm)"></div>
 
     <p class="text-muted" style="margin-top:32px;font-size:13px;text-align:center">
       Not registered yet? <a href="/signup.html">Reserve your spot</a>.
@@ -54,22 +52,10 @@
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
-    <a href="/">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-      <span>Home</span>
-    </a>
-    <a href="/agenda">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      <span>Agenda</span>
-    </a>
-    <a href="/directory">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      <span>Directory</span>
-    </a>
-    <a href="/dashboard">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-      <span>Profile</span>
-    </a>
+    <a href="/"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span>Home</span></a>
+    <a href="/agenda"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Agenda</span></a>
+    <a href="/directory"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><span>Directory</span></a>
+    <a href="/dashboard"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg><span>Profile</span></a>
   </div>
 </nav>
 
@@ -89,7 +75,7 @@
       e.target.style.display = 'none';
       document.getElementById('result').innerHTML = `
         <div class="eyebrow" style="color:var(--success)">Check your inbox</div>
-        <p style="margin-top:12px">If <strong>${email}</strong> is registered, a login link is on its way.</p>
+        <p style="margin-top:12px;color:var(--ink-soft)">If <strong style="color:var(--white)">${email}</strong> is registered, a login link is on its way.</p>
       `;
       document.getElementById('result').style.display = 'block';
     } catch (err) {
@@ -98,6 +84,5 @@
     }
   });
 </script>
-
 </body>
 </html>
