@@ -12,7 +12,7 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="brand"><img src="/img/logo.png" alt="Elevate"><span class="brand-engage"><span>engage</span></span></a>
+    <a href="/" class="brand"><img src="/img/logo.png" alt="Elevate"><span class="brand-name"><span class="highlight">Engage</span> by Elevate</span></a>
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory" class="active">Directory</a>
@@ -20,12 +20,14 @@
       <a href="/signup.html" class="nav-cta">Register Now</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
     </button>
   </div>
 </nav>
 
-<section class="hero" style="padding:32px 0 20px">
+<section class="hero" style="padding:24px 0 16px">
   <div class="container">
     <div class="eyebrow" style="margin-bottom:12px">Participants</div>
     <h1 style="font-size:clamp(2rem,7vw,3.5rem)">Directory.</h1>
@@ -35,20 +37,14 @@
 
 <section style="padding-top:0">
   <div class="container">
-    <div class="dash-tabs">
-      <button class="dash-tab active" data-view="hotels">Hotels</button>
-      <button class="dash-tab" data-view="agents">Agencies</button>
-      <button class="dash-tab" data-view="boards">Tourism Boards</button>
+    <div class="dash-tabs" style="margin-bottom:12px">
+      <button class="dash-tab active" data-view="hotels">Hotels <span class="tab-count" id="count-hotels"></span></button>
+      <button class="dash-tab" data-view="agents">Agencies <span class="tab-count" id="count-agents"></span></button>
+      <button class="dash-tab" data-view="boards">Tourism Boards <span class="tab-count" id="count-boards"></span></button>
     </div>
 
-    <div class="filter-row">
+    <div style="margin-bottom:16px">
       <input id="search" placeholder="Search by name, country...">
-      <select id="filter-region">
-        <option value="">All regions</option>
-        <option value="UAE">UAE</option>
-        <option value="INTL">International</option>
-      </select>
-      <div class="text-muted" id="result-count" style="font-size:12px;margin-left:auto"></div>
     </div>
 
     <div id="directory-content">
@@ -70,6 +66,7 @@
 <script>
   document.getElementById('nav-toggle').addEventListener('click', () => {
     document.getElementById('nav-links').classList.toggle('open');
+    document.getElementById('nav-toggle').classList.toggle('open');
   });
 
   let me = null, currentView = 'hotels';
@@ -82,6 +79,9 @@
       document.getElementById('nav-auth-link').href = '/dashboard';
     }
     await Promise.all([loadHotels(), loadAgents(), loadBoards()]);
+    document.getElementById('count-hotels').textContent = `(${data.hotels.length})`;
+    document.getElementById('count-agents').textContent = `(${data.agents.length})`;
+    document.getElementById('count-boards').textContent = `(${data.boards.length})`;
     render();
   }
 
@@ -98,10 +98,8 @@
     });
   });
   document.getElementById('search').addEventListener('input', render);
-  document.getElementById('filter-region').addEventListener('change', render);
 
-  function matches(item, query, region) {
-    if (region && item.region && item.region !== region) return false;
+  function matches(item, query) {
     if (!query) return true;
     const q = query.toLowerCase();
     return (item.org_name || item.name || '').toLowerCase().includes(q) ||
@@ -112,15 +110,13 @@
   function render() {
     const container = document.getElementById('directory-content');
     const q = document.getElementById('search').value;
-    const region = document.getElementById('filter-region').value;
 
     let items, empty;
-    if (currentView === 'hotels') { items = data.hotels.filter(h => matches(h, q, region)); empty = 'No hotels yet.'; }
-    else if (currentView === 'agents') { items = data.agents.filter(a => matches(a, q, region)); empty = 'No agencies yet.'; }
-    else { items = data.boards.filter(b => matches(b, q, null)); empty = 'Tourism boards coming soon.'; }
+    if (currentView === 'hotels') { items = data.hotels.filter(h => matches(h, q)); empty = 'No hotels yet.'; }
+    else if (currentView === 'agents') { items = data.agents.filter(a => matches(a, q)); empty = 'No agencies yet.'; }
+    else { items = data.boards.filter(b => matches(b, q)); empty = 'Tourism boards coming soon.'; }
 
-    const typeLabel = currentView === 'hotels' ? 'Hotels' : currentView === 'agents' ? 'Agencies' : 'Tourism Boards';
-    document.getElementById('result-count').textContent = `${items.length} ${typeLabel}`;
+    document.getElementById('count-' + currentView).textContent = '(' + items.length + ')';
 
     if (!items.length) {
       container.innerHTML = `<div class="empty-state"><h3>Nothing here yet</h3><p>${empty}</p></div>`;

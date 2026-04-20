@@ -12,7 +12,7 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="brand"><img src="/img/logo.png" alt="Elevate"><span class="brand-engage"><span>engage</span></span></a>
+    <a href="/" class="brand"><img src="/img/logo.png" alt="Elevate"><span class="brand-name"><span class="highlight">Engage</span> by Elevate</span></a>
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
@@ -20,7 +20,9 @@
       <a href="/signup.html" class="nav-cta">Register Now</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
     </button>
   </div>
 </nav>
@@ -209,6 +211,7 @@
 <script>
   document.getElementById('nav-toggle').addEventListener('click', () => {
     document.getElementById('nav-links').classList.toggle('open');
+    document.getElementById('nav-toggle').classList.toggle('open');
   });
 
   const form = document.getElementById('signup-form');
