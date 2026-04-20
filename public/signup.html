@@ -16,6 +16,7 @@
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
       <a href="/login.html">Sign in</a>
+      <a href="/signup.html" class="nav-cta">Register Now</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -23,124 +24,160 @@
   </div>
 </nav>
 
-<section class="hero" style="padding:64px 0 48px">
+<section class="hero" style="padding:48px 0 32px">
   <div class="container-narrow">
     <div class="eyebrow" style="margin-bottom:12px">Registration</div>
     <h1 style="font-size:clamp(2rem,7vw,3.5rem)">Reserve Your Spot.</h1>
-    <p style="margin-top:16px;color:var(--ink-soft);max-width:44ch">Tell us about your organization. You'll receive an access link to your dashboard within seconds.</p>
+    <p style="margin-top:12px;color:var(--ink-soft);max-width:44ch">Tell us about your organization. You'll receive an access link to your dashboard within seconds.</p>
   </div>
 </section>
 
-<section style="padding-top:40px">
+<section style="padding-top:24px">
   <div class="container-narrow">
 
-    <!-- Company email notice -->
-    <div class="notice">
-      <p><strong>Use your company email address.</strong> Personal emails (Gmail, Yahoo, Outlook, etc.) are not accepted. This becomes your permanent login.</p>
-    </div>
-
-    <!-- Type selector -->
-    <div style="display:flex;gap:8px;margin-bottom:28px">
-      <button class="dash-tab active" data-type="hotel">I'm a Hotel</button>
-      <button class="dash-tab" data-type="agent">I'm an Agency</button>
+    <!-- Progress bar -->
+    <div class="wizard-steps">
+      <div class="wizard-step active" data-step="1"></div>
+      <div class="wizard-step" data-step="2"></div>
+      <div class="wizard-step" data-step="3"></div>
     </div>
 
     <form id="signup-form">
-      <input type="hidden" name="type" value="hotel">
+      <input type="hidden" name="type" value="">
 
-      <!-- Logo upload -->
-      <div class="field">
-        <label>Company Logo (optional)</label>
-        <div class="logo-upload">
-          <img id="logo-preview" class="logo-upload-preview" src="" style="display:none">
-          <div id="logo-placeholder" class="logo-upload-preview" style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:11px">No logo</div>
-          <label class="logo-upload-btn" for="logo-file">Choose File</label>
-          <input type="file" id="logo-file" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none">
+      <!-- STEP 1: Organization type -->
+      <div class="wizard-panel active" data-panel="1">
+        <h3 style="margin-bottom:24px">What type of organization?</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card" style="cursor:pointer;text-align:center;padding:40px 20px" id="pick-hotel">
+            <div style="font-size:2.5rem;margin-bottom:12px">🏨</div>
+            <h4>Hotel</h4>
+            <p style="font-size:13px;color:var(--ink-muted);margin-top:6px">Properties looking to meet agencies</p>
+          </div>
+          <div class="card" style="cursor:pointer;text-align:center;padding:40px 20px" id="pick-agent">
+            <div style="font-size:2.5rem;margin-bottom:12px">✈️</div>
+            <h4>Agency</h4>
+            <p style="font-size:13px;color:var(--ink-muted);margin-top:6px">Tour operators & travel agencies</p>
+          </div>
         </div>
       </div>
 
-      <div class="form-grid">
-        <div class="field">
-          <label>Organization Name *</label>
-          <input name="org_name" required placeholder="e.g. Atlantis The Palm">
+      <!-- STEP 2: Your details -->
+      <div class="wizard-panel" data-panel="2">
+        <h3 style="margin-bottom:24px">Your details</h3>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Organization Name *</label>
+            <input name="org_name" required placeholder="e.g. Atlantis The Palm">
+          </div>
+          <div class="field">
+            <label>Contact Name *</label>
+            <input name="contact_name" required>
+          </div>
         </div>
-        <div class="field">
-          <label>Website</label>
-          <input name="website" type="url" placeholder="https://">
+
+        <!-- Company email notice -->
+        <div class="notice">
+          <p><strong>Use your company email address.</strong> Personal emails (Gmail, Yahoo, Outlook, etc.) are not accepted. This becomes your permanent login.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Company Email *</label>
+            <input name="email" type="email" required placeholder="you@yourcompany.com">
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input name="phone" type="tel">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Country *</label>
+            <input name="country" required placeholder="e.g. United Arab Emirates">
+          </div>
+          <div class="field">
+            <label>City</label>
+            <input name="city">
+          </div>
+        </div>
+
+        <!-- Hotel-only fields -->
+        <div class="hotel-only" style="display:none">
+          <div class="form-grid">
+            <div class="field">
+              <label>Star Rating</label>
+              <select name="star_rating">
+                <option value="">—</option>
+                <option value="3">3 stars</option>
+                <option value="4">4 stars</option>
+                <option value="5">5 stars</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Room Count</label>
+              <input name="room_count" type="number" min="1">
+            </div>
+          </div>
+          <div class="field">
+            <label>Region</label>
+            <select name="region">
+              <option value="">Auto-detect from country</option>
+              <option value="UAE">UAE (Days 1 & 2)</option>
+              <option value="INTL">International (Day 3)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" id="back-to-1">Back</button>
+          <button type="button" class="btn" id="next-to-3">Next</button>
         </div>
       </div>
 
-      <div class="form-grid">
+      <!-- STEP 3: Tell us more -->
+      <div class="wizard-panel" data-panel="3">
+        <h3 style="margin-bottom:24px">Tell us more</h3>
+
         <div class="field">
-          <label>Contact Name *</label>
-          <input name="contact_name" required>
+          <label>Short Description (shown publicly)</label>
+          <textarea name="description" rows="3" placeholder="A sentence or two about your property or agency."></textarea>
         </div>
-        <div class="field">
-          <label>Company Email *</label>
-          <input name="email" type="email" required placeholder="you@yourcompany.com">
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Specialties (comma-separated)</label>
+            <input name="specialties" placeholder="e.g. Luxury, Family, MICE, Beach">
+          </div>
+          <div class="field">
+            <label>Target Markets (comma-separated)</label>
+            <input name="target_markets" placeholder="e.g. UK, Germany, India">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Website</label>
+            <input name="website" type="url" placeholder="https://">
+          </div>
+          <div class="field">
+            <label>Company Logo (optional)</label>
+            <div class="logo-upload">
+              <img id="logo-preview" class="logo-upload-preview" src="" style="display:none">
+              <div id="logo-placeholder" class="logo-upload-preview" style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:11px">No logo</div>
+              <label class="logo-upload-btn" for="logo-file">Choose File</label>
+              <input type="file" id="logo-file" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none">
+            </div>
+          </div>
+        </div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" id="back-to-2">Back</button>
+          <button type="submit" class="btn">Create Account</button>
         </div>
       </div>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>Phone</label>
-          <input name="phone" type="tel">
-        </div>
-        <div class="field">
-          <label>Country *</label>
-          <input name="country" required placeholder="e.g. United Arab Emirates">
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>City</label>
-          <input name="city">
-        </div>
-        <div class="field hotel-only">
-          <label>Star Rating</label>
-          <select name="star_rating">
-            <option value="">—</option>
-            <option value="3">3 stars</option>
-            <option value="4">4 stars</option>
-            <option value="5">5 stars</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-grid hotel-only">
-        <div class="field">
-          <label>Room Count</label>
-          <input name="room_count" type="number" min="1">
-        </div>
-        <div class="field">
-          <label>Region</label>
-          <select name="region">
-            <option value="">Auto-detect from country</option>
-            <option value="UAE">UAE (Days 1 & 2)</option>
-            <option value="INTL">International (Day 3)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Short Description (shown publicly)</label>
-        <textarea name="description" rows="3" placeholder="A sentence or two about your property or agency."></textarea>
-      </div>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>Specialties (comma-separated)</label>
-          <input name="specialties" placeholder="e.g. Luxury, Family, MICE, Beach">
-        </div>
-        <div class="field">
-          <label>Target Markets (comma-separated)</label>
-          <input name="target_markets" placeholder="e.g. UK, Germany, India">
-        </div>
-      </div>
-
-      <button type="submit" class="btn" style="width:100%;margin-top:12px">Create Account</button>
-      <p class="text-muted" style="margin-top:16px;font-size:13px;text-align:center">By registering you agree to be contacted about this event.</p>
     </form>
 
     <div id="result" style="display:none;margin-top:40px;padding:28px;background:rgba(0,210,106,0.06);border:1px solid rgba(0,210,106,0.2);border-radius:var(--radius-sm)"></div>
@@ -162,6 +199,49 @@
     document.getElementById('nav-links').classList.toggle('open');
   });
 
+  const form = document.getElementById('signup-form');
+  const typeInput = form.querySelector('[name=type]');
+  const panels = document.querySelectorAll('.wizard-panel');
+  const steps = document.querySelectorAll('.wizard-step');
+  let currentStep = 1;
+
+  function goToStep(n) {
+    currentStep = n;
+    panels.forEach(p => p.classList.toggle('active', parseInt(p.dataset.panel) === n));
+    steps.forEach(s => {
+      const sn = parseInt(s.dataset.step);
+      s.classList.toggle('active', sn === n);
+      s.classList.toggle('done', sn < n);
+    });
+  }
+
+  // Step 1: pick type
+  document.getElementById('pick-hotel').addEventListener('click', () => {
+    typeInput.value = 'hotel';
+    document.querySelectorAll('.hotel-only').forEach(el => el.style.display = '');
+    goToStep(2);
+  });
+  document.getElementById('pick-agent').addEventListener('click', () => {
+    typeInput.value = 'agent';
+    document.querySelectorAll('.hotel-only').forEach(el => el.style.display = 'none');
+    goToStep(2);
+  });
+
+  // Step 2 nav
+  document.getElementById('back-to-1').addEventListener('click', () => goToStep(1));
+  document.getElementById('next-to-3').addEventListener('click', () => {
+    // Validate required fields in step 2
+    const required = form.querySelectorAll('[data-panel="2"] [required]');
+    let valid = true;
+    required.forEach(input => {
+      if (!input.value.trim()) { input.focus(); valid = false; }
+    });
+    if (valid) goToStep(3);
+  });
+
+  // Step 3 nav
+  document.getElementById('back-to-2').addEventListener('click', () => goToStep(2));
+
   // Logo preview
   let logoFile = null;
   document.getElementById('logo-file').addEventListener('change', (e) => {
@@ -177,17 +257,7 @@
     reader.readAsDataURL(file);
   });
 
-  const tabs = document.querySelectorAll('.dash-tab');
-  const form = document.getElementById('signup-form');
-  const typeInput = form.querySelector('[name=type]');
-
-  tabs.forEach(t => t.addEventListener('click', () => {
-    tabs.forEach(x => x.classList.remove('active'));
-    t.classList.add('active');
-    typeInput.value = t.dataset.type;
-    document.querySelectorAll('.hotel-only').forEach(el => el.style.display = t.dataset.type === 'hotel' ? '' : 'none');
-  }));
-
+  // Submit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = form.querySelector('button[type=submit]');
@@ -207,14 +277,11 @@
       if (logoFile) {
         const logoFd = new FormData();
         logoFd.append('logo', logoFile);
-        // We need to set the session cookie first — the signup sends a magic link
-        // but for now, logo upload happens post-login from the dashboard.
-        // Just note it's optional here.
+        // Logo upload happens post-login from the dashboard.
       }
 
       form.style.display = 'none';
-      document.querySelector('.notice').style.display = 'none';
-      document.querySelector('.dash-tab').parentElement.style.display = 'none';
+      document.querySelector('.wizard-steps').style.display = 'none';
       const result = document.getElementById('result');
       result.innerHTML = `
         <div class="eyebrow" style="color:var(--success)">Registered</div>
