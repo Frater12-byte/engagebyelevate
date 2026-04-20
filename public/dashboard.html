@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0f1a">
+<meta name="theme-color" content="#0A0A0A">
 <title>Dashboard — Engage by Elevate</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
@@ -26,7 +26,7 @@
   </div>
 </nav>
 
-<section>
+<section style="background:var(--cream)">
   <div class="container">
     <div id="loader"><div class="loader" style="margin:80px auto;display:block"></div></div>
     <div id="app" style="display:none">
@@ -94,7 +94,6 @@ let me = null, agenda = null, meetings = [];
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display = 'block';
 
-  // Tab switching
   document.querySelectorAll('.dash-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
@@ -133,7 +132,6 @@ async function loadAll() {
   } catch (err) { console.error(err); }
 }
 
-// ---------- AGENDA TAB ----------
 function renderAgenda() {
   const el = document.getElementById('tab-agenda');
   if (!agenda || Object.keys(agenda.agenda).length === 0) {
@@ -174,11 +172,10 @@ function isLocked(startTime) {
   return hrs < 48;
 }
 
-// ---------- MEETINGS TAB ----------
 function renderMeetings() {
   const el = document.getElementById('tab-meetings');
   if (!meetings.length) {
-    el.innerHTML = `<div class="empty-state"><h3>No meetings yet</h3><p>Browse the directory and request meetings with hotels or agencies.</p><a href="/directory" class="btn btn-gold" style="margin-top:20px">Open Directory</a></div>`;
+    el.innerHTML = `<div class="empty-state"><h3>No meetings yet</h3><p>Browse the directory and request meetings with hotels or agencies.</p><a href="/directory" class="btn" style="margin-top:20px">Open Directory</a></div>`;
     return;
   }
 
@@ -256,7 +253,7 @@ function meetingCard(m, kind) {
     actions = `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>`;
   } else if (kind === 'approved') {
     actions = `
-      ${m.teams_join_url ? `<a class="btn btn-small btn-gold" href="${m.teams_join_url}" target="_blank">Join Teams</a>` : '<span class="badge badge-warn">Link pending</span>'}
+      ${m.teams_join_url ? `<a class="btn btn-small" href="${m.teams_join_url}" target="_blank">Join Teams</a>` : '<span class="badge badge-warn">Link pending</span>'}
       ${!locked ? `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>` : ''}
     `;
   }
@@ -272,7 +269,7 @@ function meetingCard(m, kind) {
         <div class="eyebrow">${fmtDate(m.start_time)} · ${fmtTime(m.start_time)} – ${fmtTime(m.end_time)}</div>
         <h4 style="margin-top:6px">${escapeHtml(otherOrg)}</h4>
         <div class="meeting-meta">${escapeHtml(otherName || '')} · <span class="badge ${statusBadge}">${m.status}</span>${locked ? ' · <span class="badge">Locked</span>' : ''}</div>
-        ${m.message && kind === 'incoming' ? `<div style="margin-top:12px;padding:12px;background:var(--bg-elevated);border-left:3px solid var(--gold);border-radius:var(--radius-sm);font-size:13px;font-style:italic;color:var(--ink-soft)">"${escapeHtml(m.message)}"</div>` : ''}
+        ${m.message && kind === 'incoming' ? `<div class="notice" style="margin-top:12px;margin-bottom:0;padding:12px 16px"><p style="font-style:italic;font-size:13px">"${escapeHtml(m.message)}"</p></div>` : ''}
         ${m.decline_reason ? `<div style="margin-top:8px;font-size:13px;color:var(--ink-muted)">Reason: ${escapeHtml(m.decline_reason)}</div>` : ''}
       </div>
       <div class="meeting-actions">${actions}</div>
@@ -280,7 +277,6 @@ function meetingCard(m, kind) {
   `;
 }
 
-// ---------- BOOK TAB ----------
 async function renderBookTab() {
   const el = document.getElementById('tab-book');
   el.innerHTML = '<div class="loader" style="margin:40px auto;display:block"></div>';
@@ -307,7 +303,7 @@ async function renderBookTab() {
         <div class="eyebrow">${o.country || ''}</div>
         <h3>${escapeHtml(o.org_name)}</h3>
         <div class="org-desc">${escapeHtml(o.description || '')}</div>
-        <div style="margin-top:16px"><span class="btn btn-small btn-ghost">View availability</span></div>
+        <div style="margin-top:16px"><span class="btn btn-small btn-ghost">View Availability</span></div>
       </div>
     `).join('');
   };
@@ -363,15 +359,15 @@ window.requestMeetingModal = function(otherId, startTime, orgName) {
   document.querySelectorAll('.modal-backdrop').forEach(m => m.remove());
   const modal = document.createElement('div');
   modal.innerHTML = `
-    <h3>Request meeting</h3>
+    <h3>Request Meeting</h3>
     <p class="text-muted" style="margin-top:8px;margin-bottom:20px">With <strong>${orgName}</strong> on ${fmtDate(startTime)} at ${fmtTime(startTime)}</p>
     <div class="field">
-      <label>Optional message</label>
+      <label>Optional Message</label>
       <textarea id="req-message" placeholder="Introduce yourself or mention what you'd like to discuss..." rows="4"></textarea>
     </div>
     <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
-      <button class="btn btn-ghost btn-small" onclick="document.querySelectorAll('.modal-backdrop').forEach(m => m.remove())">Cancel</button>
-      <button class="btn btn-gold btn-small" id="req-send">Send request</button>
+      <button class="btn btn-small btn-ghost" onclick="document.querySelectorAll('.modal-backdrop').forEach(m => m.remove())">Cancel</button>
+      <button class="btn btn-small" id="req-send">Send Request</button>
     </div>
   `;
   openModal(modal);
@@ -391,7 +387,7 @@ window.requestMeetingModal = function(otherId, startTime, orgName) {
       renderAgenda();
     } catch (err) {
       toast(err.message, 'error');
-      btn.disabled = false; btn.textContent = 'Send request';
+      btn.disabled = false; btn.textContent = 'Send Request';
     }
   });
 };
@@ -402,7 +398,6 @@ window.showMeetingDetail = function(meetingId) {
   document.querySelector('[data-tab="meetings"]').click();
 };
 
-// ---------- PROFILE TAB ----------
 async function renderProfile() {
   const el = document.getElementById('tab-profile');
   const { user: full } = await api.get('/auth/me');
@@ -410,7 +405,7 @@ async function renderProfile() {
   const p = res.profile;
 
   el.innerHTML = `
-    <h3 style="margin-bottom:8px">Your public profile</h3>
+    <h3 style="margin-bottom:8px">Your Public Profile</h3>
     <p class="text-muted" style="margin-bottom:24px">This is what everyone else sees in the directory.</p>
     <form id="profile-form">
       <div class="form-grid">
@@ -437,7 +432,7 @@ async function renderProfile() {
           </div>
         </div>
       ` : ''}
-      <button type="submit" class="btn btn-gold" style="width:100%;margin-top:8px">Save profile</button>
+      <button type="submit" class="btn" style="width:100%;margin-top:8px">Save Profile</button>
     </form>
   `;
 
@@ -457,7 +452,7 @@ async function renderProfile() {
     } catch (err) {
       toast(err.message, 'error');
     } finally {
-      btn.disabled = false; btn.textContent = 'Save profile';
+      btn.disabled = false; btn.textContent = 'Save Profile';
     }
   });
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0f1a">
+<meta name="theme-color" content="#0A0A0A">
 <title>Directory — Engage by Elevate</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
@@ -23,19 +23,25 @@
   </div>
 </nav>
 
-<section>
+<section class="hero" style="padding:64px 0 48px">
   <div class="container">
-    <div class="eyebrow">Participants</div>
-    <h1 style="margin-top:12px">Directory.</h1>
-    <p class="text-muted" style="margin-top:12px;max-width:60ch">Everyone attending Engage by Elevate 2026 — searchable, filterable, and all ready to meet.</p>
+    <div class="eyebrow" style="margin-bottom:12px">Participants</div>
+    <h1 style="font-size:clamp(2rem,6vw,3.5rem)">Directory.</h1>
+    <p style="margin-top:12px;color:rgba(255,255,255,0.6);max-width:56ch">Everyone attending Engage by Elevate 2026 — searchable, filterable, and all ready to meet.</p>
+  </div>
+</section>
 
-    <div style="display:flex;gap:8px;margin-top:32px;overflow-x:auto;padding-bottom:4px">
+<div class="triangle-accent"></div>
+
+<section style="background:var(--cream)">
+  <div class="container">
+    <div style="display:flex;gap:8px;margin-bottom:24px;overflow-x:auto;padding-bottom:4px">
       <button class="dash-tab active" data-view="hotels">Hotels</button>
       <button class="dash-tab" data-view="agents">Agencies</button>
       <button class="dash-tab" data-view="boards">Tourism Boards</button>
     </div>
 
-    <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:24px">
       <input id="search" placeholder="Search by name, country..." style="max-width:360px;flex:1;min-width:200px">
       <select id="filter-region" style="max-width:180px">
         <option value="">All regions</option>
@@ -45,7 +51,7 @@
       <div class="text-muted" id="result-count" style="font-size:13px;margin-left:auto"></div>
     </div>
 
-    <div id="directory-content" style="margin-top:24px">
+    <div id="directory-content">
       <div class="loader" style="margin:80px auto;display:block"></div>
     </div>
   </div>
@@ -153,7 +159,7 @@
           <h3>${escapeHtml(b.name)}</h3>
           <div class="org-meta">${escapeHtml(b.country || '')}</div>
           <div class="org-desc">${escapeHtml(b.description || '')}</div>
-          ${b.session_title ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--gold)">
+          ${b.session_title ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--rust)">
             Session: ${escapeHtml(b.session_title)}
           </div>` : ''}
         </div>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0f1a">
+<meta name="theme-color" content="#0A0A0A">
 <title>Sign in — Engage by Elevate</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
@@ -23,24 +23,31 @@
   </div>
 </nav>
 
-<section>
+<section class="hero" style="padding:64px 0 48px">
   <div class="container-narrow" style="max-width:480px">
-    <div class="eyebrow">Sign in</div>
-    <h1 style="margin-top:12px;font-size:2.25rem">Login link.</h1>
-    <p class="text-muted" style="margin-top:16px">Enter your registered email. We'll send you a link to access your dashboard — no password needed.</p>
+    <div class="eyebrow" style="margin-bottom:12px">Sign In</div>
+    <h1 style="font-size:clamp(2rem,6vw,3rem)">Access Your Dashboard.</h1>
+    <p style="margin-top:16px;color:rgba(255,255,255,0.65)">Enter your registered email. We'll send you a secure link — no password needed.</p>
+  </div>
+</section>
 
-    <form id="login-form" style="margin-top:40px">
+<div class="triangle-accent"></div>
+
+<section style="background:var(--cream);padding-top:48px">
+  <div class="container-narrow" style="max-width:480px">
+    <form id="login-form">
       <div class="field">
         <label>Email</label>
         <input name="email" type="email" required autofocus placeholder="you@company.com">
+        <p class="text-muted" style="font-size:13px;margin-top:8px">This should be the email you registered with for the event.</p>
       </div>
-      <button type="submit" class="btn btn-gold" style="width:100%">Send login link</button>
+      <button type="submit" class="btn" style="width:100%">Send Login Link</button>
     </form>
 
-    <div id="result" style="display:none;margin-top:32px;padding:24px;border-left:3px solid var(--success);background:var(--bg-elevated);border-radius:var(--radius-sm)"></div>
+    <div id="result" style="display:none;margin-top:32px;padding:24px;background:rgba(45,138,78,0.06);border-left:3px solid var(--success);border-radius:var(--radius)"></div>
 
     <p class="text-muted" style="margin-top:32px;font-size:13px;text-align:center">
-      Not registered yet? <a href="/signup.html">Create an account</a>.
+      Not registered yet? <a href="/signup.html">Reserve your spot</a>.
     </p>
   </div>
 </section>
@@ -82,12 +89,12 @@
       e.target.style.display = 'none';
       document.getElementById('result').innerHTML = `
         <div class="eyebrow" style="color:var(--success)">Check your inbox</div>
-        <p style="margin-top:12px;color:var(--ink)">If <strong>${email}</strong> is registered, a login link is on its way.</p>
+        <p style="margin-top:12px">If <strong>${email}</strong> is registered, a login link is on its way.</p>
       `;
       document.getElementById('result').style.display = 'block';
     } catch (err) {
       toast(err.message, 'error');
-      btn.disabled = false; btn.textContent = 'Send login link';
+      btn.disabled = false; btn.textContent = 'Send Login Link';
     }
   });
 </script>

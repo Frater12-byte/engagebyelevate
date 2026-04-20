@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0f1a">
+<meta name="theme-color" content="#0A0A0A">
 <title>Register — Engage by Elevate</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
@@ -23,13 +23,28 @@
   </div>
 </nav>
 
-<section>
+<!-- Dark hero header -->
+<section class="hero" style="padding:64px 0 48px">
   <div class="container-narrow">
-    <div class="eyebrow">Registration</div>
-    <h1 style="margin-top:12px">Join the event.</h1>
-    <p class="text-muted" style="margin-top:16px;font-size:1.05rem">Select your role and tell us about your organization. We'll email you an access link within seconds.</p>
+    <div class="eyebrow" style="margin-bottom:12px">Registration</div>
+    <h1 style="font-size:clamp(2rem,6vw,3rem)">Reserve Your Spot.</h1>
+    <p style="margin-top:16px;color:rgba(255,255,255,0.65);font-size:1.05rem;max-width:48ch">Select your role and tell us about your organization. You'll receive an access link to your dashboard within seconds.</p>
+  </div>
+</section>
 
-    <div style="display:flex;gap:8px;margin-top:32px;margin-bottom:32px">
+<div class="triangle-accent"></div>
+
+<!-- Form section -->
+<section style="background:var(--cream);padding-top:48px">
+  <div class="container-narrow">
+
+    <!-- Important notice -->
+    <div class="notice">
+      <p><strong>Important:</strong> Sign up using the email address you'll have access to during the event. This becomes your login — it cannot be changed later.</p>
+    </div>
+
+    <!-- Type selector -->
+    <div style="display:flex;gap:8px;margin-bottom:32px">
       <button class="dash-tab active" data-type="hotel">I'm a Hotel</button>
       <button class="dash-tab" data-type="agent">I'm an Agency</button>
     </div>
@@ -55,7 +70,7 @@
         </div>
         <div class="field">
           <label>Email *</label>
-          <input name="email" type="email" required>
+          <input name="email" type="email" required placeholder="you@company.com">
         </div>
       </div>
 
@@ -118,11 +133,11 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-gold" style="margin-top:20px;width:100%">Create account & send login link</button>
-      <p class="text-muted" style="margin-top:12px;font-size:13px;text-align:center">By registering you agree to be contacted about this event. We won't share your details with anyone except matched meeting partners.</p>
+      <button type="submit" class="btn" style="width:100%;margin-top:12px">Create Account & Send Login Link</button>
+      <p class="text-muted" style="margin-top:16px;font-size:13px;text-align:center">By registering you agree to be contacted about this event. We won't share your details with anyone except matched meeting partners.</p>
     </form>
 
-    <div id="result" style="display:none;margin-top:40px;padding:32px;border-left:3px solid var(--success);background:var(--bg-elevated);border-radius:var(--radius-sm)"></div>
+    <div id="result" style="display:none;margin-top:40px;padding:28px;background:rgba(45,138,78,0.06);border-left:3px solid var(--success);border-radius:var(--radius)"></div>
   </div>
 </section>
 
@@ -180,17 +195,19 @@
     try {
       const data = await api.post('/auth/signup', body);
       form.style.display = 'none';
+      document.querySelector('.notice').style.display = 'none';
+      document.querySelector('[style*="gap:8px"]').style.display = 'none';
       const result = document.getElementById('result');
       result.innerHTML = `
         <div class="eyebrow" style="color:var(--success)">Registered</div>
-        <h3 style="margin-top:12px;color:var(--ink)">Check your inbox.</h3>
+        <h3 style="margin-top:12px">Check your inbox.</h3>
         <p style="margin-top:12px;color:var(--ink-soft)">We sent a login link to <strong>${body.email}</strong>. Click it to access your dashboard and start booking meetings.</p>
         <p class="text-muted" style="margin-top:16px;font-size:13px">If you don't see the email in a minute, check spam or <a href="/login.html">request a new link</a>.</p>
       `;
       result.style.display = 'block';
     } catch (err) {
       toast(err.message, 'error');
-      btn.disabled = false; btn.textContent = 'Create account & send login link';
+      btn.disabled = false; btn.textContent = 'Create Account & Send Login Link';
     }
   });
 </script>
