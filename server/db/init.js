@@ -32,7 +32,7 @@ function initDatabase() {
     -- =========================================================
     CREATE TABLE IF NOT EXISTS users (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
-      type            TEXT NOT NULL CHECK(type IN ('hotel', 'agent', 'admin')),
+      type            TEXT NOT NULL CHECK(type IN ('hotel', 'agent', 'exhibitor', 'admin')),
       email           TEXT NOT NULL UNIQUE,
       contact_name    TEXT NOT NULL,
       phone           TEXT,
@@ -224,6 +224,35 @@ function initDatabase() {
 
   // Migration: add photo_url if missing (for existing DBs)
   try { db.exec('ALTER TABLE users ADD COLUMN photo_url TEXT'); } catch {}
+
+  // Migration: allow 'exhibitor' type in existing DBs
+  // SQLite can't alter CHECK constraints, so we test and recreate if needed
+  try {
+    db.exec("INSERT INTO users (type, email, contact_name, org_name) VALUES ('exhibitor', '__test_exhibitor__', 'test', 'test')");
+    db.exec("DELETE FROM users WHERE email = '__test_exhibitor__'");
+  } catch {
+    // CHECK constraint blocks 'exhibitor' — need to recreate table
+    console.log('Migrating users table to allow exhibitor type...');
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS users_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT NOT NULL, email TEXT NOT NULL UNIQUE,
+        contact_name TEXT NOT NULL, phone TEXT, org_name TEXT NOT NULL, country TEXT, city TEXT,
+        website TEXT, logo_url TEXT, photo_url TEXT, description TEXT, specialties TEXT,
+        target_markets TEXT, room_count INTEGER, star_rating INTEGER,
+        region TEXT CHECK(region IN ('UAE', 'INTL') OR region IS NULL),
+        approved INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO users_new SELECT id, type, email, contact_name, phone, org_name, country, city,
+        website, logo_url, photo_url, description, specialties, target_markets, room_count, star_rating,
+        region, approved, active, created_at, updated_at FROM users;
+      DROP TABLE users;
+      ALTER TABLE users_new RENAME TO users;
+      CREATE INDEX IF NOT EXISTS idx_users_type ON users(type);
+      CREATE INDEX IF NOT EXISTS idx_users_region ON users(region);
+    `);
+    console.log('Migration complete.');
+  }
 
   console.log('✓ Database initialized at', DB_PATH);
   return db;

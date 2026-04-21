@@ -50,6 +50,15 @@ router.get('/agents', (req, res) => {
   res.json({ agents: publicUserFields(rows) });
 });
 
+router.get('/exhibitors', (req, res) => {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT * FROM users WHERE type = 'exhibitor' AND active = 1
+    ORDER BY org_name
+  `).all();
+  res.json({ exhibitors: publicUserFields(rows) });
+});
+
 router.get('/tourism-boards', (req, res) => {
   const db = getDb();
   const rows = db.prepare(`

@@ -79,7 +79,7 @@ function eligibleDaysFor(user) {
   const day2 = process.env.EVENT_DAY_2 || '2026-06-02';
   const day3 = process.env.EVENT_DAY_3 || '2026-06-03';
 
-  if (user.type === 'agent') return [day1, day2, day3];
+  if (user.type === 'agent' || user.type === 'exhibitor') return [day1, day2, day3];
   if (user.type === 'hotel') {
     if (user.region === 'UAE') return [day1, day2];
     if (user.region === 'INTL') return [day3];
@@ -146,7 +146,7 @@ function generateSlotsForUser(userId) {
 function regenerateAllSlots() {
   const db = getDb();
   const users = db.prepare(
-    "SELECT id FROM users WHERE active = 1 AND type IN ('hotel','agent')"
+    "SELECT id FROM users WHERE active = 1 AND type IN ('hotel','agent','exhibitor')"
   ).all();
   let total = 0;
   for (const u of users) {

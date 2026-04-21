@@ -42,7 +42,7 @@ router.post('/signup', (req, res) => {
     room_count, star_rating, region
   } = req.body;
 
-  if (!['hotel', 'agent'].includes(type)) {
+  if (!['hotel', 'agent', 'exhibitor'].includes(type)) {
     return res.status(400).json({ error: 'Invalid type' });
   }
   if (!emailAddr || !contact_name || !org_name) {
