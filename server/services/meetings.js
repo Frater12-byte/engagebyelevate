@@ -137,14 +137,16 @@ async function approveMeeting(meetingId, actingUserId) {
   let teamsInfo = { joinUrl: null, meetingId: null };
   try {
     teamsInfo = await teams.createMeeting({
-      subject: `${meeting.requester_org} × ${meeting.recipient_org}`,
+      subject: `Engage by Elevate: ${meeting.requester_org} × ${meeting.recipient_org}`,
       startTime: meeting.start_time,
       endTime: meeting.end_time,
       attendeeEmails: [meeting.requester_email, meeting.recipient_email]
     });
+    console.log(`[TEAMS OK] Meeting ${meetingId}: joinUrl=${teamsInfo.joinUrl}`);
   } catch (err) {
-    console.error('Teams link generation failed:', err.message);
-    // Non-fatal: we still approve; organizer can paste link later.
+    const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+    console.error(`[TEAMS FAIL] Meeting ${meetingId}: ${detail}`);
+    // Non-fatal: we still approve; link will show as pending.
   }
 
   const tx = db.transaction(() => {
