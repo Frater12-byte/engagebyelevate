@@ -23,7 +23,6 @@
 <nav class="nav">
   <div class="nav-inner">
     <a href="/" class="brand"><img src="/img/logo.png" alt="Engage by Elevate"></a>
-    <div class="nav-countdown" id="nav-cd-wrap"><span id="nav-cd">--d --h --m</span></div>
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
@@ -375,19 +374,6 @@
   updateCountdown();
   setInterval(updateCountdown, 1000);
 
-  // Nav countdown
-  function updateNavCountdown() {
-    const eventDate = new Date('2026-06-02T09:00:00+04:00');
-    const diff = eventDate - new Date();
-    if (diff <= 0) return;
-    const d = Math.floor(diff / 86400000);
-    const h = Math.floor((diff % 86400000) / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const el = document.getElementById('nav-cd');
-    if (el) el.textContent = d + 'd ' + String(h).padStart(2,'0') + 'h ' + String(m).padStart(2,'0') + 'm';
-  }
-  updateNavCountdown();
-  setInterval(updateNavCountdown, 60000);
 
 </script>
 </body>
