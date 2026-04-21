@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#08080a"/>
+  <rect x="0" y="0" width="1200" height="4" fill="#E8612A"/>
+  <text x="100" y="240" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#E8612A" letter-spacing="4" text-transform="uppercase">ENGAGE BY ELEVATE</text>
+  <text x="100" y="310" font-family="Arial, sans-serif" font-size="64" font-weight="900" fill="#ffffff" letter-spacing="-2">Hotel × Agency</text>
+  <text x="100" y="380" font-family="Arial, sans-serif" font-size="64" font-weight="900" fill="#ffffff" letter-spacing="-2">Matchmaking</text>
+  <text x="100" y="450" font-family="Arial, sans-serif" font-size="24" fill="#a0a0a8" letter-spacing="1">Dubai · June 2–4, 2026</text>
+  <text x="100" y="540" font-family="Arial, sans-serif" font-size="14" fill="#5a5a65" letter-spacing="2">ENGAGEBYELEVATE.COM</text>
+  <polygon points="1050,100 1100,180 1000,180" fill="#E8612A" opacity="0.15"/>
+  <polygon points="1080,400 1130,480 1030,480" fill="#E8612A" opacity="0.08"/>
+</svg>
