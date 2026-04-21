@@ -32,15 +32,15 @@ const api = {
 
 function fmtTime(iso) {
   const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Dubai' });
 }
 function fmtDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Dubai' });
 }
 function fmtDateShort(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'Asia/Dubai' });
 }
 
 function toast(msg, type = '') {

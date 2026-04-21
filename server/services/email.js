@@ -8,7 +8,13 @@
 
 const nodemailer = require('nodemailer');
 const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+dayjs.extend(utc);
+dayjs.extend(timezone);
 const { getDb } = require('../db/connection');
+
+const EVENT_TZ = 'Asia/Dubai';
 
 const SITE = 'https://engagebyelevate.com';
 const EVENT_DATES = 'June 2\u20134, 2026';
@@ -66,11 +72,11 @@ function esc(s) {
 }
 
 function fmt(iso) {
-  return dayjs(iso).format('dddd, MMMM D, YYYY [at] HH:mm');
+  return dayjs(iso).tz(EVENT_TZ).format('dddd, MMMM D, YYYY [at] HH:mm') + ' (Dubai time)';
 }
 
 function fmtShort(iso) {
-  return dayjs(iso).format('ddd, MMM D [at] HH:mm');
+  return dayjs(iso).tz(EVENT_TZ).format('ddd, MMM D [at] HH:mm') + ' GST';
 }
 
 /** Outlook-safe CTA button using VML fallback */
