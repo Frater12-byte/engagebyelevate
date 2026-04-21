@@ -82,7 +82,17 @@ async function createMeeting({ subject, startTime, endTime, attendeeEmails }) {
   if (!MS_ORGANIZER_USER_ID) {
     throw new Error('MS_ORGANIZER_USER_ID not configured');
   }
-  const token = await getAccessToken();
+
+  // Step 1: Get token (separate try-catch for auth vs creation failures)
+  let token;
+  try {
+    token = await getAccessToken();
+  } catch (authErr) {
+    console.error('[TEAMS] Auth failed before meeting creation:', authErr.message);
+    throw authErr;
+  }
+
+  // Step 2: Create the meeting
   const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(MS_ORGANIZER_USER_ID)}/onlineMeetings`;
   const body = {
     startDateTime: startTime,
@@ -93,16 +103,39 @@ async function createMeeting({ subject, startTime, endTime, attendeeEmails }) {
       isDialInBypassEnabled: true
     }
   };
-  const res = await axios.post(url, body, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  });
-  return {
-    joinUrl: res.data.joinWebUrl,
-    meetingId: res.data.id
-  };
+
+  console.log(`[TEAMS] Creating meeting: organizer=${MS_ORGANIZER_USER_ID} tenant=${MS_TENANT_ID} client=${MS_CLIENT_ID}`);
+  console.log(`[TEAMS] Request body: ${JSON.stringify(body)}`);
+
+  try {
+    const res = await axios.post(url, body, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log(`[TEAMS] Meeting created: joinUrl=${res.data.joinWebUrl} id=${res.data.id}`);
+    return {
+      joinUrl: res.data.joinWebUrl,
+      meetingId: res.data.id
+    };
+  } catch (err) {
+    const resp = err.response || {};
+    const errorBody = resp.data ? JSON.stringify(resp.data) : 'no response body';
+    const status = resp.status || 'no status';
+    const requestId = resp.headers?.['request-id'] || 'n/a';
+    const clientRequestId = resp.headers?.['client-request-id'] || 'n/a';
+    const agsDiag = resp.headers?.['x-ms-ags-diagnostic'] || 'n/a';
+
+    console.error(`[TEAMS CREATE FAIL] HTTP ${status}`);
+    console.error(`[TEAMS CREATE FAIL] Body: ${errorBody}`);
+    console.error(`[TEAMS CREATE FAIL] request-id: ${requestId}`);
+    console.error(`[TEAMS CREATE FAIL] client-request-id: ${clientRequestId}`);
+    console.error(`[TEAMS CREATE FAIL] x-ms-ags-diagnostic: ${agsDiag}`);
+    console.error(`[TEAMS CREATE FAIL] Organizer: ${MS_ORGANIZER_USER_ID}, Tenant: ${MS_TENANT_ID}, Client: ${MS_CLIENT_ID}`);
+
+    throw new Error(`Teams meeting creation failed (HTTP ${status}): ${err.response?.data?.error?.message || err.message}`);
+  }
 }
 
 async function deleteMeeting(meetingId) {

@@ -148,7 +148,7 @@ router.get('/verify', (req, res) => {
   if (!row.active) return res.status(400).send('Account is inactive');
 
   // Mark used (but we allow re-use of magic token for convenience during event; comment out next line if one-time use desired)
-  // db.prepare('UPDATE magic_tokens SET used_at = datetime("now") WHERE id = ?').run(row.id);
+  // db.prepare("UPDATE magic_tokens SET used_at = datetime('now') WHERE id = ?").run(row.id);
 
   const sessionToken = jwt.sign({ uid: row.user_id }, process.env.JWT_SECRET, { expiresIn: '30d' });
   res.cookie('session', sessionToken, {
