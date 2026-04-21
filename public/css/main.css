@@ -1402,3 +1402,22 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   padding: 0;
   margin-left: 2px;
 }
+
+/* ========== Type indicators ========== */
+.type-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.type-icon svg { width: 14px; height: 14px; flex-shrink: 0; }
+.type-hotel { color: #4EA8DE; }
+.type-agent { color: #A78BFA; }
+.type-exhibitor { color: #F59E0B; }
+.org-card.card-hotel { border-left: 3px solid rgba(78,168,222,0.3); }
+.org-card.card-agent { border-left: 3px solid rgba(167,139,250,0.3); }
+.org-card.card-exhibitor { border-left: 3px solid rgba(245,158,11,0.3); }

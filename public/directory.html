@@ -146,8 +146,8 @@
 
     if (currentView === 'boards') {
       container.innerHTML = `<div class="directory-grid">${items.map(b => `
-        <div class="org-card">
-          <div class="eyebrow">Exhibitor</div>
+        <div class="org-card card-exhibitor">
+          <div class="type-icon type-exhibitor"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Exhibitor</div>
           <h3>${escapeHtml(b.name)}</h3>
           <div class="org-meta">${escapeHtml(b.country || '')}</div>
           <div class="org-desc">${escapeHtml(b.description || '')}</div>
@@ -158,13 +158,20 @@
 
     container.innerHTML = `<div class="directory-grid">${items.map(o => {
       const initials = (o.org_name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      const isHotel = o.type === 'hotel';
+      const typeClass = isHotel ? 'type-hotel' : 'type-agent';
+      const cardClass = isHotel ? 'card-hotel' : 'card-agent';
+      const typeIcon = isHotel
+        ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>'
+        : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>';
+      const typeLabel = isHotel ? `Hotel${o.star_rating ? ' · ' + o.star_rating + ' Stars' : ''}${o.region ? ' · ' + o.region : ''}` : 'Agency';
       return `
-        <a class="org-card" href="/profile.html?id=${o.id}">
+        <a class="org-card ${cardClass}" href="/profile.html?id=${o.id}">
           ${o.logo_url
             ? `<img class="org-logo" src="${escapeHtml(o.logo_url)}" alt="">`
-            : `<div class="org-logo" style="display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--orange);font-size:16px">${initials}</div>`
+            : `<div class="org-logo" style="display:flex;align-items:center;justify-content:center;font-weight:800;color:${isHotel ? '#4EA8DE' : '#A78BFA'};font-size:16px">${initials}</div>`
           }
-          <div class="eyebrow">${o.type === 'hotel' ? (o.star_rating ? o.star_rating + '★ · ' : '') + (o.region || '') : 'Agency'}</div>
+          <div class="type-icon ${typeClass}">${typeIcon}${typeLabel}</div>
           <h3>${escapeHtml(o.org_name)}</h3>
           <div class="org-meta">${escapeHtml([o.city, o.country].filter(Boolean).join(', '))}</div>
           <div class="org-desc">${escapeHtml(o.description || '')}</div>
