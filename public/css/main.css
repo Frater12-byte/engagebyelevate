@@ -1373,3 +1373,32 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   max-height: 300px;
   padding: 0 0 20px 0;
 }
+
+/* ========== Tag picker ========== */
+.tag-picker-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--orange-dim);
+  color: var(--orange);
+  border: 1px solid rgba(232,97,42,0.2);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tag-chip button {
+  background: none;
+  border: none;
+  color: var(--orange);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  margin-left: 2px;
+}

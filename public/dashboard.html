@@ -86,6 +86,7 @@
 </nav>
 
 <script src="/js/common.js"></script>
+<script src="/js/form-data.js"></script>
 <script>
 document.getElementById('nav-toggle').addEventListener('click', () => {
   document.getElementById('nav-links').classList.toggle('open');
@@ -473,13 +474,13 @@ async function renderProfile() {
         <div class="field"><label>Website</label><input name="website" value="${escapeHtml(p.website || '')}"></div>
       </div>
       <div class="form-grid">
-        <div class="field"><label>Country</label><input name="country" value="${escapeHtml(p.country || '')}"></div>
+        <div class="field"><label>Country</label>${renderCountrySelect('country', p.country || '', false)}</div>
         <div class="field"><label>City</label><input name="city" value="${escapeHtml(p.city || '')}"></div>
       </div>
       <div class="field"><label>Description</label><textarea name="description" rows="4">${escapeHtml(p.description || '')}</textarea></div>
       <div class="form-grid">
-        <div class="field"><label>Specialties (comma-separated)</label><input name="specialties" value="${(p.specialties || []).join(', ')}"></div>
-        <div class="field"><label>Target Markets (comma-separated)</label><input name="target_markets" value="${(p.target_markets || []).join(', ')}"></div>
+        <div class="field"><label>Specialties</label><div id="prof-specialties">${renderTagPicker('specialties', SPECIALTIES, p.specialties || [])}</div></div>
+        <div class="field"><label>Target Markets</label><div id="prof-markets">${renderTagPicker('target_markets', TARGET_MARKETS, p.target_markets || [])}</div></div>
       </div>
       ${me.type === 'hotel' ? `
         <div class="form-grid">

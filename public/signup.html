@@ -130,7 +130,9 @@
         <div class="form-grid">
           <div class="field">
             <label>Country *</label>
-            <input name="country" required placeholder="e.g. United Arab Emirates">
+            <select name="country" required>
+              <option value="">Select country</option>
+            </select>
           </div>
           <div class="field">
             <label>City</label>
@@ -182,12 +184,12 @@
 
         <div class="form-grid">
           <div class="field">
-            <label>Specialties (comma-separated)</label>
-            <input name="specialties" placeholder="e.g. Luxury, Family, MICE, Beach">
+            <label>Specialties</label>
+            <div id="specialties-picker"></div>
           </div>
           <div class="field">
-            <label>Target Markets (comma-separated)</label>
-            <input name="target_markets" placeholder="e.g. UK, Germany, India">
+            <label>Target Markets</label>
+            <div id="target-markets-picker"></div>
           </div>
         </div>
 
@@ -238,11 +240,24 @@
 </nav>
 
 <script src="/js/common.js"></script>
+<script src="/js/form-data.js"></script>
 <script>
   document.getElementById('nav-toggle').addEventListener('click', () => {
     document.getElementById('nav-links').classList.toggle('open');
     document.getElementById('nav-toggle').classList.toggle('open');
   });
+
+  // Populate country dropdown
+  const countrySelect = document.querySelector('select[name="country"]');
+  COUNTRIES.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    countrySelect.appendChild(opt);
+  });
+
+  // Render tag pickers
+  document.getElementById('specialties-picker').innerHTML = renderTagPicker('specialties', SPECIALTIES, []);
+  document.getElementById('target-markets-picker').innerHTML = renderTagPicker('target_markets', TARGET_MARKETS, []);
 
   const form = document.getElementById('signup-form');
   const typeInput = form.querySelector('[name=type]');
