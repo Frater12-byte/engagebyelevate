@@ -118,7 +118,9 @@ function meetingCard(data) {
 </table>`;
 }
 
-/** Full email wrapper — dark branded layout */
+const LOGO_URL = `${SITE}/img/logo.png`;
+
+/** Full email wrapper — dark branded layout with logo, color sparks, rich footer */
 function wrap(content) {
   return `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -136,41 +138,56 @@ function wrap(content) {
     <td align="center" style="padding:40px 16px">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%">
 
-        <!-- Header -->
+        <!-- Header with logo -->
         <tr>
           <td style="padding:0 0 32px 0">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr>
-                <td style="font-family:'Archivo',Georgia,serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#C85A3A;font-weight:700;padding-bottom:12px">Engage by Elevate</td>
+                <td style="padding-bottom:20px">
+                  <a href="${SITE}" style="text-decoration:none"><img src="${LOGO_URL}" alt="Engage by Elevate" width="180" style="display:block;height:auto;border:0;max-width:180px" /></a>
+                </td>
               </tr>
               <tr>
-                <td style="border-top:2px solid #C85A3A;padding-top:0;width:60px"><div style="width:60px"></div></td>
+                <td style="height:3px;background:linear-gradient(90deg, #C85A3A 0%, #E8612A 40%, rgba(99,140,255,0.3) 70%, transparent 100%);font-size:0;line-height:0">&nbsp;</td>
               </tr>
             </table>
           </td>
         </tr>
 
-        <!-- Content -->
+        <!-- Content area with subtle color spark -->
         <tr>
-          <td style="font-family:'Manrope',-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.7;color:#a0a0a8">
+          <td style="font-family:'Manrope',-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.7;color:#a0a0a8;background-image:radial-gradient(ellipse at 90% 10%, rgba(232,97,42,0.04) 0%, transparent 50%),radial-gradient(ellipse at 10% 80%, rgba(99,140,255,0.03) 0%, transparent 50%);background-color:#0A0A0A">
             ${content}
           </td>
         </tr>
 
         <!-- Footer -->
         <tr>
-          <td style="padding:48px 0 0 0;border-top:1px solid #1a1a1f;margin-top:40px">
+          <td style="padding:40px 0 0 0">
+            <!-- Gradient divider -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr><td style="height:1px;background:linear-gradient(90deg, transparent, rgba(232,97,42,0.2), rgba(99,140,255,0.1), transparent);font-size:0;line-height:0">&nbsp;</td></tr>
+            </table>
+
+            <!-- Footer links -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:24px">
               <tr>
-                <td style="padding-top:24px;font-family:'Manrope',-apple-system,sans-serif;font-size:12px;color:#5a5a65;line-height:1.6">
-                  Engage by Elevate &middot; ${EVENT_DATES} &middot; ${EVENT_LOCATION}<br>
-                  <a href="${SITE}/agenda" style="color:#C85A3A;text-decoration:none">View event agenda</a> &middot;
-                  <a href="${SITE}" style="color:#C85A3A;text-decoration:none">engagebyelevate.com</a>
+                <td style="font-family:'Manrope',-apple-system,sans-serif;font-size:12px;color:#5a5a65;line-height:2">
+                  <a href="${SITE}/agenda" style="color:#C85A3A;text-decoration:none">Agenda</a> &nbsp;&middot;&nbsp;
+                  <a href="${SITE}/directory" style="color:#C85A3A;text-decoration:none">Directory</a> &nbsp;&middot;&nbsp;
+                  <a href="${SITE}/signup.html" style="color:#C85A3A;text-decoration:none">Register</a> &nbsp;&middot;&nbsp;
+                  <a href="${SITE}/login.html" style="color:#C85A3A;text-decoration:none">Sign In</a> &nbsp;&middot;&nbsp;
+                  <a href="mailto:hello@engagebyelevate.com" style="color:#C85A3A;text-decoration:none">Contact Us</a>
                 </td>
               </tr>
               <tr>
-                <td style="padding-top:16px;font-family:'Manrope',-apple-system,sans-serif;font-size:11px;color:#3a3a42">
-                  Elevate Tourism LLC &middot; Dubai, UAE
+                <td style="padding-top:16px;font-family:'Manrope',-apple-system,sans-serif;font-size:12px;color:#5a5a65">
+                  Engage by Elevate &middot; ${EVENT_DATES} &middot; ${EVENT_LOCATION}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:4px;font-family:'Manrope',-apple-system,sans-serif;font-size:11px;color:#3a3a42">
+                  Elevate Tourism LLC &middot; Dubai, UAE &middot; <a href="${SITE}" style="color:#3a3a42;text-decoration:none">engagebyelevate.com</a>
                 </td>
               </tr>
             </table>
