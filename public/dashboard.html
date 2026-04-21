@@ -332,6 +332,7 @@ async function renderBookTab() {
   const boardsAsExhibitors = (bRes.boards || []).map(b => ({
     id: 'board-' + b.id, type: 'exhibitor', org_name: b.name,
     country: b.country, description: b.description, logo_url: b.logo_url,
+    contact_email: b.contact_email,
     _isBoard: true
   }));
   const allOthers = [
@@ -380,15 +381,16 @@ async function renderBookTab() {
         ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>'
         : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>';
       const clickAction = o._isBoard
-        ? `onclick="toast('This exhibitor is a presenter — meetings are not available yet.', 'error')"`
+        ? `onclick="openMessageModal(this)" data-name="${escapeHtml(o.org_name)}" data-email="${escapeHtml(o.contact_email || '')}"`
         : `onclick="openAvailabilityModal(${o.id})"`;
+      const btnLabel = o._isBoard ? 'Send Message' : 'View Availability';
       return `
       <div class="org-card ${typeClass}" ${clickAction}>
         <div class="type-icon ${typeColor}">${typeIcon}${typeLabel}</div>
         <h3>${escapeHtml(o.org_name)}</h3>
         <div class="org-meta">${escapeHtml([o.city, o.country].filter(Boolean).join(', '))}</div>
         <div class="org-desc">${escapeHtml(o.description || '')}</div>
-        <div style="margin-top:14px"><span class="btn btn-small btn-ghost btn-inline">View Availability</span></div>
+        <div style="margin-top:14px"><span class="btn btn-small btn-ghost btn-inline">${btnLabel}</span></div>
       </div>`;
     }).join('');
   };
@@ -484,6 +486,39 @@ window.toggleSlot = async function(slotId) {
     await loadAll();
     renderAgenda();
   } catch (err) { toast(err.message, 'error'); }
+};
+
+window.openMessageModal = function(el) {
+  const name = el.dataset.name;
+  const email = el.dataset.email;
+  const modal = document.createElement('div');
+  modal.innerHTML = `
+    <h3>Send a message to ${escapeHtml(name)}</h3>
+    <p class="text-muted" style="margin-top:8px;margin-bottom:20px">Introduce yourself or ask a question. Your message will be sent via email.</p>
+    <div class="field">
+      <label>Your message</label>
+      <textarea id="exhibitor-msg" rows="5" placeholder="Hi, I'd like to learn more about your offerings at Engage by Elevate..."></textarea>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost btn-small btn-inline" onclick="document.querySelectorAll('.modal-backdrop').forEach(m => m.remove())">Cancel</button>
+      <button class="btn btn-small btn-inline" id="send-exhibitor-msg">Send Message</button>
+    </div>
+  `;
+  openModal(modal);
+  document.getElementById('send-exhibitor-msg').addEventListener('click', async () => {
+    const msg = document.getElementById('exhibitor-msg').value.trim();
+    if (!msg) { toast('Please write a message', 'error'); return; }
+    const btn = document.getElementById('send-exhibitor-msg');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try {
+      await api.post('/api/message-exhibitor', { exhibitor_name: name, exhibitor_email: email, message: msg });
+      document.querySelectorAll('.modal-backdrop').forEach(m => m.remove());
+      toast('Message sent', 'success');
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Send Message';
+    }
+  });
 };
 
 window.showMeetingDetail = function(meetingId) {

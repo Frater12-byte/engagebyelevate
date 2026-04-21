@@ -157,6 +157,45 @@ router.post('/me/slots/:id/toggle', requireAuth, (req, res) => {
   }
 });
 
+// ---------- Message an exhibitor ----------
+router.post('/message-exhibitor', requireAuth, async (req, res) => {
+  const { exhibitor_name, exhibitor_email, message } = req.body;
+  if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required' });
+
+  const sender = req.user;
+  const recipientEmail = exhibitor_email || process.env.ADMIN_EMAIL || 'hello@engagebyelevate.com';
+
+  try {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '465', 10),
+      secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    });
+
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: recipientEmail,
+      replyTo: sender.email,
+      subject: `Message from ${sender.org_name} via Engage by Elevate`,
+      text: `Message from ${sender.org_name} (${sender.contact_name}, ${sender.email}):\n\n${message.trim()}\n\n---\nSent via Engage by Elevate\nhttps://engagebyelevate.com`,
+      html: `<div style="font-family:sans-serif;max-width:600px">
+        <p style="color:#888;font-size:12px;text-transform:uppercase;letter-spacing:2px">Message via Engage by Elevate</p>
+        <p><strong>${sender.org_name}</strong> (${sender.contact_name}) sent a message${exhibitor_name ? ' to ' + exhibitor_name : ''}:</p>
+        <blockquote style="border-left:3px solid #E8612A;padding:12px 16px;margin:16px 0;color:#333">${message.trim().replace(/\n/g, '<br>')}</blockquote>
+        <p style="font-size:13px;color:#666">Reply directly to this email to respond to ${sender.contact_name} at ${sender.email}.</p>
+      </div>`
+    });
+
+    console.log(`[MSG] ${sender.email} -> ${recipientEmail} (exhibitor: ${exhibitor_name})`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[MSG FAIL]', err.message);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
 // ---------- Update my profile ----------
 router.put('/me/profile', requireAuth, (req, res) => {
   const db = getDb();
