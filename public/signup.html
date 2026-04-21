@@ -66,7 +66,7 @@
       <div class="wizard-step" data-step="4"></div>
     </div>
 
-    <form id="signup-form">
+    <form id="signup-form" novalidate>
       <input type="hidden" name="type" value="">
 
       <!-- STEP 1: Organization type -->
@@ -195,7 +195,7 @@
 
         <div class="field">
           <label>Website</label>
-          <input name="website" type="url" placeholder="https://">
+          <input name="website" type="text" placeholder="https://yourcompany.com">
         </div>
 
         <div class="wizard-nav">
@@ -294,9 +294,16 @@
     const required = form.querySelectorAll('[data-panel="2"] [required]');
     let valid = true;
     required.forEach(input => {
-      if (!input.value.trim()) { input.focus(); valid = false; }
+      if (!input.value.trim()) {
+        input.style.borderColor = 'var(--danger)';
+        if (valid) input.focus();
+        valid = false;
+      } else {
+        input.style.borderColor = '';
+      }
     });
-    if (valid) goToStep(3);
+    if (!valid) { toast('Please fill in all required fields', 'error'); return; }
+    goToStep(3);
   });
 
   // Step 3 nav
