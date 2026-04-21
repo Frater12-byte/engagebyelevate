@@ -104,10 +104,27 @@ let me = null, agenda = null, meetings = [];
   document.getElementById('user-sub').textContent = `${me.contact_name} · ${me.email}${me.region ? ' · ' + me.region : ''}`;
 
   await loadAll();
-  renderAgenda();
+
+  // Check URL params for deep-link (e.g. ?tab=book&with=7)
+  const urlParams = new URLSearchParams(location.search);
+  const deepTab = urlParams.get('tab');
+  const deepWith = urlParams.get('with');
 
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+
+  if (deepTab) {
+    const tabBtn = document.querySelector(`[data-tab="${deepTab}"]`);
+    if (tabBtn) {
+      tabBtn.click();
+      // If deep-linking to book with a specific user, open their availability modal after render
+      if (deepTab === 'book' && deepWith) {
+        setTimeout(() => { if (window.openAvailabilityModal) openAvailabilityModal(parseInt(deepWith, 10)); }, 500);
+      }
+    }
+  } else {
+    renderAgenda();
+  }
 
   document.querySelectorAll('.dash-tab').forEach(tab => {
     tab.addEventListener('click', () => {
