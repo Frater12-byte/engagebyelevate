@@ -1266,7 +1266,7 @@ a, .btn, .dash-tab, .slot, .nav-links a {
 }
 @keyframes marqueeScroll {
   from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  to { transform: translateX(-25%); }
 }
 
 /* ========== Agenda day-head mobile fix ========== */
