@@ -15,6 +15,7 @@ dayjs.extend(timezone);
 const { getDb } = require('../db/connection');
 
 const EVENT_TZ = 'Asia/Dubai';
+const REPLY_TO = process.env.REPLY_TO_EMAIL || 'engage.meetings@elevatedmc.com';
 
 const SITE = 'https://engagebyelevate.com';
 const EVENT_DATES = 'June 2\u20134, 2026';
@@ -48,6 +49,7 @@ async function send(to, subject, html, text, meta = {}) {
   try {
     const info = await getTransporter().sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      replyTo: REPLY_TO,
       to,
       subject,
       html,
@@ -188,6 +190,11 @@ function wrap(content) {
               </tr>
               <tr>
                 <td style="padding-top:16px;font-family:'Manrope',-apple-system,sans-serif;font-size:12px;color:#5a5a65">
+                  Questions? <a href="mailto:${REPLY_TO}" style="color:#C85A3A;text-decoration:none">${REPLY_TO}</a>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:12px;font-family:'Manrope',-apple-system,sans-serif;font-size:12px;color:#5a5a65">
                   Engage by Elevate &middot; ${EVENT_DATES} &middot; ${EVENT_LOCATION}
                 </td>
               </tr>
