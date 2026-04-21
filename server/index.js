@@ -38,6 +38,7 @@ const upload = multer({
 });
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security + parsing
 app.use(helmet({

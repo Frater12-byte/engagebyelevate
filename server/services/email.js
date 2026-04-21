@@ -43,9 +43,11 @@ async function send(to, subject, html, meta = {}) {
       subject,
       html
     });
+    console.log(`[EMAIL OK] to=${to} subject="${subject}" messageId=${info.messageId} response="${info.response || ''}"`);
     log({ to_email: to, subject, template: meta.template, meeting_id: meta.meeting_id, user_id: meta.user_id, status: 'sent' });
     return info;
   } catch (err) {
+    console.error(`[EMAIL FAIL] to=${to} subject="${subject}" error=${err.message}${err.response ? ' response=' + err.response : ''}${err.code ? ' code=' + err.code : ''}`);
     log({ to_email: to, subject, template: meta.template, meeting_id: meta.meeting_id, user_id: meta.user_id, status: 'failed', error: err.message });
     throw err;
   }
