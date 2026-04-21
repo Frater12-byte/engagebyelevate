@@ -40,9 +40,13 @@ async function getAccessToken() {
     return cachedToken;
   }
   if (!MS_TENANT_ID || !MS_CLIENT_ID || !MS_CLIENT_SECRET) {
-    throw new Error('Microsoft Graph credentials not configured');
+    throw new Error('Microsoft Graph credentials not configured (check MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET in .env)');
+  }
+  if (MS_TENANT_ID === 'your_tenant_id' || MS_CLIENT_SECRET === 'your_client_secret') {
+    throw new Error('Microsoft Graph credentials are still placeholder values — update .env with real credentials');
   }
 
+  console.log(`[TEAMS] Requesting token for tenant=${MS_TENANT_ID.slice(0,8)}... client=${MS_CLIENT_ID.slice(0,8)}... organizer=${MS_ORGANIZER_USER_ID}`);
   const url = `https://login.microsoftonline.com/${MS_TENANT_ID}/oauth2/v2.0/token`;
   const params = new URLSearchParams({
     client_id: MS_CLIENT_ID,
@@ -50,13 +54,19 @@ async function getAccessToken() {
     grant_type: 'client_credentials',
     scope: 'https://graph.microsoft.com/.default'
   });
-  const res = await axios.post(url, params, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-  });
-
-  cachedToken = res.data.access_token;
-  tokenExpiresAt = Date.now() + (res.data.expires_in * 1000);
-  return cachedToken;
+  try {
+    const res = await axios.post(url, params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    cachedToken = res.data.access_token;
+    tokenExpiresAt = Date.now() + (res.data.expires_in * 1000);
+    console.log('[TEAMS] Token obtained successfully');
+    return cachedToken;
+  } catch (err) {
+    const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+    console.error(`[TEAMS AUTH FAIL] ${detail}`);
+    throw new Error('Teams auth failed: ' + (err.response?.data?.error_description || err.message));
+  }
 }
 
 /**

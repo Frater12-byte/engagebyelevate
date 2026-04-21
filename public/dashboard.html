@@ -322,12 +322,24 @@ async function renderBookTab() {
   el.innerHTML = '<div class="loader" style="margin:40px auto;display:block"></div>';
 
   // Load all participants, exclude self
-  const [hRes, aRes, eRes] = await Promise.all([
+  const [hRes, aRes, eRes, bRes] = await Promise.all([
     api.get('/api/public/hotels'),
     api.get('/api/public/agents'),
-    api.get('/api/public/exhibitors')
+    api.get('/api/public/exhibitors'),
+    api.get('/api/public/tourism-boards')
   ]);
-  const allOthers = [...(hRes.hotels || []), ...(aRes.agents || []), ...(eRes.exhibitors || [])].filter(o => o.id !== me.id);
+  // Merge exhibitor users + tourism boards (boards get a synthetic type)
+  const boardsAsExhibitors = (bRes.boards || []).map(b => ({
+    id: 'board-' + b.id, type: 'exhibitor', org_name: b.name,
+    country: b.country, description: b.description, logo_url: b.logo_url,
+    _isBoard: true
+  }));
+  const allOthers = [
+    ...(hRes.hotels || []),
+    ...(aRes.agents || []),
+    ...(eRes.exhibitors || []),
+    ...boardsAsExhibitors
+  ].filter(o => o.id !== me.id);
 
   el.innerHTML = `
     <h3 style="margin-bottom:8px">Book a meeting</h3>
@@ -367,8 +379,11 @@ async function renderBookTab() {
       const typeIcon = o.type === 'agent'
         ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>'
         : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>';
+      const clickAction = o._isBoard
+        ? `onclick="toast('This exhibitor is a presenter — meetings are not available yet.', 'error')"`
+        : `onclick="openAvailabilityModal(${o.id})"`;
       return `
-      <div class="org-card ${typeClass}" onclick="openAvailabilityModal(${o.id})">
+      <div class="org-card ${typeClass}" ${clickAction}>
         <div class="type-icon ${typeColor}">${typeIcon}${typeLabel}</div>
         <h3>${escapeHtml(o.org_name)}</h3>
         <div class="org-meta">${escapeHtml([o.city, o.country].filter(Boolean).join(', '))}</div>
