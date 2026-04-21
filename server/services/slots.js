@@ -127,12 +127,13 @@ function generateSlotsForUser(userId) {
     }
 
     const rawSlots = enumerateSlots(day, cfg.workStart, cfg.workEnd);
+    // All slots are free — sessions run alongside meetings, not blocking them
     const rows = rawSlots.map(s => ({
       user_id: user.id,
       day,
       start: s.start,
       end: s.end,
-      status: isBlocked(s.start, s.end, blocked) ? 'blocked' : 'free'
+      status: 'free'
     }));
 
     tx(rows);

@@ -172,9 +172,12 @@ function renderAgenda() {
             const cls = `slot ${s.status}${locked ? ' locked' : ''}`;
             const label = s.status === 'booked' ? (s.other_org || 'Meeting') :
                           s.status === 'held' ? 'Pending' :
-                          s.status === 'blocked' ? 'Session' :
+                          s.status === 'blocked' ? 'Closed' :
                           s.status === 'free' ? (locked ? 'Locked' : 'Free') : s.status;
-            return `<div class="${cls}" ${s.meeting_id_full ? `onclick="showMeetingDetail(${s.meeting_id_full})"` : ''}>
+            const canToggle = !locked && (s.status === 'free' || s.status === 'blocked');
+            const onclick = s.meeting_id_full ? `onclick="showMeetingDetail(${s.meeting_id_full})"` :
+                            canToggle ? `onclick="toggleSlot(${s.id})"` : '';
+            return `<div class="${cls}" ${onclick} ${canToggle ? 'title="Click to close/open this slot"' : ''}>
               <div class="slot-time">${fmtTime(s.start_time)}</div>
               <div class="slot-status">${escapeHtml(label)}</div>
             </div>`;
@@ -408,6 +411,15 @@ window.requestMeetingModal = function(otherId, startTime, orgName) {
       btn.disabled = false; btn.textContent = 'Send Request';
     }
   });
+};
+
+window.toggleSlot = async function(slotId) {
+  try {
+    const res = await api.post(`/api/me/slots/${slotId}/toggle`);
+    toast(res.status === 'blocked' ? 'Slot closed' : 'Slot opened', 'success');
+    await loadAll();
+    renderAgenda();
+  } catch (err) { toast(err.message, 'error'); }
 };
 
 window.showMeetingDetail = function(meetingId) {

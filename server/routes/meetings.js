@@ -140,6 +140,26 @@ router.post('/meetings/:id/cancel', requireAuth, (req, res) => {
   }
 });
 
+// ---------- Close/open a slot ----------
+router.post('/me/slots/:id/toggle', requireAuth, (req, res) => {
+  const db = getDb();
+  const slot = db.prepare('SELECT * FROM slots WHERE id = ? AND user_id = ?').get(
+    parseInt(req.params.id, 10), req.user.id
+  );
+  if (!slot) return res.status(404).json({ error: 'Slot not found' });
+
+  // Only free <-> blocked transitions allowed
+  if (slot.status === 'free') {
+    db.prepare("UPDATE slots SET status = 'blocked', updated_at = datetime('now') WHERE id = ?").run(slot.id);
+    res.json({ ok: true, status: 'blocked' });
+  } else if (slot.status === 'blocked') {
+    db.prepare("UPDATE slots SET status = 'free', updated_at = datetime('now') WHERE id = ?").run(slot.id);
+    res.json({ ok: true, status: 'free' });
+  } else {
+    res.status(400).json({ error: `Cannot toggle a slot with status "${slot.status}"` });
+  }
+});
+
 // ---------- Update my profile ----------
 router.put('/me/profile', requireAuth, (req, res) => {
   const db = getDb();
