@@ -42,8 +42,8 @@ router.post('/signup', (req, res) => {
     room_count, star_rating, region
   } = req.body;
 
-  if (!['hotel', 'agent', 'exhibitor'].includes(type)) {
-    return res.status(400).json({ error: 'Invalid type' });
+  if (!['hotel', 'agent'].includes(type)) {
+    return res.status(400).json({ error: 'To participate as an exhibitor, please contact engage.meetings@elevatedmc.com' });
   }
   if (!emailAddr || !contact_name || !org_name) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -90,8 +90,8 @@ router.post('/signup', (req, res) => {
     if (err.message.includes('UNIQUE')) {
       return res.status(409).json({ error: 'This email is already registered. Use "Get login link" instead.' });
     }
-    console.error(err);
-    res.status(500).json({ error: 'Registration failed' });
+    console.error('[SIGNUP FAIL]', err.message, err.stack?.split('\n')[1]);
+    res.status(500).json({ error: 'Registration failed: ' + err.message });
   }
 });
 

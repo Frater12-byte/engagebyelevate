@@ -72,7 +72,7 @@
       <!-- STEP 1: Organization type -->
       <div class="wizard-panel active" data-panel="1">
         <h3 style="margin-bottom:24px">What type of organization?</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="card" style="cursor:pointer;text-align:center;padding:32px 16px" id="pick-hotel">
             <div style="margin-bottom:12px"><svg width="36" height="36" fill="none" stroke="#4EA8DE" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0v-2M5 21H3m2 0v-2m4-16v2m4-2v2m-4 4v2m4-2v2m-4 4v2m4-2v2"/></svg></div>
             <h4>Hotel</h4>
@@ -83,12 +83,8 @@
             <h4>Agency</h4>
             <p style="font-size:12px;color:var(--ink-muted);margin-top:4px">Tour operators & travel agents</p>
           </div>
-          <div class="card" style="cursor:pointer;text-align:center;padding:32px 16px" id="pick-exhibitor">
-            <div style="margin-bottom:12px"><svg width="36" height="36" fill="none" stroke="#F59E0B" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></div>
-            <h4>Exhibitor</h4>
-            <p style="font-size:12px;color:var(--ink-muted);margin-top:4px">Tourism boards & sponsors</p>
-          </div>
         </div>
+        <p style="margin-top:20px;font-size:13px;color:var(--ink-muted);text-align:center">Want to participate as an exhibitor? Contact <a href="mailto:engage.meetings@elevatedmc.com">engage.meetings@elevatedmc.com</a></p>
       </div>
 
       <!-- STEP 2: Your details -->
@@ -289,11 +285,6 @@
   });
   document.getElementById('pick-agent').addEventListener('click', () => {
     typeInput.value = 'agent';
-    document.querySelectorAll('.hotel-only').forEach(el => el.style.display = 'none');
-    goToStep(2);
-  });
-  document.getElementById('pick-exhibitor').addEventListener('click', () => {
-    typeInput.value = 'exhibitor';
     document.querySelectorAll('.hotel-only').forEach(el => el.style.display = 'none');
     goToStep(2);
   });

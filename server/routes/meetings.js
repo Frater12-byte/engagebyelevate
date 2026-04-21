@@ -65,6 +65,9 @@ router.get('/users/:id/availability', requireAuth, (req, res) => {
   const db = getDb();
   const other = db.prepare('SELECT * FROM users WHERE id = ? AND active = 1').get(req.params.id);
   if (!other) return res.status(404).json({ error: 'Not found' });
+  if (other.type === 'exhibitor') {
+    return res.status(400).json({ error: 'Exhibitors do not have bookable meeting slots. Use the messaging feature instead.' });
+  }
 
   // Intersect both users' slots: only time windows where BOTH have a slot are bookable
   const mySlots = db.prepare(`SELECT * FROM slots WHERE user_id = ? ORDER BY start_time`).all(req.user.id);
@@ -163,7 +166,7 @@ router.post('/message-exhibitor', requireAuth, async (req, res) => {
   if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required' });
 
   const sender = req.user;
-  const recipientEmail = exhibitor_email || process.env.ADMIN_EMAIL || 'hello@engagebyelevate.com';
+  const recipientEmail = exhibitor_email || process.env.REPLY_TO_EMAIL || 'engage.meetings@elevatedmc.com';
 
   try {
     const nodemailer = require('nodemailer');

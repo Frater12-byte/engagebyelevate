@@ -185,7 +185,7 @@ function wrap(content) {
                   <a href="${SITE}/directory" style="color:#C85A3A;text-decoration:none">Directory</a> &nbsp;&middot;&nbsp;
                   <a href="${SITE}/signup.html" style="color:#C85A3A;text-decoration:none">Register</a> &nbsp;&middot;&nbsp;
                   <a href="${SITE}/login.html" style="color:#C85A3A;text-decoration:none">Sign In</a> &nbsp;&middot;&nbsp;
-                  <a href="mailto:hello@engagebyelevate.com" style="color:#C85A3A;text-decoration:none">Contact Us</a>
+                  <a href="mailto:${REPLY_TO}" style="color:#C85A3A;text-decoration:none">Contact Us</a>
                 </td>
               </tr>
               <tr>
