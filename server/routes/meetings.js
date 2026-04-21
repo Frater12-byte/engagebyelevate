@@ -65,9 +65,6 @@ router.get('/users/:id/availability', requireAuth, (req, res) => {
   const db = getDb();
   const other = db.prepare('SELECT * FROM users WHERE id = ? AND active = 1').get(req.params.id);
   if (!other) return res.status(404).json({ error: 'Not found' });
-  if (other.type === req.user.type) {
-    return res.status(400).json({ error: `You can only meet with ${req.user.type === 'hotel' ? 'agents' : 'hotels'}` });
-  }
 
   // Intersect both users' slots: only time windows where BOTH have a slot are bookable
   const mySlots = db.prepare(`SELECT * FROM slots WHERE user_id = ? ORDER BY start_time`).all(req.user.id);

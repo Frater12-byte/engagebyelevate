@@ -87,7 +87,7 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 
   try {
     const { profile: p } = await api.get(`/api/public/profile/${id}`);
-    const canBook = me && me.type !== p.type && ['hotel','agent'].includes(me.type) && ['hotel','agent'].includes(p.type);
+    const canBook = me && me.id !== p.id;
     const initials = (p.org_name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
 
     content.innerHTML = `

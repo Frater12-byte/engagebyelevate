@@ -321,11 +321,15 @@ async function renderBookTab() {
   const el = document.getElementById('tab-book');
   el.innerHTML = '<div class="loader" style="margin:40px auto;display:block"></div>';
 
-  const targetType = me.type === 'hotel' ? 'agents' : 'hotels';
-  const { [targetType]: others } = await api.get(`/api/public/${targetType}`);
+  // Load all participants (hotels + agents), exclude self
+  const [hRes, aRes] = await Promise.all([
+    api.get('/api/public/hotels'),
+    api.get('/api/public/agents')
+  ]);
+  const others = [...(hRes.hotels || []), ...(aRes.agents || [])].filter(o => o.id !== me.id);
 
   el.innerHTML = `
-    <h3 style="margin-bottom:8px">Book a meeting with ${targetType === 'hotels' ? 'a hotel' : 'an agency'}</h3>
+    <h3 style="margin-bottom:8px">Book a meeting</h3>
     <p class="text-muted" style="margin-bottom:20px">Select who you'd like to meet. You'll see their live availability alongside yours.</p>
     <input id="book-search" placeholder="Search by name or country..." style="max-width:360px;margin-bottom:20px">
     <div id="book-list" class="directory-grid"></div>
@@ -338,16 +342,16 @@ async function renderBookTab() {
       (o.org_name || '').toLowerCase().includes(q) ||
       (o.country || '').toLowerCase().includes(q)
     );
-    const isTargetHotel = targetType === 'hotels';
     list.innerHTML = filtered.map(o => {
-      const typeClass = isTargetHotel ? 'card-hotel' : 'card-agent';
-      const typeColor = isTargetHotel ? 'type-hotel' : 'type-agent';
-      const typeIcon = isTargetHotel
+      const isH = o.type === 'hotel';
+      const typeClass = isH ? 'card-hotel' : 'card-agent';
+      const typeColor = isH ? 'type-hotel' : 'type-agent';
+      const typeIcon = isH
         ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>'
         : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>';
       return `
       <div class="org-card ${typeClass}" onclick="openAvailabilityModal(${o.id})">
-        <div class="type-icon ${typeColor}">${typeIcon}${isTargetHotel ? 'Hotel' : 'Agency'}</div>
+        <div class="type-icon ${typeColor}">${typeIcon}${isH ? 'Hotel' : 'Agency'}</div>
         <h3>${escapeHtml(o.org_name)}</h3>
         <div class="org-meta">${escapeHtml([o.city, o.country].filter(Boolean).join(', '))}</div>
         <div class="org-desc">${escapeHtml(o.description || '')}</div>

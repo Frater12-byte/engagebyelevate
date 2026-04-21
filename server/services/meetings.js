@@ -48,19 +48,15 @@ function findSlot(userId, startTime) {
 function requestMeeting(requesterId, recipientId, startTime, message) {
   const db = getDb();
 
-  // Validate users exist and are different types (hotel <-> agent only)
+  // Validate users exist
   const requester = db.prepare('SELECT * FROM users WHERE id = ? AND active = 1').get(requesterId);
   const recipient = db.prepare('SELECT * FROM users WHERE id = ? AND active = 1').get(recipientId);
 
   if (!requester || !recipient) {
     throw new Error('Invalid users');
   }
-  if (requester.type === recipient.type) {
-    throw new Error('Meetings must be between a hotel and an agent');
-  }
-  if (!['hotel', 'agent'].includes(requester.type) ||
-      !['hotel', 'agent'].includes(recipient.type)) {
-    throw new Error('Invalid user type for meetings');
+  if (requesterId === recipientId) {
+    throw new Error('You cannot book a meeting with yourself');
   }
 
   // Lock window check
