@@ -1,15 +1,18 @@
 /**
- * Email service.
+ * Email service — Engage by Elevate 2026
  *
- * Sends via SMTP (Hostinger's mail server by default).
- * All sends are logged to the email_log table for audit + N8N reconciliation.
- *
- * Templates are inline HTML with shared styling to avoid external assets.
+ * Sends via SMTP. All sends logged to email_log table.
+ * Templates: dark branded design matching engagebyelevate.com
+ * Table-based layout, inline CSS, plain-text fallbacks.
  */
 
 const nodemailer = require('nodemailer');
 const dayjs = require('dayjs');
 const { getDb } = require('../db/connection');
+
+const SITE = 'https://engagebyelevate.com';
+const EVENT_DATES = 'June 2\u20134, 2026';
+const EVENT_LOCATION = 'Dubai';
 
 let transporter;
 function getTransporter() {
@@ -26,7 +29,7 @@ function getTransporter() {
   return transporter;
 }
 
-function log(row) {
+function dbLog(row) {
   try {
     getDb().prepare(`
       INSERT INTO email_log (to_email, subject, template, meeting_id, user_id, status, error)
@@ -35,144 +38,395 @@ function log(row) {
   } catch (e) { console.error('email_log insert failed:', e.message); }
 }
 
-async function send(to, subject, html, meta = {}) {
+async function send(to, subject, html, text, meta = {}) {
   try {
     const info = await getTransporter().sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to,
       subject,
-      html
+      html,
+      text
     });
     console.log(`[EMAIL OK] to=${to} subject="${subject}" messageId=${info.messageId} response="${info.response || ''}"`);
-    log({ to_email: to, subject, template: meta.template, meeting_id: meta.meeting_id, user_id: meta.user_id, status: 'sent' });
+    dbLog({ to_email: to, subject, template: meta.template, meeting_id: meta.meeting_id, user_id: meta.user_id, status: 'sent' });
     return info;
   } catch (err) {
     console.error(`[EMAIL FAIL] to=${to} subject="${subject}" error=${err.message}${err.response ? ' response=' + err.response : ''}${err.code ? ' code=' + err.code : ''}`);
-    log({ to_email: to, subject, template: meta.template, meeting_id: meta.meeting_id, user_id: meta.user_id, status: 'failed', error: err.message });
+    dbLog({ to_email: to, subject, template: meta.template, meeting_id: meta.meeting_id, user_id: meta.user_id, status: 'failed', error: err.message });
     throw err;
   }
 }
 
-// ---------- Shared branded template ----------
-function wrap(content) {
-  return `
-  <div style="background:#f4f1ea;padding:40px 20px;font-family:Georgia,serif;color:#1a1a1a">
-    <div style="max-width:580px;margin:0 auto;background:#fff;border:1px solid #e5e1d6">
-      <div style="background:#0f1a2b;color:#d4a762;padding:24px 32px;border-bottom:3px solid #d4a762">
-        <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:0.7">Engage by Elevate</div>
-        <div style="font-size:20px;margin-top:4px;font-weight:normal;letter-spacing:0.5px">Hotel × Agency Matchmaking</div>
-      </div>
-      <div style="padding:32px">${content}</div>
-      <div style="padding:20px 32px;border-top:1px solid #e5e1d6;font-size:11px;color:#888;background:#fafaf5">
-        This is an automated message from Engage by Elevate.<br>
-        June 1–3, 2026 · Dubai
-      </div>
-    </div>
-  </div>`;
-}
+// ================================================================
+// Shared components
+// ================================================================
 
-function btn(href, label, color = '#0f1a2b') {
-  return `<a href="${href}" style="display:inline-block;padding:12px 24px;background:${color};color:#fff;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;letter-spacing:1px;text-transform:uppercase">${label}</a>`;
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function fmt(iso) {
-  return dayjs(iso).format('dddd, MMM D · HH:mm');
+  return dayjs(iso).format('dddd, MMMM D, YYYY [at] HH:mm');
 }
 
-// ---------- Magic link ----------
+function fmtShort(iso) {
+  return dayjs(iso).format('ddd, MMM D [at] HH:mm');
+}
+
+/** Outlook-safe CTA button using VML fallback */
+function btn(label, href, bg = '#C85A3A') {
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0">
+  <tr>
+    <td align="center" style="border-radius:4px;background:${bg}">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:48px;v-text-anchor:middle;width:240px" arcsize="8%" stroke="f" fillcolor="${bg}">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase">${esc(label)}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-->
+      <a href="${href}" target="_blank" style="display:inline-block;padding:14px 36px;background:${bg};color:#ffffff;text-decoration:none;font-family:'Manrope',-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:4px;line-height:1;mso-hide:all">${esc(label)}</a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>`;
+}
+
+/** Meeting details card */
+function meetingCard(data) {
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0;border-left:3px solid #C85A3A;background:#141414">
+  <tr>
+    <td style="padding:20px 24px">
+      ${data.org ? `<div style="font-family:'Archivo',Georgia,serif;font-size:18px;font-weight:700;color:#ffffff;margin-bottom:4px">${esc(data.org)}</div>` : ''}
+      ${data.contact ? `<div style="font-family:'Manrope',-apple-system,sans-serif;font-size:14px;color:#a0a0a8;margin-bottom:12px">${esc(data.contact)}</div>` : ''}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding-right:24px">
+            <div style="font-family:'Manrope',-apple-system,sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#5a5a65;margin-bottom:4px">Date & Time</div>
+            <div style="font-family:'Archivo',Georgia,serif;font-size:15px;color:#ffffff">${data.datetime}</div>
+          </td>
+          <td>
+            <div style="font-family:'Manrope',-apple-system,sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#5a5a65;margin-bottom:4px">Duration</div>
+            <div style="font-family:'Archivo',Georgia,serif;font-size:15px;color:#ffffff">20 minutes</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+/** Full email wrapper — dark branded layout */
+function wrap(content) {
+  return `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <title>Engage by Elevate</title>
+  <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#0A0A0A;color:#ffffff;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0A0A0A">
+  <tr>
+    <td align="center" style="padding:40px 16px">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%">
+
+        <!-- Header -->
+        <tr>
+          <td style="padding:0 0 32px 0">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td style="font-family:'Archivo',Georgia,serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#C85A3A;font-weight:700;padding-bottom:12px">Engage by Elevate</td>
+              </tr>
+              <tr>
+                <td style="border-top:2px solid #C85A3A;padding-top:0;width:60px"><div style="width:60px"></div></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Content -->
+        <tr>
+          <td style="font-family:'Manrope',-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.7;color:#a0a0a8">
+            ${content}
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:48px 0 0 0;border-top:1px solid #1a1a1f;margin-top:40px">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td style="padding-top:24px;font-family:'Manrope',-apple-system,sans-serif;font-size:12px;color:#5a5a65;line-height:1.6">
+                  Engage by Elevate &middot; ${EVENT_DATES} &middot; ${EVENT_LOCATION}<br>
+                  <a href="${SITE}/agenda" style="color:#C85A3A;text-decoration:none">View event agenda</a> &middot;
+                  <a href="${SITE}" style="color:#C85A3A;text-decoration:none">engagebyelevate.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:16px;font-family:'Manrope',-apple-system,sans-serif;font-size:11px;color:#3a3a42">
+                  Elevate Tourism LLC &middot; Dubai, UAE
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`;
+}
+
+function heading(text) {
+  return `<div style="font-family:'Archivo',Georgia,serif;font-size:24px;font-weight:700;color:#ffffff;line-height:1.2;margin-bottom:20px">${text}</div>`;
+}
+
+function greeting(name) {
+  return name
+    ? `<div style="color:#ffffff;margin-bottom:16px">Hello ${esc(name)},</div>`
+    : `<div style="color:#ffffff;margin-bottom:16px">Hello,</div>`;
+}
+
+function blockquote(text) {
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:20px 0">
+  <tr>
+    <td style="border-left:2px solid #C85A3A;padding:12px 20px;font-style:italic;color:#a0a0a8;font-size:14px;line-height:1.6">${esc(text)}</td>
+  </tr>
+</table>`;
+}
+
+function fallbackLink(url) {
+  return `<div style="margin-top:8px;font-size:12px;color:#5a5a65;word-break:break-all">Or paste this URL into your browser:<br><a href="${url}" style="color:#C85A3A;text-decoration:none">${url}</a></div>`;
+}
+
+function footnote(text) {
+  return `<div style="margin-top:32px;font-size:13px;color:#5a5a65;line-height:1.6">${text}</div>`;
+}
+
+// ================================================================
+// 1. Magic link
+// ================================================================
+
 async function sendMagicLink(user, token) {
   const url = `${process.env.BASE_URL}/auth/verify?token=${token}`;
+  const subject = 'Your access link to Engage by Elevate';
+
   const html = wrap(`
-    <h2 style="font-weight:normal;font-size:22px;margin:0 0 16px">Hello ${user.contact_name},</h2>
-    <p>Click below to access your personal dashboard for Engage by Elevate.</p>
-    <p style="margin:28px 0">${btn(url, 'Open Dashboard', '#d4a762')}</p>
-    <p style="font-size:13px;color:#666">This link works for the duration of the event. Keep it private — anyone with the link can access your account.</p>
-    <p style="font-size:13px;color:#666;word-break:break-all">If the button doesn't work, paste this into your browser:<br>${url}</p>
+    ${heading('Your Access Link')}
+    ${greeting(user.contact_name)}
+    <div style="margin-bottom:20px">Click below to access your dashboard for Engage by Elevate, ${EVENT_DATES} in ${EVENT_LOCATION}. From here you can view your personal agenda, manage meeting requests, and update your profile.</div>
+    ${btn('ACCESS DASHBOARD', url)}
+    ${fallbackLink(url)}
+    ${footnote("This link is unique to your account. Don't share it \u2014 anyone with this link can access your profile.")}
   `);
-  return send(user.email, 'Your Engage by Elevate access link', html, {
+
+  const text = `Hello ${user.contact_name || ''},
+
+Your access link to Engage by Elevate:
+${url}
+
+Click the link above to access your dashboard for Engage by Elevate, ${EVENT_DATES} in ${EVENT_LOCATION}. From here you can view your personal agenda, manage meeting requests, and update your profile.
+
+This link is unique to your account. Don't share it.
+
+---
+Engage by Elevate - ${EVENT_DATES} - ${EVENT_LOCATION}
+${SITE}`;
+
+  return send(user.email, subject, html, text, {
     template: 'magic_link', user_id: user.id
   });
 }
 
-// ---------- Meeting request ----------
+// ================================================================
+// 2. Meeting request received
+// ================================================================
+
 async function sendMeetingRequest(meeting, requester, recipient) {
-  const url = `${process.env.BASE_URL}/dashboard?meeting=${meeting.id}`;
+  const dashUrl = `${process.env.BASE_URL}/dashboard?meeting=${meeting.id}`;
+  const profileUrl = `${process.env.BASE_URL}/profile.html?id=${requester.id}`;
+  const subject = `${requester.org_name} wants to meet with you`;
+
   const html = wrap(`
-    <h2 style="font-weight:normal;font-size:22px;margin:0 0 16px">New meeting request</h2>
-    <p><strong>${requester.org_name}</strong> (${requester.contact_name}) would like to meet with you.</p>
-    <div style="background:#f8f6f0;padding:16px;border-left:3px solid #d4a762;margin:20px 0">
-      <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px">Proposed Time</div>
-      <div style="font-size:18px;margin-top:4px">${fmt(meeting.start_time)}</div>
-      <div style="font-size:13px;color:#666">20 minutes · Virtual meeting</div>
-    </div>
-    ${meeting.message ? `<div style="margin:20px 0"><div style="font-size:12px;color:#888;text-transform:uppercase">Message</div><div style="padding:12px;border:1px solid #e5e1d6;margin-top:8px;font-style:italic">${escapeHtml(meeting.message)}</div></div>` : ''}
-    <p style="margin:28px 0">${btn(url, 'Review Request')}</p>
-    <p style="font-size:13px;color:#666">This request will auto-expire 48 hours before the meeting time if you don't respond.</p>
+    ${heading('New Meeting Request')}
+    ${greeting(recipient.contact_name)}
+    <div style="margin-bottom:8px">You have a new meeting request from <strong style="color:#ffffff">${esc(requester.org_name)}</strong>.</div>
+    ${meetingCard({
+      org: requester.org_name,
+      contact: requester.contact_name,
+      datetime: fmtShort(meeting.start_time)
+    })}
+    ${meeting.message ? blockquote(meeting.message) : ''}
+    ${btn('REVIEW REQUEST', dashUrl)}
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:-16px">
+      <tr>
+        <td>
+          <a href="${profileUrl}" style="font-family:'Manrope',-apple-system,sans-serif;font-size:12px;letter-spacing:0.5px;color:#C85A3A;text-decoration:none;text-transform:uppercase;font-weight:600">View ${esc(requester.org_name)}'s profile</a>
+        </td>
+      </tr>
+    </table>
+    ${footnote('This request expires 48 hours before the proposed meeting time if not actioned.')}
   `);
-  return send(recipient.email, `Meeting request from ${requester.org_name}`, html, {
+
+  const text = `Hello ${recipient.contact_name || ''},
+
+You have a new meeting request from ${requester.org_name} (${requester.contact_name}).
+
+When: ${fmtShort(meeting.start_time)}
+Duration: 20 minutes
+${meeting.message ? `\nMessage: "${meeting.message}"\n` : ''}
+Review this request on your dashboard:
+${dashUrl}
+
+This request expires 48 hours before the proposed meeting time if not actioned.
+
+---
+Engage by Elevate - ${EVENT_DATES} - ${EVENT_LOCATION}
+${SITE}`;
+
+  return send(recipient.email, subject, html, text, {
     template: 'meeting_request', meeting_id: meeting.id, user_id: recipient.id
   });
 }
 
-// ---------- Meeting approved ----------
-async function sendMeetingApproved(meeting) {
-  const joinBlock = meeting.teams_join_url
-    ? `<p style="margin:28px 0">${btn(meeting.teams_join_url, 'Join Teams Meeting', '#5b5fc7')}</p>`
-    : `<p style="color:#a87800;background:#fdf6e3;padding:12px;border-left:3px solid #d4a762">The Teams link will be shared separately by the organizer.</p>`;
+// ================================================================
+// 3. Meeting approved
+// ================================================================
 
-  const html = (toName, otherOrg) => wrap(`
-    <h2 style="font-weight:normal;font-size:22px;margin:0 0 16px;color:#2d6a3e">✓ Meeting confirmed</h2>
-    <p>Hello ${toName}, your meeting with <strong>${otherOrg}</strong> is confirmed.</p>
-    <div style="background:#f8f6f0;padding:16px;border-left:3px solid #2d6a3e;margin:20px 0">
-      <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px">When</div>
-      <div style="font-size:18px;margin-top:4px">${fmt(meeting.start_time)}</div>
-      <div style="font-size:13px;color:#666">20 minutes</div>
-    </div>
-    ${joinBlock}
-    <p style="font-size:13px;color:#666">You can view all your meetings anytime via your dashboard.</p>
+async function sendMeetingApproved(meeting) {
+  const teamsBlock = meeting.teams_join_url
+    ? btn('JOIN TEAMS MEETING', meeting.teams_join_url, '#5B5FC7')
+    : `<div style="margin:24px 0;padding:16px 20px;background:#141414;border-left:3px solid #5a5a65;font-size:14px;color:#a0a0a8">The Teams link will be sent separately by the organizer.</div>`;
+
+  const buildHtml = (toName, otherOrg, otherContact) => wrap(`
+    ${heading('Meeting Confirmed')}
+    ${greeting(toName)}
+    <div style="margin-bottom:8px">Your meeting with <strong style="color:#ffffff">${esc(otherOrg)}</strong> is confirmed.</div>
+    ${meetingCard({
+      org: otherOrg,
+      contact: otherContact,
+      datetime: fmtShort(meeting.start_time)
+    })}
+    ${teamsBlock}
+    ${footnote('Add this meeting to your calendar by saving the invite from your <a href="' + SITE + '/dashboard" style="color:#C85A3A;text-decoration:none">dashboard</a>.')}
   `);
 
-  // Email both parties
-  await send(meeting.requester_email, `Meeting confirmed with ${meeting.recipient_org}`, html(meeting.requester_name, meeting.recipient_org), {
-    template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.requester_id
-  });
-  await send(meeting.recipient_email, `Meeting confirmed with ${meeting.requester_org}`, html(meeting.recipient_name, meeting.requester_org), {
-    template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.recipient_id
-  });
+  const buildText = (toName, otherOrg, otherContact) => `Hello ${toName || ''},
+
+Your meeting with ${otherOrg} (${otherContact}) is confirmed.
+
+When: ${fmtShort(meeting.start_time)}
+Duration: 20 minutes
+${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : '\nThe Teams link will be sent separately by the organizer.\n'}
+View all your meetings on your dashboard:
+${SITE}/dashboard
+
+---
+Engage by Elevate - ${EVENT_DATES} - ${EVENT_LOCATION}
+${SITE}`;
+
+  const subjectFor = (otherOrg) => `Confirmed: Meeting with ${otherOrg}`;
+
+  await send(
+    meeting.requester_email,
+    subjectFor(meeting.recipient_org),
+    buildHtml(meeting.requester_name, meeting.recipient_org, meeting.recipient_name),
+    buildText(meeting.requester_name, meeting.recipient_org, meeting.recipient_name),
+    { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.requester_id }
+  );
+  await send(
+    meeting.recipient_email,
+    subjectFor(meeting.requester_org),
+    buildHtml(meeting.recipient_name, meeting.requester_org, meeting.requester_name),
+    buildText(meeting.recipient_name, meeting.requester_org, meeting.requester_name),
+    { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.recipient_id }
+  );
 }
 
-// ---------- Meeting declined ----------
+// ================================================================
+// 4. Meeting declined
+// ================================================================
+
 async function sendMeetingDeclined(meeting) {
+  const dashUrl = `${process.env.BASE_URL}/dashboard`;
+  const subject = `Meeting request with ${meeting.recipient_org} was declined`;
+
   const html = wrap(`
-    <h2 style="font-weight:normal;font-size:22px;margin:0 0 16px">Meeting request declined</h2>
-    <p>Your meeting request with <strong>${meeting.recipient_org}</strong> at ${fmt(meeting.start_time)} was declined.</p>
-    ${meeting.decline_reason ? `<div style="padding:12px;border:1px solid #e5e1d6;margin:16px 0;font-style:italic">${escapeHtml(meeting.decline_reason)}</div>` : ''}
-    <p>The slot is now free — you can browse other hotels or agents and try a different time.</p>
-    <p style="margin:28px 0">${btn(`${process.env.BASE_URL}/dashboard`, 'Back to Dashboard')}</p>
+    ${heading('Meeting Request Declined')}
+    ${greeting(meeting.requester_name)}
+    <div style="margin-bottom:8px"><strong style="color:#ffffff">${esc(meeting.recipient_org)}</strong> is unable to meet at the time you proposed. You may be able to find another slot that works for both of you.</div>
+    ${meeting.decline_reason ? blockquote(meeting.decline_reason) : ''}
+    ${meetingCard({
+      org: meeting.recipient_org,
+      datetime: fmtShort(meeting.start_time)
+    })}
+    ${btn('VIEW AVAILABLE SLOTS', dashUrl)}
   `);
-  return send(meeting.requester_email, `Meeting request declined`, html, {
+
+  const text = `Hello ${meeting.requester_name || ''},
+
+Your meeting request with ${meeting.recipient_org} at ${fmtShort(meeting.start_time)} was declined.
+
+${meeting.recipient_org} is unable to meet at the time you proposed. You may be able to find another slot that works for both of you.
+${meeting.decline_reason ? `\nReason: "${meeting.decline_reason}"\n` : ''}
+View available slots on your dashboard:
+${dashUrl}
+
+---
+Engage by Elevate - ${EVENT_DATES} - ${EVENT_LOCATION}
+${SITE}`;
+
+  return send(meeting.requester_email, subject, html, text, {
     template: 'meeting_declined', meeting_id: meeting.id, user_id: meeting.requester_id
   });
 }
 
-// ---------- Meeting cancelled ----------
+// ================================================================
+// 5. Meeting cancelled
+// ================================================================
+
 async function sendMeetingCancelled(meeting, cancelledByUserId) {
   const otherEmail = cancelledByUserId === meeting.requester_id ? meeting.recipient_email : meeting.requester_email;
   const otherName = cancelledByUserId === meeting.requester_id ? meeting.recipient_name : meeting.requester_name;
   const cancellerOrg = cancelledByUserId === meeting.requester_id ? meeting.requester_org : meeting.recipient_org;
+  const otherUserId = cancelledByUserId === meeting.requester_id ? meeting.recipient_id : meeting.requester_id;
+  const dashUrl = `${process.env.BASE_URL}/dashboard`;
+  const subject = `Meeting with ${cancellerOrg} was cancelled`;
 
   const html = wrap(`
-    <h2 style="font-weight:normal;font-size:22px;margin:0 0 16px">Meeting cancelled</h2>
-    <p>Hello ${otherName}, your meeting with <strong>${cancellerOrg}</strong> at ${fmt(meeting.start_time)} has been cancelled.</p>
-    <p>The slot is now free again.</p>
+    ${heading('Meeting Cancelled')}
+    ${greeting(otherName)}
+    <div style="margin-bottom:8px"><strong style="color:#ffffff">${esc(cancellerOrg)}</strong> has cancelled your meeting scheduled for ${fmtShort(meeting.start_time)}. Your slot is now free for other requests.</div>
+    ${meetingCard({
+      org: cancellerOrg,
+      datetime: fmtShort(meeting.start_time)
+    })}
+    ${btn('BACK TO DASHBOARD', dashUrl)}
   `);
-  return send(otherEmail, 'Meeting cancelled', html, {
-    template: 'meeting_cancelled', meeting_id: meeting.id
-  });
-}
 
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const text = `Hello ${otherName || ''},
+
+${cancellerOrg} has cancelled your meeting scheduled for ${fmtShort(meeting.start_time)}. Your slot is now free for other requests.
+
+Return to your dashboard:
+${dashUrl}
+
+---
+Engage by Elevate - ${EVENT_DATES} - ${EVENT_LOCATION}
+${SITE}`;
+
+  return send(otherEmail, subject, html, text, {
+    template: 'meeting_cancelled', meeting_id: meeting.id, user_id: otherUserId
+  });
 }
 
 module.exports = {
