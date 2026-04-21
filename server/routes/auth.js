@@ -85,6 +85,12 @@ router.post('/signup', (req, res) => {
     // Send magic link right away so they can access dashboard
     sendMagicLinkFor(userId).catch(console.error);
 
+    // Notify admin of new registration
+    const notifyTo = process.env.REPLY_TO_EMAIL || 'engage.meetings@elevatedmc.com';
+    email.sendAdminNotification(notifyTo, {
+      type, org_name, contact_name, email: emailNorm, country: country || '', city: city || ''
+    }).catch(console.error);
+
     res.json({ ok: true, userId, message: 'Registration successful. Check your email for the access link.' });
   } catch (err) {
     if (err.message.includes('UNIQUE')) {

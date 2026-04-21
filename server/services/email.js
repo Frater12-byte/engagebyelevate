@@ -459,10 +459,41 @@ ${SITE}`;
   });
 }
 
+// ================================================================
+// 6. Admin notification — new registration
+// ================================================================
+
+async function sendAdminNotification(to, reg) {
+  const subject = `New registration: ${reg.org_name} (${reg.type})`;
+
+  const html = wrap(`
+    ${heading('New Registration')}
+    <div style="margin-bottom:20px">A new <strong style="color:#ffffff">${reg.type}</strong> just registered on Engage by Elevate.</div>
+    ${meetingCard({
+      org: reg.org_name,
+      contact: `${reg.contact_name} — ${reg.email}`,
+      datetime: `${reg.city ? reg.city + ', ' : ''}${reg.country}`
+    })}
+    ${btn('VIEW DIRECTORY', SITE + '/directory')}
+  `);
+
+  const text = `New ${reg.type} registration on Engage by Elevate:
+
+Organization: ${reg.org_name}
+Contact: ${reg.contact_name}
+Email: ${reg.email}
+Location: ${[reg.city, reg.country].filter(Boolean).join(', ')}
+
+View directory: ${SITE}/directory`;
+
+  return send(to, subject, html, text, { template: 'admin_notification' });
+}
+
 module.exports = {
   sendMagicLink,
   sendMeetingRequest,
   sendMeetingApproved,
   sendMeetingDeclined,
-  sendMeetingCancelled
+  sendMeetingCancelled,
+  sendAdminNotification
 };
