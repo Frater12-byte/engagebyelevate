@@ -789,7 +789,10 @@ textarea { resize: vertical; min-height: 100px; }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
 
 /* ========== Nav CTA ========== */
-.nav-cta {
+.nav-links a.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--orange);
   color: var(--white) !important;
   padding: 10px 28px;
@@ -799,11 +802,12 @@ textarea { resize: vertical; min-height: 100px; }
   text-transform: uppercase;
   font-weight: 700;
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: background 0.2s, transform 0.2s;
   margin-left: 4px;
   flex-shrink: 0;
+  line-height: 1;
 }
-.nav-cta:hover { background: var(--orange-hover); color: var(--white) !important; }
+.nav-links a.nav-cta:hover { background: var(--orange-hover); color: var(--white) !important; transform: none; }
 
 /* ========== Team section ========== */
 .team-grid {
