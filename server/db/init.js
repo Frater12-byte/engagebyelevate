@@ -43,6 +43,7 @@ function initDatabase() {
       city            TEXT,
       website         TEXT,
       logo_url        TEXT,
+      photo_url       TEXT,
 
       -- Profile (shown publicly)
       description     TEXT,
@@ -220,6 +221,9 @@ function initDatabase() {
       created_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Migration: add photo_url if missing (for existing DBs)
+  try { db.exec('ALTER TABLE users ADD COLUMN photo_url TEXT'); } catch {}
 
   console.log('✓ Database initialized at', DB_PATH);
   return db;

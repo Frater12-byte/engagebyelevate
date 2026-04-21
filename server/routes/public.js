@@ -21,6 +21,8 @@ function publicUserFields(rows) {
     region: r.region,
     website: r.website,
     logo_url: r.logo_url,
+    photo_url: r.photo_url,
+    contact_name: r.contact_name,
     description: r.description,
     specialties: r.specialties ? safeJSON(r.specialties) : [],
     target_markets: r.target_markets ? safeJSON(r.target_markets) : [],

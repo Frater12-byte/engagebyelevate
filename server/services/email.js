@@ -386,7 +386,7 @@ async function sendMeetingDeclined(meeting) {
       org: meeting.recipient_org,
       datetime: fmtShort(meeting.start_time)
     })}
-    ${btn('VIEW AVAILABLE SLOTS', dashUrl)}
+    ${btn('BACK TO DASHBOARD', dashUrl)}
   `);
 
   const text = `Hello ${meeting.requester_name || ''},

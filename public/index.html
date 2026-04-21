@@ -26,8 +26,8 @@
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
-      <a href="/login.html">Sign in</a>
-      <a href="/signup.html" class="nav-cta">Register Now</a>
+      <a href="/login.html" id="nav-auth-link">Sign in</a>
+      <a href="/signup.html" class="nav-cta" id="nav-cta-link">Register Now</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
       <span class="bar"></span>
@@ -337,6 +337,17 @@
       q.closest('.faq-item').classList.toggle('open');
     });
   });
+
+  // Show Dashboard link when logged in
+  (async () => {
+    const me = await getMe();
+    if (me) {
+      const authLink = document.getElementById('nav-auth-link');
+      if (authLink) { authLink.textContent = 'Dashboard'; authLink.href = '/dashboard'; }
+      const ctaLink = document.getElementById('nav-cta-link');
+      if (ctaLink) { ctaLink.textContent = 'Dashboard'; ctaLink.href = '/dashboard'; ctaLink.className = 'nav-cta'; }
+    }
+  })();
 
   // Participant marquee
   (async () => {

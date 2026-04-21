@@ -89,6 +89,7 @@
       document.getElementById('result').innerHTML = `
         <div class="eyebrow" style="color:var(--success)">Check your inbox</div>
         <p style="margin-top:12px;color:var(--ink-soft)">If <strong style="color:var(--white)">${email}</strong> is registered, a login link is on its way.</p>
+        <p class="text-muted" style="margin-top:12px;font-size:13px">The email may take 2-3 minutes to arrive. Check your spam folder if you don't see it.</p>
       `;
       document.getElementById('result').style.display = 'block';
     } catch (err) {

@@ -165,7 +165,7 @@ router.put('/me/profile', requireAuth, (req, res) => {
   const db = getDb();
   const allowed = [
     'contact_name', 'phone', 'org_name', 'country', 'city', 'website',
-    'description', 'specialties', 'target_markets', 'room_count', 'star_rating', 'logo_url'
+    'description', 'specialties', 'target_markets', 'room_count', 'star_rating', 'logo_url', 'photo_url'
   ];
   const updates = [];
   const values = [];

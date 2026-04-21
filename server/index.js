@@ -57,26 +57,37 @@ app.use('/auth', authLimiter);
 const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 120 });
 app.use('/api', apiLimiter);
 
+// File upload endpoints (before route mounting — multer needs direct access)
+function authFromCookie(req) {
+  const token = req.cookies?.session;
+  if (!token) return null;
+  try { return jwt.verify(token, process.env.JWT_SECRET); }
+  catch { return null; }
+}
+
+app.post('/api/upload-logo', upload.single('logo'), (req, res) => {
+  const payload = authFromCookie(req);
+  if (!payload) return res.status(401).json({ error: 'Not authenticated' });
+  if (!req.file) return res.status(400).json({ error: 'No valid image file provided (max 2MB, PNG/JPG/SVG/WebP)' });
+  const logoUrl = `/uploads/${req.file.filename}`;
+  getDb().prepare('UPDATE users SET logo_url = ?, updated_at = datetime("now") WHERE id = ?').run(logoUrl, payload.uid);
+  res.json({ ok: true, logo_url: logoUrl });
+});
+
+app.post('/api/upload-photo', upload.single('photo'), (req, res) => {
+  const payload = authFromCookie(req);
+  if (!payload) return res.status(401).json({ error: 'Not authenticated' });
+  if (!req.file) return res.status(400).json({ error: 'No valid image file provided (max 2MB, PNG/JPG/SVG/WebP)' });
+  const photoUrl = `/uploads/${req.file.filename}`;
+  getDb().prepare('UPDATE users SET photo_url = ?, updated_at = datetime("now") WHERE id = ?').run(photoUrl, payload.uid);
+  res.json({ ok: true, photo_url: photoUrl });
+});
+
 // Routes
 app.use('/auth', require('./routes/auth'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/n8n', require('./routes/n8n'));
 app.use('/api', require('./routes/meetings'));
-
-// Logo upload endpoint (requires auth)
-app.post('/api/upload-logo', upload.single('logo'), (req, res) => {
-  const token = req.cookies?.session;
-  if (!token) return res.status(401).json({ error: 'Not authenticated' });
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (!req.file) return res.status(400).json({ error: 'No valid image file provided (max 2MB, PNG/JPG/SVG/WebP)' });
-    const logoUrl = `/uploads/${req.file.filename}`;
-    getDb().prepare('UPDATE users SET logo_url = ?, updated_at = datetime("now") WHERE id = ?').run(logoUrl, payload.uid);
-    res.json({ ok: true, logo_url: logoUrl });
-  } catch {
-    res.status(401).json({ error: 'Not authenticated' });
-  }
-});
 
 // Static files
 app.use(express.static(path.join(__dirname, '..', 'public')));

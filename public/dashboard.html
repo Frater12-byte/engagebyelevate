@@ -438,6 +438,20 @@ async function renderProfile() {
     <h3 style="margin-bottom:8px">Your Public Profile</h3>
     <p class="text-muted" style="margin-bottom:24px">This is what everyone else sees in the directory.</p>
 
+    <!-- Photo upload -->
+    <div class="field">
+      <label>Your Photo</label>
+      <div class="logo-upload">
+        ${p.photo_url
+          ? `<img id="profile-photo-preview" class="logo-upload-preview" src="${escapeHtml(p.photo_url)}" style="border-radius:50%">`
+          : `<img id="profile-photo-preview" class="logo-upload-preview" src="" style="display:none;border-radius:50%">
+             <div id="profile-photo-placeholder" class="logo-upload-preview" style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:11px;border-radius:50%">No photo</div>`
+        }
+        <label class="logo-upload-btn" for="profile-photo-file">Upload Photo</label>
+        <input type="file" id="profile-photo-file" accept=".png,.jpg,.jpeg,.webp" style="display:none">
+      </div>
+    </div>
+
     <!-- Logo upload -->
     <div class="field">
       <label>Company Logo</label>
@@ -480,6 +494,25 @@ async function renderProfile() {
       <button type="submit" class="btn" style="width:100%;margin-top:8px">Save Profile</button>
     </form>
   `;
+
+  // Photo upload handler
+  document.getElementById('profile-photo-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('photo', file);
+    try {
+      const res = await fetch('/api/upload-photo', { method: 'POST', credentials: 'include', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const preview = document.getElementById('profile-photo-preview');
+      preview.src = data.photo_url;
+      preview.style.display = 'block';
+      const placeholder = document.getElementById('profile-photo-placeholder');
+      if (placeholder) placeholder.style.display = 'none';
+      toast('Photo uploaded', 'success');
+    } catch (err) { toast(err.message, 'error'); }
+  });
 
   // Logo upload handler
   document.getElementById('profile-logo-file').addEventListener('change', async (e) => {
