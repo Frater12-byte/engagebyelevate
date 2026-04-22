@@ -71,26 +71,47 @@ function escapeHtml(s) {
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
+/** Check logged_in cookie instantly (no network) */
+function isLoggedInFast() {
+  return document.cookie.split(';').some(c => c.trim().startsWith('logged_in='));
+}
+
+/** Instant nav setup from cookie — runs synchronously, no flash */
+(function() {
+  if (!isLoggedInFast()) { document.body.classList.add('nav-ready'); return; }
+  const authLink = document.getElementById('nav-auth-link');
+  if (authLink) { authLink.textContent = 'My Dashboard'; authLink.href = '/dashboard'; }
+  const ctaLink = document.getElementById('nav-cta-link');
+  if (ctaLink) { ctaLink.textContent = 'Sign out'; ctaLink.href = '#'; ctaLink.className = ''; }
+  document.body.classList.add('nav-ready');
+})();
+
 async function getMe() {
   try { return (await api.get('/auth/me')).user; }
   catch { return null; }
 }
 
-/** Update nav for logged-in user: My Dashboard (with notification count) + Sign out */
+/** Update nav for logged-in user: add notification count + wire sign-out handler */
 async function updateNavForUser(me) {
-  // Reveal nav links (hidden by CSS until auth state is known)
   document.body.classList.add('nav-ready');
-  if (!me) return;
+  if (!me) {
+    // Cookie was stale — revert to logged-out nav
+    if (isLoggedInFast()) {
+      const authLink = document.getElementById('nav-auth-link');
+      if (authLink) { authLink.textContent = 'Sign in'; authLink.href = '/login.html'; }
+      const ctaLink = document.getElementById('nav-cta-link');
+      if (ctaLink) { ctaLink.textContent = 'Register Now'; ctaLink.href = '/signup.html'; ctaLink.className = 'nav-cta'; ctaLink.onclick = null; }
+    }
+    return;
+  }
+  // Ensure nav is set (may already be from instant check)
   const authLink = document.getElementById('nav-auth-link');
-  if (authLink) {
+  if (authLink && !authLink.querySelector('.nav-notif')) {
     authLink.textContent = 'My Dashboard';
     authLink.href = '/dashboard';
-    // Fetch notification count
     try {
       const { count } = await api.get('/api/me/notifications');
-      if (count > 0) {
-        authLink.insertAdjacentHTML('beforeend', `<span class="nav-notif">${count}</span>`);
-      }
+      if (count > 0) authLink.insertAdjacentHTML('beforeend', `<span class="nav-notif">${count}</span>`);
     } catch {}
   }
   const ctaLink = document.getElementById('nav-cta-link');
@@ -98,7 +119,12 @@ async function updateNavForUser(me) {
     ctaLink.textContent = 'Sign out';
     ctaLink.href = '#';
     ctaLink.className = '';
-    ctaLink.onclick = async (e) => { e.preventDefault(); await api.post('/auth/logout'); location.href = '/'; };
+    ctaLink.onclick = async (e) => {
+      e.preventDefault();
+      document.cookie = 'logged_in=; Max-Age=0; path=/';
+      await api.post('/auth/logout');
+      location.href = '/';
+    };
   }
 }
 

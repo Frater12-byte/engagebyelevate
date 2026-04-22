@@ -157,18 +157,16 @@ router.get('/verify', (req, res) => {
   // db.prepare("UPDATE magic_tokens SET used_at = datetime('now') WHERE id = ?").run(row.id);
 
   const sessionToken = jwt.sign({ uid: row.user_id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-  res.cookie('session', sessionToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 30 * 24 * 60 * 60 * 1000
-  });
+  const cookieOpts = { secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 };
+  res.cookie('session', sessionToken, { ...cookieOpts, httpOnly: true });
+  res.cookie('logged_in', '1', { ...cookieOpts, httpOnly: false });
   res.redirect('/dashboard');
 });
 
 // ---------- Logout ----------
 router.post('/logout', (req, res) => {
   res.clearCookie('session');
+  res.clearCookie('logged_in');
   res.json({ ok: true });
 });
 
