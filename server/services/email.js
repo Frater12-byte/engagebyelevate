@@ -352,7 +352,7 @@ async function sendMeetingApproved(meeting) {
 
   // Google Calendar link
   const gcalStart = dayjs(meeting.start_time).utc().format('YYYYMMDDTHHmmss') + 'Z';
-  const gcalEnd = dayjs(meeting.start_time).add(30, 'minute').utc().format('YYYYMMDDTHHmmss') + 'Z';
+  const gcalEnd = dayjs(meeting.start_time).add(20, 'minute').utc().format('YYYYMMDDTHHmmss') + 'Z';
   const gcalSubject = encodeURIComponent(`Engage by Elevate — ${meeting.requester_org} × ${meeting.recipient_org}`);
   const gcalDetails = encodeURIComponent(meeting.teams_join_url ? `Join Teams: ${meeting.teams_join_url}` : 'Engage by Elevate meeting');
   const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalSubject}&dates=${gcalStart}/${gcalEnd}&details=${gcalDetails}&location=${encodeURIComponent(meeting.teams_join_url || 'Microsoft Teams')}`;
@@ -388,7 +388,7 @@ async function sendMeetingApproved(meeting) {
 Your meeting with ${otherOrg} (${otherContact}) is confirmed.
 
 When: ${fmtShort(meeting.start_time)}
-Duration: 30 minutes
+Duration: 20 minutes
 ${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : ''}
 Add to calendar: ${icsUrl}
 Google Calendar: ${gcalUrl}

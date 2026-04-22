@@ -222,6 +222,14 @@ function isLocked(startTime) {
   return hrs < 48;
 }
 
+function localTzNote(start, end) {
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (userTz === 'Asia/Dubai') return '';
+  const fmt = (iso) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: userTz, hour: '2-digit', minute: '2-digit' });
+  const tzAbbr = new Date(start).toLocaleTimeString('en-GB', { timeZone: userTz, timeZoneName: 'short' }).split(' ').pop();
+  return ` · ${fmt(start)} – ${fmt(end)} ${tzAbbr}`;
+}
+
 function renderMeetings() {
   const el = document.getElementById('tab-meetings');
   if (!meetings.length) {
@@ -303,11 +311,11 @@ function meetingCard(m, kind) {
     actions = `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>`;
   } else if (kind === 'approved') {
     const gcalStart = new Date(m.start_time).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-    const gcalEnd = new Date(new Date(m.start_time).getTime() + 30*60000).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const gcalEnd = new Date(new Date(m.start_time).getTime() + 20*60000).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const gcalSubject = encodeURIComponent(`Engage by Elevate — ${otherOrg}`);
     const gcalDetails = encodeURIComponent(m.teams_join_url ? `Join Teams: ${m.teams_join_url}` : 'Engage by Elevate meeting');
     const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalSubject}&dates=${gcalStart}/${gcalEnd}&details=${gcalDetails}&location=${encodeURIComponent(m.teams_join_url || 'Microsoft Teams')}`;
-    const outlookUrl = `https://outlook.office.com/calendar/0/action/compose?subject=${gcalSubject}&startdt=${encodeURIComponent(m.start_time)}&enddt=${encodeURIComponent(new Date(new Date(m.start_time).getTime()+30*60000).toISOString())}&body=${gcalDetails}&location=${encodeURIComponent(m.teams_join_url || 'Microsoft Teams')}`;
+    const outlookUrl = `https://outlook.office.com/calendar/0/action/compose?subject=${gcalSubject}&startdt=${encodeURIComponent(m.start_time)}&enddt=${encodeURIComponent(new Date(new Date(m.start_time).getTime()+20*60000).toISOString())}&body=${gcalDetails}&location=${encodeURIComponent(m.teams_join_url || 'Microsoft Teams')}`;
     actions = `
       ${m.teams_join_url ? `<a class="btn btn-small" href="${m.teams_join_url}" target="_blank">Join Teams</a>` : ''}
       ${!locked ? `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>` : ''}
@@ -329,11 +337,12 @@ function meetingCard(m, kind) {
   }[m.status] || '';
 
   return `
-    <div class="meeting-card">
+    <div class="meeting-card card-${m.status}">
       <div>
-        <div class="eyebrow">${fmtDate(m.start_time)} · ${fmtTime(m.start_time)} – ${fmtTime(m.end_time)}</div>
+        <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);font-weight:600">${fmtDate(m.start_time)}</div>
+        <div style="font-size:13px;color:var(--ink-muted);margin-top:2px">${fmtTime(m.start_time)} – ${fmtTime(m.end_time)} GST${localTzNote(m.start_time, m.end_time)}</div>
         <h4 style="margin-top:6px">${escapeHtml(otherOrg)}</h4>
-        <div class="meeting-meta">${escapeHtml(otherName || '')} · <span class="badge ${statusBadge}">${m.status}</span>${locked ? ' · <span class="badge">Locked</span>' : ''}</div>
+        <div class="meeting-meta">${escapeHtml(otherName || '')} · <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:${m.status === 'approved' ? 'var(--success)' : m.status === 'pending' ? 'var(--orange)' : 'var(--ink-muted)'}"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span>${m.status}</span>${locked ? ' · <span class="badge">Locked</span>' : ''}</div>
         ${m.message && kind === 'incoming' ? `<div class="notice" style="margin-top:12px;margin-bottom:0;padding:12px 16px"><p style="font-style:italic;font-size:13px">"${escapeHtml(m.message)}"</p></div>` : ''}
         ${m.decline_reason ? `<div style="margin-top:8px;font-size:13px;color:var(--ink-muted)">Reason: ${escapeHtml(m.decline_reason)}</div>` : ''}
       </div>
@@ -451,7 +460,7 @@ window.openAvailabilityModal = async function(otherId) {
       <div class="eyebrow">${other.type === 'hotel' ? 'Hotel' : 'Agency'}</div>
       <h3 style="margin-top:8px">${escapeHtml(other.org_name)}</h3>
       <p class="text-muted" style="font-size:13px;margin-bottom:20px">${escapeHtml(other.contact_name || '')} · ${escapeHtml(other.country || '')}</p>
-      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Pick an available slot to request a 20-minute meeting.</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Pick an available slot to request a 20-minute meeting. All times are Dubai time (GMT+4).</p>
       ${Object.keys(grouped).sort().map(day => {
         const daySlots = grouped[day];
         const anyAvailable = daySlots.some(s => s.available && !isLocked(s.start_time));
