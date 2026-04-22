@@ -92,8 +92,9 @@ router.post('/signup', (req, res) => {
     }).catch(console.error);
 
     // Auto-login the new user so they can upload logo immediately
-    const sessionToken = jwt.sign({ uid: userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    const cookieOpts = { secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 };
+    const signupSessionId = crypto.randomBytes(16).toString('hex');
+    const sessionToken = jwt.sign({ uid: userId, sid: signupSessionId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const cookieOpts = { secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 };
     res.cookie('session', sessionToken, { ...cookieOpts, httpOnly: true });
     res.cookie('logged_in', '1', { ...cookieOpts, httpOnly: false });
 
@@ -132,7 +133,7 @@ async function sendMagicLinkFor(userId) {
   if (!user) throw new Error('User not found');
 
   const token = crypto.randomBytes(32).toString('hex');
-  const expiryHours = parseInt(process.env.MAGIC_LINK_EXPIRY_HOURS || '720', 10);
+  const expiryHours = parseInt(process.env.MAGIC_LINK_EXPIRY_HOURS || '24', 10);
   const expiresAt = dayjs().add(expiryHours, 'hour').toISOString();
 
   db.prepare(`
@@ -158,12 +159,15 @@ router.get('/verify', (req, res) => {
   if (!row) return res.status(400).send('Invalid or expired link');
   if (dayjs().isAfter(dayjs(row.expires_at))) return res.status(400).send('This link has expired');
   if (!row.active) return res.status(400).send('Account is inactive');
+  if (row.used_at) return res.status(400).send('This link has already been used. Request a new one from the sign-in page.');
 
-  // Mark used (but we allow re-use of magic token for convenience during event; comment out next line if one-time use desired)
-  // db.prepare("UPDATE magic_tokens SET used_at = datetime('now') WHERE id = ?").run(row.id);
+  // Mark token as used — single use only
+  db.prepare("UPDATE magic_tokens SET used_at = datetime('now') WHERE id = ?").run(row.id);
 
-  const sessionToken = jwt.sign({ uid: row.user_id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-  const cookieOpts = { secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 };
+  // Invalidate any previous sessions by using a unique session ID
+  const sessionId = crypto.randomBytes(16).toString('hex');
+  const sessionToken = jwt.sign({ uid: row.user_id, sid: sessionId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  const cookieOpts = { secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 };
   res.cookie('session', sessionToken, { ...cookieOpts, httpOnly: true });
   res.cookie('logged_in', '1', { ...cookieOpts, httpOnly: false });
   res.redirect('/dashboard');
