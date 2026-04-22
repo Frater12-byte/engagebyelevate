@@ -100,6 +100,23 @@ app.use('/auth', require('./routes/auth'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/n8n', require('./routes/n8n'));
 app.use('/api', require('./routes/meetings'));
+app.use('/api/exhibitors', require('./routes/exhibitors'));
+
+// Admin: create/update exhibitor
+app.post('/admin/exhibitors', (req, res) => {
+  const adminPw = process.env.ADMIN_PASSWORD;
+  const auth = req.headers.authorization?.replace('Bearer ', '');
+  if (!adminPw || auth !== adminPw) return res.status(401).json({ error: 'Unauthorized' });
+  const { slug, name, category, description, logo_url, website, contact_name, contact_email, booth_number } = req.body;
+  if (!slug || !name || !contact_email) return res.status(400).json({ error: 'slug, name, contact_email required' });
+  const db = getDb();
+  db.prepare(`INSERT INTO exhibitors (slug, name, category, description, logo_url, website, contact_name, contact_email, booth_number)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(slug) DO UPDATE SET name=?, category=?, description=?, logo_url=?, website=?, contact_name=?, contact_email=?, booth_number=?`
+  ).run(slug, name, category||null, description||null, logo_url||null, website||null, contact_name||null, contact_email, booth_number||null,
+        name, category||null, description||null, logo_url||null, website||null, contact_name||null, contact_email, booth_number||null);
+  res.json({ ok: true });
+});
 
 // Static files
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -108,6 +125,10 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.get(['/dashboard', '/directory', '/agenda'], (req, res) => {
   const page = req.path.slice(1) + '.html';
   res.sendFile(path.join(__dirname, '..', 'public', page));
+});
+
+app.get('/exhibitor/:slug', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'exhibitor.html'));
 });
 
 // Health check

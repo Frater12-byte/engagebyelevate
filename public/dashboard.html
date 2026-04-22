@@ -360,11 +360,12 @@ async function renderBookTab() {
   el.innerHTML = '<div class="loader" style="margin:40px auto;display:block"></div>';
 
   // Load all participants, exclude self
-  const [hRes, aRes, eRes, bRes] = await Promise.all([
+  const [hRes, aRes, eRes, bRes, exRes] = await Promise.all([
     api.get('/api/public/hotels'),
     api.get('/api/public/agents'),
     api.get('/api/public/exhibitors'),
-    api.get('/api/public/tourism-boards')
+    api.get('/api/public/tourism-boards'),
+    api.get('/api/exhibitors')
   ]);
   // Merge exhibitor users + tourism boards (boards get a synthetic type)
   const boardsAsExhibitors = (bRes.boards || []).map(b => ({
@@ -373,11 +374,19 @@ async function renderBookTab() {
     contact_email: b.contact_email,
     _isBoard: true
   }));
+  const exhibitorProfilesAsExhibitors = (exRes.exhibitors || []).map(ex => ({
+    id: 'exhibitor-' + ex.id, type: 'exhibitor', org_name: ex.name,
+    description: ex.description, logo_url: ex.logo_url,
+    contact_email: ex.contact_email, contact_name: ex.contact_name,
+    category: ex.category, booth_number: ex.booth_number,
+    _isExhibitorProfile: true, _slug: ex.slug
+  }));
   const allOthers = [
     ...(hRes.hotels || []),
     ...(aRes.agents || []),
     ...(eRes.exhibitors || []),
-    ...boardsAsExhibitors
+    ...boardsAsExhibitors,
+    ...exhibitorProfilesAsExhibitors
   ].filter(o => o.id !== me.id);
 
   el.innerHTML = `
@@ -409,7 +418,7 @@ async function renderBookTab() {
     const filtered = allOthers.filter(o => {
       if (bookTypeFilter !== 'all' && o.type !== bookTypeFilter) return false;
       if (!q) return true;
-      return (o.org_name || '').toLowerCase().includes(q) || (o.country || '').toLowerCase().includes(q);
+      return (o.org_name || '').toLowerCase().includes(q) || (o.country || '').toLowerCase().includes(q) || (o.category || '').toLowerCase().includes(q);
     });
     list.innerHTML = filtered.map(o => {
       const typeClass = o.type === 'hotel' ? 'card-hotel' : o.type === 'exhibitor' ? 'card-exhibitor' : 'card-agent';

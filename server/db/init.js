@@ -220,6 +220,34 @@ function initDatabase() {
       ip_address  TEXT,
       created_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    -- =========================================================
+    -- EXHIBITORS (standalone profiles with contact forms)
+    -- =========================================================
+    CREATE TABLE IF NOT EXISTS exhibitors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      category TEXT,
+      description TEXT,
+      logo_url TEXT,
+      website TEXT,
+      contact_name TEXT,
+      contact_email TEXT NOT NULL,
+      booth_number TEXT,
+      active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS exhibitor_contacts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      exhibitor_id INTEGER NOT NULL REFERENCES exhibitors(id),
+      sender_name TEXT NOT NULL,
+      sender_company TEXT,
+      sender_email TEXT NOT NULL,
+      message TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   // Migration: add photo_url if missing (for existing DBs)

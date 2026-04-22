@@ -168,6 +168,14 @@ function seed() {
   const n = regenerateAllSlots();
   console.log(`Regenerated ${n} slots.`);
 
+  // Seed first exhibitor
+  db.prepare(`INSERT OR IGNORE INTO exhibitors (slug, name, category, description, website, contact_name, contact_email, booth_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    'elevate-world', 'Elevate World', 'Destination Management',
+    'Elevate World is a global travel and tourism group delivering exceptional destination services across the Middle East, Indian Ocean, Southeast Asia, and beyond.',
+    'https://www.elevatedmc.com', 'Fra', 'francesco.terragni+exhibit1@elevatedmc.com', '01'
+  );
+  console.log('Exhibitor seeded.');
+
   console.log('✓ Seed complete');
 }
 

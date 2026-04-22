@@ -525,11 +525,46 @@ View directory: ${SITE}/directory`;
   return send(to, subject, html, text, { template: 'admin_notification' });
 }
 
+// ================================================================
+// 7. Exhibitor contact — notify exhibitor
+// ================================================================
+
+async function sendExhibitorContact(exhibitor, sub) {
+  const subject = `New enquiry from ${sub.sender_name} — Engage by Elevate`;
+  const html = wrap(`
+    ${heading('New Enquiry')}
+    ${subheading(`${esc(sub.sender_name)}${sub.sender_company ? ' from ' + esc(sub.sender_company) : ''} has sent you a message via your Engage by Elevate profile.`)}
+    ${meetingCard({ org: sub.sender_name, contact: sub.sender_company || '', datetime: sub.sender_email })}
+    ${blockquote(sub.message)}
+    ${footnote('Reply directly to <a href="mailto:' + esc(sub.sender_email) + '" style="color:' + C_RUST + ';text-decoration:none">' + esc(sub.sender_email) + '</a> to respond.')}
+  `);
+  const text = `New enquiry from ${sub.sender_name}${sub.sender_company ? ' (' + sub.sender_company + ')' : ''}\nEmail: ${sub.sender_email}\n\nMessage:\n${sub.message}\n\nReply to ${sub.sender_email} to respond.`;
+  return send(exhibitor.contact_email, subject, html, text, { template: 'exhibitor_contact' });
+}
+
+// ================================================================
+// 8. Exhibitor contact — acknowledgement to sender
+// ================================================================
+
+async function sendExhibitorContactAck(exhibitor, sub) {
+  const subject = `Your message to ${exhibitor.name} — Engage by Elevate`;
+  const html = wrap(`
+    ${heading('Message Sent')}
+    ${subheading(`Your message has been forwarded to <strong style="color:${C_WHITE}">${esc(exhibitor.name)}</strong>. They will be in touch directly.`)}
+    ${meetingCard({ org: exhibitor.name, contact: exhibitor.booth_number ? 'Booth ' + exhibitor.booth_number : '', datetime: exhibitor.website || '' })}
+    ${blockquote(sub.message)}
+  `);
+  const text = `Your message to ${exhibitor.name} has been sent.\n\nOriginal message:\n${sub.message}\n\nThey will reply directly to your email.`;
+  return send(sub.sender_email, subject, html, text, { template: 'exhibitor_contact_ack' });
+}
+
 module.exports = {
   sendMagicLink,
   sendMeetingRequest,
   sendMeetingApproved,
   sendMeetingDeclined,
   sendMeetingCancelled,
-  sendAdminNotification
+  sendAdminNotification,
+  sendExhibitorContact,
+  sendExhibitorContactAck
 };

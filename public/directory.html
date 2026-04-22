@@ -94,21 +94,22 @@
   });
 
   let me = null, currentView = 'hotels';
-  let data = { hotels: [], agents: [], boards: [] };
+  let data = { hotels: [], agents: [], boards: [], exhibitorProfiles: [] };
 
   async function init() {
     me = await getMe();
     await updateNavForUser(me);
-    await Promise.all([loadHotels(), loadAgents(), loadBoards()]);
+    await Promise.all([loadHotels(), loadAgents(), loadBoards(), loadExhibitorProfiles()]);
     document.getElementById('count-hotels').textContent = `(${data.hotels.length})`;
     document.getElementById('count-agents').textContent = `(${data.agents.length})`;
-    document.getElementById('count-boards').textContent = `(${data.boards.length})`;
+    document.getElementById('count-boards').textContent = `(${(data.boards.length + data.exhibitorProfiles.length)})`;
     render();
   }
 
   async function loadHotels() { try { data.hotels = (await api.get('/api/public/hotels')).hotels; } catch {} }
   async function loadAgents() { try { data.agents = (await api.get('/api/public/agents')).agents; } catch {} }
   async function loadBoards() { try { data.boards = (await api.get('/api/public/tourism-boards')).boards; } catch {} }
+  async function loadExhibitorProfiles() { try { data.exhibitorProfiles = (await api.get('/api/exhibitors')).exhibitors; } catch { data.exhibitorProfiles = []; } }
 
   document.querySelectorAll('.dash-tab').forEach(t => {
     t.addEventListener('click', () => {
@@ -124,7 +125,7 @@
     if (!query) return true;
     const q = query.toLowerCase();
     return (item.org_name || item.name || '').toLowerCase().includes(q) ||
-           (item.country || '').toLowerCase().includes(q) ||
+           (item.country || item.category || '').toLowerCase().includes(q) ||
            (item.city || '').toLowerCase().includes(q);
   }
 
@@ -132,27 +133,48 @@
     const container = document.getElementById('directory-content');
     const q = document.getElementById('search').value;
 
-    let items, empty;
+    let items, extraItems, empty;
     if (currentView === 'hotels') { items = data.hotels.filter(h => matches(h, q)); empty = 'No hotels yet.'; }
     else if (currentView === 'agents') { items = data.agents.filter(a => matches(a, q)); empty = 'No agencies yet.'; }
-    else { items = data.boards.filter(b => matches(b, q)); empty = 'Exhibitors coming soon.'; }
+    else {
+      items = data.boards.filter(b => matches(b, q));
+      extraItems = data.exhibitorProfiles.filter(b => matches(b, q));
+      empty = 'Exhibitors coming soon.';
+    }
 
-    document.getElementById('count-' + currentView).textContent = '(' + items.length + ')';
+    const totalCount = currentView === 'boards' ? (items.length + (extraItems ? extraItems.length : 0)) : items.length;
+    document.getElementById('count-' + currentView).textContent = '(' + totalCount + ')';
 
-    if (!items.length) {
+    if (currentView === 'boards' && !items.length && (!extraItems || !extraItems.length)) {
+      container.innerHTML = `<div class="empty-state"><h3>Nothing here yet</h3><p>${empty}</p></div>`;
+      return;
+    }
+    if (currentView !== 'boards' && !items.length) {
       container.innerHTML = `<div class="empty-state"><h3>Nothing here yet</h3><p>${empty}</p></div>`;
       return;
     }
 
     if (currentView === 'boards') {
-      container.innerHTML = `<div class="directory-grid">${items.map(b => `
+      const boardCards = items.map(b => `
         <div class="org-card card-exhibitor">
           <div class="type-icon type-exhibitor"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Exhibitor</div>
           <h3>${escapeHtml(b.name)}</h3>
           <div class="org-meta">${escapeHtml(b.country || '')}</div>
           <div class="org-desc">${escapeHtml(b.description || '')}</div>
         </div>
-      `).join('')}</div>`;
+      `).join('');
+      const exhibitorCards = (extraItems || []).map(ex => `
+        <a class="org-card card-exhibitor" href="/exhibitor/${encodeURIComponent(ex.slug)}">
+          ${ex.logo_url
+            ? `<img class="org-logo" src="${escapeHtml(ex.logo_url)}" alt="">`
+            : `<div class="org-logo" style="display:flex;align-items:center;justify-content:center;font-weight:800;color:#F59E0B;font-size:16px">${(ex.name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()}</div>`
+          }
+          <div class="type-icon type-exhibitor"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Exhibitor${ex.category ? ' · ' + escapeHtml(ex.category) : ''}${ex.booth_number ? ' · Booth ' + escapeHtml(ex.booth_number) : ''}</div>
+          <h3>${escapeHtml(ex.name)}</h3>
+          <div class="org-desc">${escapeHtml(ex.description || '')}</div>
+        </a>
+      `).join('');
+      container.innerHTML = `<div class="directory-grid">${boardCards}${exhibitorCards}</div>`;
       return;
     }
 
