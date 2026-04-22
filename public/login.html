@@ -36,8 +36,8 @@
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
-      <a href="/login.html">Sign in</a>
-      <a href="/signup.html" class="nav-cta">Register Now</a>
+      <a id="nav-auth-link" href="/login.html">Sign in</a>
+      <a href="/signup.html" class="nav-cta" id="nav-cta-link">Register Now</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
       <span class="bar"></span>
@@ -89,6 +89,12 @@
     document.getElementById('nav-links').classList.toggle('open');
     document.getElementById('nav-toggle').classList.toggle('open');
   });
+
+  // Auth check: redirect logged-in users to dashboard
+  (async () => {
+    const me = await getMe();
+    if (me) return location.href = '/dashboard';
+  })();
 
   document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();

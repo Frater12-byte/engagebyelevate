@@ -35,7 +35,7 @@
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
       <a id="nav-auth-link" href="/login.html">Sign in</a>
-      <a href="/signup.html" class="nav-cta">Register Now</a>
+      <a href="/signup.html" class="nav-cta" id="nav-cta-link">Register Now</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
       <span class="bar"></span>
@@ -76,8 +76,10 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 (async () => {
   const me = await getMe();
   if (me) {
-    document.getElementById('nav-auth-link').textContent = 'Dashboard';
+    document.getElementById('nav-auth-link').textContent = 'My Dashboard';
     document.getElementById('nav-auth-link').href = '/dashboard';
+    const ctaLink = document.getElementById('nav-cta-link');
+    if (ctaLink) { ctaLink.textContent = 'Sign out'; ctaLink.href = '#'; ctaLink.className = ''; ctaLink.onclick = async (e) => { e.preventDefault(); await api.post('/auth/logout'); location.href = '/'; }; }
   }
 
   const id = new URLSearchParams(location.search).get('id');
