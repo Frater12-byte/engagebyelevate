@@ -81,43 +81,58 @@ function fmtShort(iso) {
   return dayjs(iso).tz(EVENT_TZ).format('ddd, MMM D [at] HH:mm') + ' GST';
 }
 
-/** Outlook-safe CTA button using VML fallback */
-function btn(label, href, bg = '#C85A3A') {
+// Font stacks matching the website
+const F_DISPLAY = "'Archivo', Georgia, serif";
+const F_BODY = "'Manrope', -apple-system, 'Segoe UI', sans-serif";
+const C_RUST = '#E8612A';
+const C_WHITE = '#ffffff';
+const C_SOFT = '#b0b0b8';
+const C_MUTED = '#6a6a75';
+const C_CARD = '#141416';
+
+/** Outlook-safe CTA button — large, prominent */
+function btn(label, href, bg = C_RUST) {
   return `
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:28px 0">
   <tr>
-    <td align="center" style="border-radius:4px;background:${bg}">
-      <!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:48px;v-text-anchor:middle;width:240px" arcsize="8%" stroke="f" fillcolor="${bg}">
-        <w:anchorlock/>
-        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase">${esc(label)}</center>
-      </v:roundrect>
-      <![endif]-->
-      <!--[if !mso]><!-->
-      <a href="${href}" target="_blank" style="display:inline-block;padding:14px 36px;background:${bg};color:#ffffff;text-decoration:none;font-family:'Manrope',-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:4px;line-height:1;mso-hide:all">${esc(label)}</a>
-      <!--<![endif]-->
+    <td align="center">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="center" style="border-radius:6px;background:${bg}">
+            <!--[if mso]>
+            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:52px;v-text-anchor:middle;width:280px" arcsize="8%" stroke="f" fillcolor="${bg}">
+              <w:anchorlock/>
+              <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:1px">${esc(label)}</center>
+            </v:roundrect>
+            <![endif]-->
+            <!--[if !mso]><!-->
+            <a href="${href}" target="_blank" style="display:inline-block;padding:16px 48px;background:${bg};color:#ffffff;text-decoration:none;font-family:${F_BODY};font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:6px;line-height:1;mso-hide:all">${esc(label)}</a>
+            <!--<![endif]-->
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>`;
 }
 
-/** Meeting details card */
+/** Meeting details card — clean, spacious */
 function meetingCard(data) {
   return `
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0;border-left:3px solid #C85A3A;background:#141414">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0;border-radius:8px;overflow:hidden">
   <tr>
-    <td style="padding:20px 24px">
-      ${data.org ? `<div style="font-family:'Archivo',Georgia,serif;font-size:18px;font-weight:700;color:#ffffff;margin-bottom:4px">${esc(data.org)}</div>` : ''}
-      ${data.contact ? `<div style="font-family:'Manrope',-apple-system,sans-serif;font-size:14px;color:#a0a0a8;margin-bottom:12px">${esc(data.contact)}</div>` : ''}
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+    <td style="background:${C_CARD};padding:24px 28px;border-left:4px solid ${C_RUST}">
+      ${data.org ? `<div style="font-family:${F_DISPLAY};font-size:20px;font-weight:700;color:${C_WHITE};margin-bottom:6px">${esc(data.org)}</div>` : ''}
+      ${data.contact ? `<div style="font-family:${F_BODY};font-size:15px;color:${C_SOFT};margin-bottom:16px">${esc(data.contact)}</div>` : ''}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
-          <td style="padding-right:24px">
-            <div style="font-family:'Manrope',-apple-system,sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#5a5a65;margin-bottom:4px">Date & Time</div>
-            <div style="font-family:'Archivo',Georgia,serif;font-size:15px;color:#ffffff">${data.datetime}</div>
+          <td style="padding-right:32px;vertical-align:top">
+            <div style="font-family:${F_BODY};font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${C_MUTED};margin-bottom:6px">When</div>
+            <div style="font-family:${F_DISPLAY};font-size:16px;font-weight:600;color:${C_WHITE}">${data.datetime}</div>
           </td>
-          <td>
-            <div style="font-family:'Manrope',-apple-system,sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#5a5a65;margin-bottom:4px">Duration</div>
-            <div style="font-family:'Archivo',Georgia,serif;font-size:15px;color:#ffffff">20 minutes</div>
+          <td style="vertical-align:top">
+            <div style="font-family:${F_BODY};font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${C_MUTED};margin-bottom:6px">Duration</div>
+            <div style="font-family:${F_DISPLAY};font-size:16px;font-weight:600;color:${C_WHITE}">20 min</div>
           </td>
         </tr>
       </table>
@@ -162,9 +177,9 @@ function wrap(content) {
           </td>
         </tr>
 
-        <!-- Content area with subtle color spark -->
+        <!-- Content -->
         <tr>
-          <td style="font-family:'Manrope',-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.7;color:#a0a0a8;background-image:radial-gradient(ellipse at 90% 10%, rgba(232,97,42,0.04) 0%, transparent 50%),radial-gradient(ellipse at 10% 80%, rgba(99,140,255,0.03) 0%, transparent 50%);background-color:#0A0A0A">
+          <td style="font-family:${F_BODY};font-size:16px;line-height:1.75;color:${C_SOFT}">
             ${content}
           </td>
         </tr>
@@ -216,30 +231,32 @@ function wrap(content) {
 }
 
 function heading(text) {
-  return `<div style="font-family:'Archivo',Georgia,serif;font-size:24px;font-weight:700;color:#ffffff;line-height:1.2;margin-bottom:20px">${text}</div>`;
+  return `<div style="font-family:${F_DISPLAY};font-size:28px;font-weight:800;color:${C_WHITE};line-height:1.2;margin-bottom:8px;letter-spacing:-0.02em">${text}</div>`;
+}
+
+function subheading(text) {
+  return `<div style="font-size:17px;color:${C_SOFT};margin-bottom:24px;line-height:1.6">${text}</div>`;
 }
 
 function greeting(name) {
-  return name
-    ? `<div style="color:#ffffff;margin-bottom:16px">Hello ${esc(name)},</div>`
-    : `<div style="color:#ffffff;margin-bottom:16px">Hello,</div>`;
+  return `<div style="color:${C_WHITE};font-size:17px;margin-bottom:20px">Hi ${esc(name || 'there')},</div>`;
 }
 
 function blockquote(text) {
   return `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:20px 0">
   <tr>
-    <td style="border-left:2px solid #C85A3A;padding:12px 20px;font-style:italic;color:#a0a0a8;font-size:14px;line-height:1.6">${esc(text)}</td>
+    <td style="border-left:3px solid ${C_RUST};padding:16px 24px;font-style:italic;color:${C_SOFT};font-size:15px;line-height:1.7;background:${C_CARD};border-radius:0 6px 6px 0">${esc(text)}</td>
   </tr>
 </table>`;
 }
 
 function fallbackLink(url) {
-  return `<div style="margin-top:8px;font-size:12px;color:#5a5a65;word-break:break-all">Or paste this URL into your browser:<br><a href="${url}" style="color:#C85A3A;text-decoration:none">${url}</a></div>`;
+  return `<div style="margin-top:12px;font-size:13px;color:${C_MUTED};word-break:break-all;line-height:1.6">Or copy this link:<br><a href="${url}" style="color:${C_RUST};text-decoration:none">${url}</a></div>`;
 }
 
 function footnote(text) {
-  return `<div style="margin-top:32px;font-size:13px;color:#5a5a65;line-height:1.6">${text}</div>`;
+  return `<div style="margin-top:36px;padding-top:20px;border-top:1px solid #1a1a1f;font-size:13px;color:${C_MUTED};line-height:1.6">${text}</div>`;
 }
 
 // ================================================================
@@ -251,12 +268,12 @@ async function sendMagicLink(user, token) {
   const subject = 'Your access link to Engage by Elevate';
 
   const html = wrap(`
-    ${heading('Your Access Link')}
+    ${heading('Welcome to Engage')}
     ${greeting(user.contact_name)}
-    <div style="margin-bottom:20px">Click below to access your dashboard for Engage by Elevate, ${EVENT_DATES} in ${EVENT_LOCATION}. From here you can view your personal agenda, manage meeting requests, and update your profile.</div>
-    ${btn('ACCESS DASHBOARD', url)}
+    ${subheading('Your personal dashboard is ready. View your agenda, browse participants, and start booking meetings.')}
+    ${btn('Open Your Dashboard', url)}
     ${fallbackLink(url)}
-    ${footnote("This link is unique to your account. Don't share it \u2014 anyone with this link can access your profile.")}
+    ${footnote("This link is unique to your account. Keep it private \u2014 anyone with this link can access your profile.")}
   `);
 
   const text = `Hello ${user.contact_name || ''},
@@ -289,22 +306,18 @@ async function sendMeetingRequest(meeting, requester, recipient) {
   const html = wrap(`
     ${heading('New Meeting Request')}
     ${greeting(recipient.contact_name)}
-    <div style="margin-bottom:8px">You have a new meeting request from <strong style="color:#ffffff">${esc(requester.org_name)}</strong>.</div>
+    ${subheading(`<strong style="color:${C_WHITE}">${esc(requester.org_name)}</strong> would like to meet with you.`)}
     ${meetingCard({
       org: requester.org_name,
       contact: requester.contact_name,
       datetime: fmtShort(meeting.start_time)
     })}
     ${meeting.message ? blockquote(meeting.message) : ''}
-    ${btn('REVIEW REQUEST', dashUrl)}
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:-16px">
-      <tr>
-        <td>
-          <a href="${profileUrl}" style="font-family:'Manrope',-apple-system,sans-serif;font-size:12px;letter-spacing:0.5px;color:#C85A3A;text-decoration:none;text-transform:uppercase;font-weight:600">View ${esc(requester.org_name)}'s profile</a>
-        </td>
-      </tr>
-    </table>
-    ${footnote('This request expires 48 hours before the proposed meeting time if not actioned.')}
+    ${btn('Review Request', dashUrl)}
+    <div style="text-align:center;margin-top:-8px">
+      <a href="${profileUrl}" style="font-family:${F_BODY};font-size:13px;color:${C_RUST};text-decoration:none">View their profile</a>
+    </div>
+    ${footnote('This request expires 48 hours before the meeting time if not actioned.')}
   `);
 
   const text = `Hello ${recipient.contact_name || ''},
@@ -334,20 +347,20 @@ ${SITE}`;
 
 async function sendMeetingApproved(meeting) {
   const teamsBlock = meeting.teams_join_url
-    ? btn('JOIN TEAMS MEETING', meeting.teams_join_url, '#5B5FC7')
-    : `<div style="margin:24px 0;padding:16px 20px;background:#141414;border-left:3px solid #5a5a65;font-size:14px;color:#a0a0a8">The Teams link will be sent separately by the organizer.</div>`;
+    ? btn('Join Teams Meeting', meeting.teams_join_url, '#5B5FC7')
+    : `<div style="margin:24px 0;padding:16px 24px;background:${C_CARD};border-radius:6px;font-size:14px;color:${C_SOFT};text-align:center">Teams link will be shared by email before the meeting.</div>`;
 
   const buildHtml = (toName, otherOrg, otherContact) => wrap(`
     ${heading('Meeting Confirmed')}
     ${greeting(toName)}
-    <div style="margin-bottom:8px">Your meeting with <strong style="color:#ffffff">${esc(otherOrg)}</strong> is confirmed.</div>
+    ${subheading(`Your meeting with <strong style="color:${C_WHITE}">${esc(otherOrg)}</strong> is confirmed.`)}
     ${meetingCard({
       org: otherOrg,
       contact: otherContact,
       datetime: fmtShort(meeting.start_time)
     })}
     ${teamsBlock}
-    ${footnote('Add this meeting to your calendar by saving the invite from your <a href="' + SITE + '/dashboard" style="color:#C85A3A;text-decoration:none">dashboard</a>.')}
+    ${footnote('View all your meetings on your <a href="' + SITE + '/dashboard" style="color:' + C_RUST + ';text-decoration:none">dashboard</a>.')}
   `);
 
   const buildText = (toName, otherOrg, otherContact) => `Hello ${toName || ''},
@@ -391,15 +404,15 @@ async function sendMeetingDeclined(meeting) {
   const subject = `Meeting request with ${meeting.recipient_org} was declined`;
 
   const html = wrap(`
-    ${heading('Meeting Request Declined')}
+    ${heading('Request Declined')}
     ${greeting(meeting.requester_name)}
-    <div style="margin-bottom:8px"><strong style="color:#ffffff">${esc(meeting.recipient_org)}</strong> is unable to meet at the time you proposed. You may be able to find another slot that works for both of you.</div>
-    ${meeting.decline_reason ? blockquote(meeting.decline_reason) : ''}
+    ${subheading(`<strong style="color:${C_WHITE}">${esc(meeting.recipient_org)}</strong> is unable to meet at the proposed time. You can try another slot.`)}
     ${meetingCard({
       org: meeting.recipient_org,
       datetime: fmtShort(meeting.start_time)
     })}
-    ${btn('BACK TO DASHBOARD', dashUrl)}
+    ${meeting.decline_reason ? blockquote(meeting.decline_reason) : ''}
+    ${btn('Back to Dashboard', dashUrl)}
   `);
 
   const text = `Hello ${meeting.requester_name || ''},
@@ -435,12 +448,12 @@ async function sendMeetingCancelled(meeting, cancelledByUserId) {
   const html = wrap(`
     ${heading('Meeting Cancelled')}
     ${greeting(otherName)}
-    <div style="margin-bottom:8px"><strong style="color:#ffffff">${esc(cancellerOrg)}</strong> has cancelled your meeting scheduled for ${fmtShort(meeting.start_time)}. Your slot is now free for other requests.</div>
+    ${subheading(`<strong style="color:${C_WHITE}">${esc(cancellerOrg)}</strong> has cancelled your meeting. Your slot is now free.`)}
     ${meetingCard({
       org: cancellerOrg,
       datetime: fmtShort(meeting.start_time)
     })}
-    ${btn('BACK TO DASHBOARD', dashUrl)}
+    ${btn('Back to Dashboard', dashUrl)}
   `);
 
   const text = `Hello ${otherName || ''},
@@ -468,13 +481,13 @@ async function sendAdminNotification(to, reg) {
 
   const html = wrap(`
     ${heading('New Registration')}
-    <div style="margin-bottom:20px">A new <strong style="color:#ffffff">${reg.type}</strong> just registered on Engage by Elevate.</div>
+    ${subheading(`A new <strong style="color:${C_WHITE}">${reg.type}</strong> just registered.`)}
     ${meetingCard({
       org: reg.org_name,
-      contact: `${reg.contact_name} — ${reg.email}`,
+      contact: `${reg.contact_name} \u2014 ${reg.email}`,
       datetime: `${reg.city ? reg.city + ', ' : ''}${reg.country}`
     })}
-    ${btn('VIEW DIRECTORY', SITE + '/directory')}
+    ${btn('View Directory', SITE + '/directory')}
   `);
 
   const text = `New ${reg.type} registration on Engage by Elevate:
