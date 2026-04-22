@@ -13,10 +13,6 @@
 <meta property="og:description" content="View exhibitor profile at Engage by Elevate 2026.">
 <meta property="og:image" content="https://engagebyelevate.com/img/og-image.svg">
 <meta property="og:site_name" content="Engage by Elevate">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Exhibitor — Engage by Elevate 2026">
-<meta name="twitter:description" content="View exhibitor profile at Engage by Elevate 2026.">
-<meta name="twitter:image" content="https://engagebyelevate.com/img/og-image.svg">
 <link rel="stylesheet" href="/css/main.css">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-HS8W2SFVZJ"></script>
@@ -48,17 +44,9 @@
   </div>
 </nav>
 
-<section>
-  <div class="container" style="max-width:800px">
-    <a href="/directory" style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-muted);display:inline-flex;align-items:center;gap:6px;margin-bottom:32px">
-      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      Back to directory
-    </a>
-    <div id="content">
-      <div class="loader" style="margin:80px auto;display:block"></div>
-    </div>
-  </div>
-</section>
+<div id="content">
+  <div class="loader" style="margin:120px auto;display:block"></div>
+</div>
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
@@ -80,7 +68,6 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
   const me = await getMe();
   await updateNavForUser(me);
 
-  // Extract slug from URL: /exhibitor/some-slug
   const slug = location.pathname.split('/').filter(Boolean).pop();
   if (!slug) return location.href = '/directory';
 
@@ -90,69 +77,132 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
     const { exhibitor: ex } = await api.get(`/api/exhibitors/${encodeURIComponent(slug)}`);
     const initials = (ex.name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
 
-    content.innerHTML = `
-      <!-- Exhibitor header -->
-      <div style="text-align:center;margin-bottom:40px">
-        ${ex.logo_url
-          ? `<img src="${escapeHtml(ex.logo_url)}" alt="${escapeHtml(ex.name)}" style="width:100px;height:100px;border-radius:var(--radius-sm);object-fit:contain;background:var(--bg-elevated);margin-bottom:20px">`
-          : `<div style="width:100px;height:100px;border-radius:var(--radius-sm);background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:32px;color:var(--orange);margin:0 auto 20px">${initials}</div>`
-        }
-        <div class="eyebrow" style="margin-bottom:8px">
-          Exhibitor${ex.category ? ' · ' + escapeHtml(ex.category) : ''}
-        </div>
-        <h1 style="font-size:clamp(1.8rem,6vw,3rem)">${escapeHtml(ex.name)}</h1>
-        ${ex.booth_number ? `<div style="margin-top:12px"><span class="badge badge-gold">Booth ${escapeHtml(ex.booth_number)}</span></div>` : ''}
-        ${ex.description ? `
-          <hr class="gradient-line" style="margin:24px 0">
-          <p style="font-size:1rem;line-height:1.8;color:var(--ink-soft);max-width:56ch;margin:0 auto 24px;text-align:center">${escapeHtml(ex.description)}</p>
-        ` : ''}
-        ${ex.website ? `<p style="margin-top:12px"><a href="${escapeHtml(ex.website)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:14px">
-          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          ${escapeHtml(ex.website.replace(/^https?:\/\//, ''))}
-        </a></p>` : ''}
-      </div>
+    document.title = `${ex.name} — Engage by Elevate 2026`;
 
-      <!-- Contact form -->
-      <div style="margin-top:48px;padding:32px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius)">
-        <h3 style="margin-bottom:8px">Get in touch</h3>
-        <p class="text-muted" style="margin-bottom:24px">Send a message to ${escapeHtml(ex.name)}. They will reply directly to your email.</p>
-        <form id="contact-form">
-          <div class="form-grid">
-            <div class="field"><label>Your Name *</label><input name="sender_name" required ${me ? `value="${escapeHtml(me.contact_name)}"` : ''}></div>
-            <div class="field"><label>Company</label><input name="sender_company" ${me ? `value="${escapeHtml(me.org_name)}"` : ''}></div>
+    content.innerHTML = `
+      <!-- Hero banner -->
+      <section class="hero" style="padding:56px 0 40px;position:relative;overflow:hidden">
+        <div class="glow-orange" style="top:-80px;right:-60px"></div>
+        <div class="glow-purple" style="bottom:-60px;left:-40px"></div>
+        <div class="container" style="max-width:800px;position:relative;z-index:2">
+          <a href="/directory" style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-muted);display:inline-flex;align-items:center;gap:6px;margin-bottom:24px">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Directory
+          </a>
+
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+            ${ex.logo_url
+              ? `<img src="${escapeHtml(ex.logo_url)}" alt="${escapeHtml(ex.name)}" style="width:80px;height:80px;border-radius:var(--radius-sm);object-fit:contain;background:var(--bg-elevated);flex-shrink:0">`
+              : `<div style="width:80px;height:80px;border-radius:var(--radius-sm);background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:28px;color:var(--orange);flex-shrink:0">${initials}</div>`
+            }
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">
+                Exhibitor${ex.category ? ' · ' + escapeHtml(ex.category) : ''}
+              </div>
+              <h1 style="font-size:clamp(1.8rem,5vw,2.8rem)">${escapeHtml(ex.name)}</h1>
+              ${ex.booth_number ? `<span class="badge badge-gold" style="margin-top:8px;display:inline-block">Booth ${escapeHtml(ex.booth_number)}</span>` : ''}
+            </div>
           </div>
-          <div class="field"><label>Email *</label><input name="sender_email" type="email" required ${me ? `value="${escapeHtml(me.email)}"` : ''}></div>
-          <div class="field"><label>Message *</label><textarea name="message" rows="5" required placeholder="Hi, I'd like to learn more about your offerings at Engage by Elevate..."></textarea></div>
-          <button type="submit" class="btn" style="width:100%;margin-top:8px">Send Message</button>
-        </form>
-        <div id="contact-success" style="display:none;text-align:center;padding:32px 0">
-          <div style="font-size:40px;margin-bottom:16px">&#10003;</div>
-          <h3>Message sent</h3>
-          <p class="text-muted" style="margin-top:8px">${escapeHtml(ex.name)} will reply directly to your email.</p>
         </div>
-      </div>
+      </section>
+
+      <hr class="gradient-line">
+
+      <!-- About -->
+      <section style="padding:48px 0">
+        <div class="container" style="max-width:800px">
+          ${ex.description ? `
+            <div class="eyebrow" style="margin-bottom:12px">About</div>
+            <p style="font-size:1.05rem;line-height:1.8;color:var(--ink-soft);max-width:60ch">${escapeHtml(ex.description)}</p>
+          ` : ''}
+
+          <!-- Details grid -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:32px">
+            ${ex.website ? `
+              <div style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:20px">
+                <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Website</div>
+                <a href="${escapeHtml(ex.website)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  ${escapeHtml(ex.website.replace(/^https?:\/\//, ''))}
+                </a>
+              </div>
+            ` : ''}
+            ${ex.booth_number ? `
+              <div style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:20px">
+                <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Booth</div>
+                <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:900;color:var(--orange)">${escapeHtml(ex.booth_number)}</div>
+              </div>
+            ` : ''}
+            ${ex.category ? `
+              <div style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:20px">
+                <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Category</div>
+                <div style="font-size:15px;font-weight:600;color:var(--white)">${escapeHtml(ex.category)}</div>
+              </div>
+            ` : ''}
+            ${ex.contact_name ? `
+              <div style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:20px">
+                <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Contact</div>
+                <div style="font-size:15px;font-weight:600;color:var(--white)">${escapeHtml(ex.contact_name)}</div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Contact section -->
+          <div style="margin-top:48px" id="contact-section">
+            ${me ? `
+              <div class="eyebrow" style="margin-bottom:12px">Get in Touch</div>
+              <h3 style="margin-bottom:8px">Send a message to ${escapeHtml(ex.name)}</h3>
+              <p class="text-muted" style="margin-bottom:20px;font-size:14px">Your message will be sent from <strong style="color:var(--white)">${escapeHtml(me.contact_name)}</strong> (${escapeHtml(me.org_name)}) to their team. They will reply directly to ${escapeHtml(me.email)}.</p>
+              <form id="contact-form" novalidate>
+                <div class="field">
+                  <label>Your Message</label>
+                  <textarea name="message" rows="5" required placeholder="Hi, I'd like to learn more about your offerings at Engage by Elevate..."></textarea>
+                </div>
+                <button type="submit" class="btn" style="width:100%">Send Message</button>
+              </form>
+              <div id="contact-success" style="display:none;text-align:center;padding:40px 0">
+                <div style="font-family:var(--font-display);font-size:2rem;font-weight:900;color:var(--success);margin-bottom:12px">Sent</div>
+                <h3>Message delivered</h3>
+                <p class="text-muted" style="margin-top:8px">${escapeHtml(ex.name)} will reply to ${escapeHtml(me.email)} directly.</p>
+                <a href="/directory" class="btn btn-ghost btn-inline" style="margin-top:20px">Back to Directory</a>
+              </div>
+            ` : `
+              <div style="text-align:center;padding:40px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius)">
+                <h3 style="margin-bottom:8px">Want to connect with ${escapeHtml(ex.name)}?</h3>
+                <p class="text-muted" style="margin-bottom:20px">Sign in to send them a message.</p>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                  <a href="/login.html" class="btn btn-inline">Sign In</a>
+                  <a href="/signup.html" class="btn btn-ghost btn-inline">Register</a>
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+      </section>
     `;
 
-    document.title = `${ex.name} — Engage by Elevate`;
-
-    document.getElementById('contact-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = e.target.querySelector('button');
-      btn.disabled = true; btn.textContent = 'Sending...';
-      const fd = new FormData(e.target);
-      const body = Object.fromEntries(fd.entries());
-      try {
-        await api.post(`/api/exhibitors/${slug}/contact`, body);
-        document.getElementById('contact-form').style.display = 'none';
-        document.getElementById('contact-success').style.display = 'block';
-      } catch (err) {
-        toast(err.message, 'error');
-        btn.disabled = false; btn.textContent = 'Send Message';
-      }
-    });
+    // Wire contact form
+    const form = document.getElementById('contact-form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msg = form.querySelector('textarea').value.trim();
+        if (!msg) { toast('Please write a message', 'error'); return; }
+        const btn = form.querySelector('button');
+        btn.disabled = true; btn.textContent = 'Sending...';
+        try {
+          await api.post(`/api/exhibitors/${slug}/contact`, { message: msg });
+          form.style.display = 'none';
+          document.getElementById('contact-success').style.display = 'block';
+        } catch (err) {
+          toast(err.message, 'error');
+          btn.disabled = false; btn.textContent = 'Send Message';
+        }
+      });
+    }
 
   } catch (err) {
-    content.innerHTML = '<div class="empty-state"><h3>Exhibitor not found</h3><p>This exhibitor may have been removed.</p></div>';
+    content.innerHTML = '<section><div class="container" style="max-width:800px"><div class="empty-state"><h3>Exhibitor not found</h3><p>This exhibitor may have been removed.</p><a href="/directory" class="btn btn-ghost btn-inline" style="margin-top:16px">Back to Directory</a></div></div></section>';
   }
 })();
 </script>

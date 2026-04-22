@@ -1,10 +1,11 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { getDb } = require('../db/connection');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-const contactLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3, message: { error: 'Too many messages. Try again later.' } });
+const contactLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { error: 'Too many messages. Try again later.' } });
 
 // List all active exhibitors
 router.get('/', (req, res) => {
@@ -21,24 +22,27 @@ router.get('/:slug', (req, res) => {
   res.json({ exhibitor: row });
 });
 
-// Contact form submission
-router.post('/:slug/contact', contactLimiter, async (req, res) => {
+// Contact form — requires login, auto-populates sender from session
+router.post('/:slug/contact', requireAuth, contactLimiter, async (req, res) => {
   const db = getDb();
   const exhibitor = db.prepare('SELECT * FROM exhibitors WHERE slug = ? AND active = 1').get(req.params.slug);
   if (!exhibitor) return res.status(404).json({ error: 'Not found' });
 
-  const { sender_name, sender_company, sender_email, message } = req.body;
-  if (!sender_name || !sender_email || !message) {
-    return res.status(400).json({ error: 'Name, email and message are required' });
+  const { message } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ error: 'Please write a message' });
   }
 
+  const sender_name = req.user.contact_name;
+  const sender_company = req.user.org_name;
+  const sender_email = req.user.email;
+
   db.prepare('INSERT INTO exhibitor_contacts (exhibitor_id, sender_name, sender_company, sender_email, message) VALUES (?, ?, ?, ?, ?)').run(
-    exhibitor.id, sender_name, sender_company || null, sender_email, message
+    exhibitor.id, sender_name, sender_company, sender_email, message.trim()
   );
 
-  const submission = { sender_name, sender_company, sender_email, message };
+  const submission = { sender_name, sender_company, sender_email, message: message.trim() };
 
-  // Send emails (non-blocking)
   try {
     const email = require('../services/email');
     await email.sendExhibitorContact(exhibitor, submission);
