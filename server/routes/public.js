@@ -104,4 +104,13 @@ router.get('/stats', (req, res) => {
   res.json({ hotels, agents, meetings, boards });
 });
 
+// Check if email already registered
+router.get('/check-email', (req, res) => {
+  const email = String(req.query.email || '').toLowerCase().trim();
+  if (!email) return res.json({ exists: false });
+  const db = getDb();
+  const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  res.json({ exists: !!user });
+});
+
 module.exports = router;

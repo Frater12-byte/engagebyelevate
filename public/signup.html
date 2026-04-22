@@ -67,6 +67,7 @@
       <div class="wizard-step" data-step="2"></div>
       <div class="wizard-step" data-step="3"></div>
       <div class="wizard-step" data-step="4"></div>
+      <div class="wizard-step" data-step="5"></div>
     </div>
 
     <form id="signup-form" novalidate>
@@ -218,7 +219,21 @@
 
         <div class="wizard-nav">
           <button type="button" class="btn btn-ghost" id="back-to-3">Back</button>
-          <button type="submit" class="btn">Create Account</button>
+          <button type="button" class="btn" id="next-to-5">Review & Submit</button>
+        </div>
+      </div>
+
+      <!-- STEP 5: Review & confirm -->
+      <div class="wizard-panel" data-panel="5">
+        <h3 style="margin-bottom:16px">Review your details</h3>
+        <div class="notice" style="border-color:var(--orange)">
+          <p><strong>Review carefully</strong> — once you register, you'll receive access via this email address. Your account cannot be transferred to a different email later.</p>
+        </div>
+        <div id="review-summary" style="margin-top:20px"></div>
+        <div id="review-error" style="display:none;margin-top:16px;padding:16px;background:var(--danger-dim);border:1px solid rgba(255,59,59,0.2);border-radius:var(--radius-sm);color:var(--danger);font-size:14px"></div>
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" id="back-to-4">Back to edit</button>
+          <button type="button" class="btn" id="confirm-submit">Confirm & create account</button>
         </div>
       </div>
     </form>
@@ -315,6 +330,93 @@
 
   // Step 4 nav
   document.getElementById('back-to-3').addEventListener('click', () => goToStep(3));
+  document.getElementById('next-to-5').addEventListener('click', async () => {
+    // Build form data for review
+    const fd = new FormData(form);
+    const body = Object.fromEntries(fd.entries());
+
+    // Check for duplicate email before showing review
+    const email = (body.email || '').toLowerCase().trim();
+    if (email) {
+      try {
+        const { exists } = await api.get('/api/public/check-email?email=' + encodeURIComponent(email));
+        if (exists) {
+          toast('An account already exists with this email.', 'error');
+          const emailDup = document.getElementById('email-dup-warn');
+          if (!emailDup) {
+            const emailField = form.querySelector('input[name="email"]');
+            emailField.insertAdjacentHTML('afterend', '<p id="email-dup-warn" style="margin-top:6px;font-size:13px;color:var(--danger)">An account already exists with this email. <a href="/login.html">Sign in instead</a></p>');
+          }
+          goToStep(2);
+          return;
+        }
+      } catch {}
+    }
+
+    // Render review summary
+    const specialties = body.specialties ? body.specialties.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const markets = body.target_markets ? body.target_markets.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const isHotel = body.type === 'hotel';
+
+    document.getElementById('review-summary').innerHTML = `
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:16px">${isHotel ? 'Hotel' : 'Agency'}</div>
+      <div style="display:grid;gap:12px">
+        <div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Organization</span><div style="color:var(--white);font-size:1.1rem;font-weight:600;margin-top:2px">${escapeHtml(body.org_name)}</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Contact</span><div style="margin-top:2px">${escapeHtml(body.contact_name)}</div></div>
+          <div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Email (your login)</span><div style="margin-top:2px;color:var(--orange);font-weight:600">${escapeHtml(body.email)}</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          ${body.phone ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Phone</span><div style="margin-top:2px">${escapeHtml(body.phone)}</div></div>` : ''}
+          <div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Location</span><div style="margin-top:2px">${escapeHtml([body.city, body.country].filter(Boolean).join(', '))}</div></div>
+        </div>
+        ${isHotel && (body.star_rating || body.room_count) ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          ${body.star_rating ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Star Rating</span><div style="margin-top:2px">${body.star_rating} Stars</div></div>` : ''}
+          ${body.room_count ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Rooms</span><div style="margin-top:2px">${body.room_count}</div></div>` : ''}
+        </div>` : ''}
+        ${body.description ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Description</span><div style="margin-top:2px;color:var(--ink-soft)">${escapeHtml(body.description)}</div></div>` : ''}
+        ${specialties.length ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Specialties</span><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${specialties.map(s => `<span class="badge badge-gold">${escapeHtml(s)}</span>`).join('')}</div></div>` : ''}
+        ${markets.length ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Target Markets</span><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${markets.map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}</div></div>` : ''}
+        ${body.website ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Website</span><div style="margin-top:2px">${escapeHtml(body.website)}</div></div>` : ''}
+      </div>
+    `;
+    document.getElementById('review-error').style.display = 'none';
+    goToStep(5);
+  });
+
+  // Step 5 nav
+  document.getElementById('back-to-4').addEventListener('click', () => goToStep(4));
+  document.getElementById('confirm-submit').addEventListener('click', async () => {
+    const btn = document.getElementById('confirm-submit');
+    btn.disabled = true; btn.textContent = 'Creating account...';
+
+    const fd = new FormData(form);
+    const body = Object.fromEntries(fd.entries());
+    if (body.specialties) body.specialties = body.specialties.split(',').map(s => s.trim()).filter(Boolean);
+    if (body.target_markets) body.target_markets = body.target_markets.split(',').map(s => s.trim()).filter(Boolean);
+    if (body.room_count) body.room_count = parseInt(body.room_count, 10);
+    if (body.star_rating) body.star_rating = parseInt(body.star_rating, 10);
+
+    try {
+      await api.post('/auth/signup', body);
+      form.style.display = 'none';
+      document.querySelector('.wizard-steps').style.display = 'none';
+      const result = document.getElementById('result');
+      result.innerHTML = `
+        <div class="eyebrow" style="color:var(--success)">Registered</div>
+        <h3 style="margin-top:12px;color:var(--white)">Check your inbox.</h3>
+        <p style="margin-top:12px;color:var(--ink-soft)">We sent a login link to <strong style="color:var(--white)">${body.email}</strong>. Click it to access your dashboard and start booking meetings.</p>
+        <p class="text-muted" style="margin-top:16px;font-size:13px">The email may take 2-3 minutes to arrive. Don't see it? Check your spam folder or <a href="/login.html">request a new link</a>.</p>
+      `;
+      result.style.display = 'block';
+    } catch (err) {
+      const errDiv = document.getElementById('review-error');
+      errDiv.textContent = err.message;
+      errDiv.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Confirm & create account';
+    }
+  });
 
   // Logo preview
   let logoFile = null;
@@ -329,45 +431,6 @@
       document.getElementById('logo-placeholder').style.display = 'none';
     };
     reader.readAsDataURL(file);
-  });
-
-  // Submit
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = form.querySelector('button[type=submit]');
-    btn.disabled = true; btn.textContent = 'Creating account...';
-
-    const fd = new FormData(form);
-    const body = Object.fromEntries(fd.entries());
-    if (body.specialties) body.specialties = body.specialties.split(',').map(s => s.trim()).filter(Boolean);
-    if (body.target_markets) body.target_markets = body.target_markets.split(',').map(s => s.trim()).filter(Boolean);
-    if (body.room_count) body.room_count = parseInt(body.room_count, 10);
-    if (body.star_rating) body.star_rating = parseInt(body.star_rating, 10);
-
-    try {
-      const data = await api.post('/auth/signup', body);
-
-      // Upload logo if selected
-      if (logoFile) {
-        const logoFd = new FormData();
-        logoFd.append('logo', logoFile);
-        // Logo upload happens post-login from the dashboard.
-      }
-
-      form.style.display = 'none';
-      document.querySelector('.wizard-steps').style.display = 'none';
-      const result = document.getElementById('result');
-      result.innerHTML = `
-        <div class="eyebrow" style="color:var(--success)">Registered</div>
-        <h3 style="margin-top:12px;color:var(--white)">Check your inbox.</h3>
-        <p style="margin-top:12px;color:var(--ink-soft)">We sent a login link to <strong style="color:var(--white)">${body.email}</strong>. Click it to access your dashboard and start booking meetings.</p>
-        <p class="text-muted" style="margin-top:16px;font-size:13px">The email may take 2-3 minutes to arrive. Don't see it? Check your spam folder or <a href="/login.html">request a new link</a>.</p>
-      `;
-      result.style.display = 'block';
-    } catch (err) {
-      toast(err.message, 'error');
-      btn.disabled = false; btn.textContent = 'Create Account';
-    }
   });
 </script>
 </body>
