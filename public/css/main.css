@@ -623,13 +623,9 @@ textarea { resize: vertical; min-height: 100px; }
 .meeting-card {
   border: 1px solid transparent;
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 24px 28px;
   background: var(--bg-card);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 20px;
   margin-bottom: 14px;
-  align-items: start;
   transition: border-color 0.2s, box-shadow 0.2s;
   position: relative;
 }
@@ -638,15 +634,31 @@ textarea { resize: vertical; min-height: 100px; }
 .meeting-card.card-declined,
 .meeting-card.card-cancelled,
 .meeting-card.card-expired { opacity: 0.5; }
-.meeting-card h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; color: var(--white); }
-.meeting-card .meeting-meta { font-size: 13px; color: var(--ink-soft); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.meeting-card .meeting-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-.meeting-card .meeting-actions .btn { min-width: 120px; }
+.meeting-card h4 { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; color: var(--white); }
+.meeting-card .meeting-meta { font-size: 13px; color: var(--ink-soft); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-@media (max-width: 640px) {
-  .meeting-card { grid-template-columns: 1fr; gap: 14px; }
-  .meeting-card .meeting-actions { flex-direction: row; flex-wrap: wrap; align-items: stretch; width: 100%; }
-  .meeting-card .meeting-actions .btn { flex: 1; min-width: 0; }
+.meeting-card-body {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 24px;
+  align-items: center;
+}
+.meeting-card-info { min-width: 0; }
+.meeting-card-calendar { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.meeting-card-calendar .cal-label { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.5px; }
+.meeting-card-calendar .cal-icons { display: flex; gap: 10px; align-items: center; }
+.meeting-card-calendar .cal-icons a { display: block; line-height: 0; }
+.meeting-card-calendar .cal-icons img { width: 32px; height: 32px; border-radius: 4px; }
+.meeting-card-calendar .cal-icons svg { display: block; }
+.meeting-card-btns { display: flex; flex-direction: column; gap: 8px; }
+.meeting-card-btns .btn { min-width: 160px; }
+
+@media (max-width: 768px) {
+  .meeting-card { padding: 20px; }
+  .meeting-card-body { grid-template-columns: 1fr auto; }
+  .meeting-card-calendar { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; }
+  .meeting-card-btns { flex-direction: row; grid-column: 1 / -1; }
+  .meeting-card-btns .btn { flex: 1; min-width: 0; }
 }
 
 /* ========== Modal ========== */
