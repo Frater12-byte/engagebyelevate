@@ -302,10 +302,18 @@ function meetingCard(m, kind) {
   } else if (kind === 'outgoing') {
     actions = `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>`;
   } else if (kind === 'approved') {
+    const gcalStart = new Date(m.start_time).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const gcalEnd = new Date(new Date(m.start_time).getTime() + 30*60000).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const gcalSubject = encodeURIComponent(`Engage by Elevate — ${otherOrg}`);
+    const gcalDetails = encodeURIComponent(m.teams_join_url ? `Join Teams: ${m.teams_join_url}` : 'Engage by Elevate meeting');
+    const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalSubject}&dates=${gcalStart}/${gcalEnd}&details=${gcalDetails}&location=${encodeURIComponent(m.teams_join_url || 'Microsoft Teams')}`;
     actions = `
       ${m.teams_join_url ? `<a class="btn btn-small" href="${m.teams_join_url}" target="_blank">Join Teams</a>` : ''}
+      <a class="btn btn-small btn-ghost" href="/api/meetings/${m.id}/calendar.ics" download>Add to Calendar</a>
       ${!locked ? `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>` : ''}
     `;
+    // Add Google Calendar link below the card
+    actions += `<a href="${gcalUrl}" target="_blank" style="font-size:11px;color:var(--ink-muted);text-decoration:none;margin-top:4px;display:block">Google Calendar</a>`;
   }
 
   const statusBadge = {

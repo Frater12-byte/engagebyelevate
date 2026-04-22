@@ -350,6 +350,25 @@ async function sendMeetingApproved(meeting) {
     ? btn('Join Teams Meeting', meeting.teams_join_url, '#5B5FC7')
     : '';
 
+  // Google Calendar link
+  const gcalStart = dayjs(meeting.start_time).utc().format('YYYYMMDDTHHmmss') + 'Z';
+  const gcalEnd = dayjs(meeting.start_time).add(30, 'minute').utc().format('YYYYMMDDTHHmmss') + 'Z';
+  const gcalSubject = encodeURIComponent(`Engage by Elevate — ${meeting.requester_org} × ${meeting.recipient_org}`);
+  const gcalDetails = encodeURIComponent(meeting.teams_join_url ? `Join Teams: ${meeting.teams_join_url}` : 'Engage by Elevate meeting');
+  const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalSubject}&dates=${gcalStart}/${gcalEnd}&details=${gcalDetails}&location=${encodeURIComponent(meeting.teams_join_url || 'Microsoft Teams')}`;
+  const icsUrl = `${SITE}/api/meetings/${meeting.id}/calendar.ics`;
+
+  const calendarBlock = `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 0">
+      <tr>
+        <td align="center" style="font-family:${F_BODY};font-size:13px;color:${C_MUTED}">
+          <a href="${icsUrl}" style="color:${C_RUST};text-decoration:none;font-weight:600">Download .ics</a>
+          &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+          <a href="${gcalUrl}" style="color:${C_RUST};text-decoration:none;font-weight:600">Google Calendar</a>
+        </td>
+      </tr>
+    </table>`;
+
   const buildHtml = (toName, otherOrg, otherContact) => wrap(`
     ${heading('Meeting Confirmed')}
     ${greeting(toName)}
@@ -360,6 +379,7 @@ async function sendMeetingApproved(meeting) {
       datetime: fmtShort(meeting.start_time)
     })}
     ${teamsBlock}
+    ${calendarBlock}
     ${footnote('View all your meetings on your <a href="' + SITE + '/dashboard" style="color:' + C_RUST + ';text-decoration:none">dashboard</a>.')}
   `);
 
@@ -368,8 +388,11 @@ async function sendMeetingApproved(meeting) {
 Your meeting with ${otherOrg} (${otherContact}) is confirmed.
 
 When: ${fmtShort(meeting.start_time)}
-Duration: 20 minutes
+Duration: 30 minutes
 ${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : ''}
+Add to calendar: ${icsUrl}
+Google Calendar: ${gcalUrl}
+
 View all your meetings on your dashboard:
 ${SITE}/dashboard
 

@@ -149,6 +149,63 @@ router.post('/meetings/:id/cancel', requireAuth, (req, res) => {
   }
 });
 
+// ---------- Calendar .ics download ----------
+router.get('/meetings/:id/calendar.ics', requireAuth, (req, res) => {
+  const db = getDb();
+  const m = db.prepare(`
+    SELECT m.*,
+      ru.org_name AS requester_org, ru.contact_name AS requester_name,
+      eu.org_name AS recipient_org, eu.contact_name AS recipient_name
+    FROM meetings m
+    JOIN users ru ON m.requester_id = ru.id
+    JOIN users eu ON m.recipient_id = eu.id
+    WHERE m.id = ?
+  `).get(parseInt(req.params.id, 10));
+
+  if (!m) return res.status(404).json({ error: 'Meeting not found' });
+  if (m.requester_id !== req.user.id && m.recipient_id !== req.user.id) {
+    return res.status(403).json({ error: 'Not your meeting' });
+  }
+  if (m.status !== 'approved') return res.status(400).json({ error: 'Meeting not confirmed' });
+
+  const toUTC = (iso) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const dtStart = toUTC(m.start_time);
+  const dtEnd = toUTC(new Date(new Date(m.start_time).getTime() + 30 * 60000).toISOString());
+  const now = toUTC(new Date().toISOString());
+  const summary = `Engage by Elevate — ${m.requester_org} × ${m.recipient_org}`;
+  const otherOrg = req.user.id === m.requester_id ? m.recipient_org : m.requester_org;
+  const otherName = req.user.id === m.requester_id ? m.recipient_name : m.requester_name;
+  const description = `Meeting with ${otherOrg} (${otherName})\\n\\nDuration: 30 minutes${m.teams_join_url ? '\\n\\nJoin Teams: ' + m.teams_join_url : ''}\\n\\nManage your meetings: https://engagebyelevate.com/dashboard`;
+  const location = m.teams_join_url ? `Microsoft Teams: ${m.teams_join_url}` : 'Microsoft Teams';
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Engage by Elevate//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:meeting-${m.id}@engagebyelevate.com`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `SUMMARY:${summary}`,
+    `DESCRIPTION:${description}`,
+    `LOCATION:${location}`,
+    `ORGANIZER;CN=Engage by Elevate:mailto:engage.meetings@elevatedmc.com`,
+    'STATUS:CONFIRMED',
+    ...(m.teams_join_url ? [`URL:${m.teams_join_url}`] : []),
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  res.set({
+    'Content-Type': 'text/calendar; charset=utf-8',
+    'Content-Disposition': `attachment; filename="meeting-${m.id}.ics"`
+  });
+  res.send(ics);
+});
+
 // ---------- Close/open a slot ----------
 router.post('/me/slots/:id/toggle', requireAuth, (req, res) => {
   const db = getDb();
