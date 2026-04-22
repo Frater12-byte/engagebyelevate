@@ -99,8 +99,8 @@ app.post('/api/upload-photo', upload.single('photo'), (req, res) => {
 app.use('/auth', require('./routes/auth'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/n8n', require('./routes/n8n'));
-app.use('/api', require('./routes/meetings'));
 app.use('/api/exhibitors', require('./routes/exhibitors'));
+app.use('/api', require('./routes/meetings'));
 
 // Admin: create/update exhibitor
 app.post('/admin/exhibitors', (req, res) => {

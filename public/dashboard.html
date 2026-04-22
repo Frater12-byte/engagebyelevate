@@ -359,13 +359,14 @@ async function renderBookTab() {
   const el = document.getElementById('tab-book');
   el.innerHTML = '<div class="loader" style="margin:40px auto;display:block"></div>';
 
-  // Load all participants, exclude self
+  // Load all participants, exclude self (each call is fault-tolerant)
+  const safe = (p) => p.catch(() => ({}));
   const [hRes, aRes, eRes, bRes, exRes] = await Promise.all([
-    api.get('/api/public/hotels'),
-    api.get('/api/public/agents'),
-    api.get('/api/public/exhibitors'),
-    api.get('/api/public/tourism-boards'),
-    api.get('/api/exhibitors')
+    safe(api.get('/api/public/hotels')),
+    safe(api.get('/api/public/agents')),
+    safe(api.get('/api/public/exhibitors')),
+    safe(api.get('/api/public/tourism-boards')),
+    safe(api.get('/api/exhibitors'))
   ]);
   // Merge exhibitor users + tourism boards (boards get a synthetic type)
   const boardsAsExhibitors = (bRes.boards || []).map(b => ({
