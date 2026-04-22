@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>document.documentElement.classList.add(document.cookie.includes("session=")?"is-authed":"is-guest")</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -28,8 +29,8 @@
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
-      <a href="/dashboard" class="active" id="nav-dash-link">My Dashboard</a>
-      <a href="#" id="logout">Sign out</a>
+      <a href="/dashboard" class="active" id="nav-dash">My Dashboard</a>
+      <a href="#" id="nav-signout">Sign out</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
       <span class="bar"></span>
@@ -146,8 +147,9 @@ let me = null, agenda = null, meetings = [];
     document.querySelector('[data-tab="profile"]').click();
   });
 
-  document.getElementById('logout').addEventListener('click', async (e) => {
+  document.getElementById('nav-signout').addEventListener('click', async (e) => {
     e.preventDefault();
+    document.cookie = 'logged_in=; Max-Age=0; path=/';
     await api.post('/auth/logout');
     location.href = '/';
   });
@@ -168,7 +170,7 @@ async function loadAll() {
     if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
     else badge.style.display = 'none';
     // Update nav badge
-    const dashLink = document.getElementById('nav-dash-link');
+    const dashLink = document.getElementById('nav-dash');
     if (dashLink) {
       const existing = dashLink.querySelector('.nav-notif');
       if (existing) existing.remove();

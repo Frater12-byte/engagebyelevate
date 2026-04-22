@@ -71,55 +71,39 @@ function escapeHtml(s) {
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
-/** Check logged_in cookie instantly (no network) */
-function isLoggedInFast() {
-  return document.cookie.split(';').some(c => c.trim().startsWith('logged_in='));
-}
-
-/** Instant nav setup from cookie — runs synchronously, no flash */
-(function() {
-  if (!isLoggedInFast()) { document.body.classList.add('nav-ready'); return; }
-  const authLink = document.getElementById('nav-auth-link');
-  if (authLink) { authLink.textContent = 'My Dashboard'; authLink.href = '/dashboard'; }
-  const ctaLink = document.getElementById('nav-cta-link');
-  if (ctaLink) { ctaLink.textContent = 'Sign out'; ctaLink.href = '#'; ctaLink.className = ''; }
-  document.body.classList.add('nav-ready');
-})();
-
 async function getMe() {
   try { return (await api.get('/auth/me')).user; }
   catch { return null; }
 }
 
-/** Update nav for logged-in user: add notification count + wire sign-out handler */
+/**
+ * Validate auth state and enrich nav (notification count, sign-out handler).
+ * The initial show/hide is handled by CSS + the inline <script> in <head>.
+ * This function handles: stale cookie correction, notification badge, sign-out wiring.
+ */
 async function updateNavForUser(me) {
-  document.body.classList.add('nav-ready');
+  const html = document.documentElement;
   if (!me) {
-    // Cookie was stale — revert to logged-out nav
-    if (isLoggedInFast()) {
-      const authLink = document.getElementById('nav-auth-link');
-      if (authLink) { authLink.textContent = 'Sign in'; authLink.href = '/login.html'; }
-      const ctaLink = document.getElementById('nav-cta-link');
-      if (ctaLink) { ctaLink.textContent = 'Register Now'; ctaLink.href = '/signup.html'; ctaLink.className = 'nav-cta'; ctaLink.onclick = null; }
-    }
+    // Session invalid — force guest state even if cookie said authed
+    html.classList.remove('is-authed');
+    html.classList.add('is-guest');
     return;
   }
-  // Ensure nav is set (may already be from instant check)
-  const authLink = document.getElementById('nav-auth-link');
-  if (authLink && !authLink.querySelector('.nav-notif')) {
-    authLink.textContent = 'My Dashboard';
-    authLink.href = '/dashboard';
+  // Confirmed authed
+  html.classList.remove('is-guest');
+  html.classList.add('is-authed');
+  // Add notification badge
+  const dashLink = document.getElementById('nav-dash');
+  if (dashLink) {
     try {
       const { count } = await api.get('/api/me/notifications');
-      if (count > 0) authLink.insertAdjacentHTML('beforeend', `<span class="nav-notif">${count}</span>`);
+      if (count > 0) dashLink.insertAdjacentHTML('beforeend', `<span class="nav-notif">${count}</span>`);
     } catch {}
   }
-  const ctaLink = document.getElementById('nav-cta-link');
-  if (ctaLink) {
-    ctaLink.textContent = 'Sign out';
-    ctaLink.href = '#';
-    ctaLink.className = '';
-    ctaLink.onclick = async (e) => {
+  // Wire sign-out
+  const signOut = document.getElementById('nav-signout');
+  if (signOut) {
+    signOut.onclick = async (e) => {
       e.preventDefault();
       document.cookie = 'logged_in=; Max-Age=0; path=/';
       await api.post('/auth/logout');

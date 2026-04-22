@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>document.documentElement.classList.add(document.cookie.includes("session=")?"is-authed":"is-guest")</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0a">
@@ -36,8 +37,10 @@
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
-      <a id="nav-auth-link" href="/login.html">Sign in</a>
-      <a href="/signup.html" class="nav-cta" id="nav-cta-link">Register Now</a>
+      <a href="/dashboard" class="auth-only" id="nav-dash">My Dashboard</a>
+      <a href="#" class="auth-only" id="nav-signout">Sign out</a>
+      <a href="/login.html" class="guest-only">Sign in</a>
+      <a href="/signup.html" class="nav-cta guest-only">Register Now</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
       <span class="bar"></span>

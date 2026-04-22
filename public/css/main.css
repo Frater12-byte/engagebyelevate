@@ -817,9 +817,15 @@ textarea { resize: vertical; min-height: 100px; }
 }
 .nav-links a.nav-cta:hover { background: var(--orange-hover); color: var(--white) !important; transform: none; }
 
-/* Hide auth-dependent nav links until state is resolved */
-#nav-auth-link, #nav-cta-link { opacity: 0; transition: opacity 0.15s; }
-.nav-ready #nav-auth-link, .nav-ready #nav-cta-link { opacity: 1; }
+/* Auth-aware nav: show/hide based on html.is-authed or html.is-guest */
+.nav-links .auth-only, .nav-links .guest-only { display: none; }
+html.is-authed .nav-links .auth-only { display: inline-block; }
+html.is-guest .nav-links .guest-only { display: inline-block; }
+@media (max-width: 768px) {
+  .nav-links.open .auth-only, .nav-links.open .guest-only { display: block; }
+  html.is-authed .nav-links.open .guest-only { display: none; }
+  html.is-guest .nav-links.open .auth-only { display: none; }
+}
 
 .nav-notif {
   display: inline-flex;
