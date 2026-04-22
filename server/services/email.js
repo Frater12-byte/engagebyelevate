@@ -348,7 +348,7 @@ ${SITE}`;
 async function sendMeetingApproved(meeting) {
   const teamsBlock = meeting.teams_join_url
     ? btn('Join Teams Meeting', meeting.teams_join_url, '#5B5FC7')
-    : `<div style="margin:24px 0;padding:16px 24px;background:${C_CARD};border-radius:6px;font-size:14px;color:${C_SOFT};text-align:center">Teams link will be shared by email before the meeting.</div>`;
+    : '';
 
   const buildHtml = (toName, otherOrg, otherContact) => wrap(`
     ${heading('Meeting Confirmed')}
@@ -369,7 +369,7 @@ Your meeting with ${otherOrg} (${otherContact}) is confirmed.
 
 When: ${fmtShort(meeting.start_time)}
 Duration: 20 minutes
-${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : '\nThe Teams link will be sent separately by the organizer.\n'}
+${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : ''}
 View all your meetings on your dashboard:
 ${SITE}/dashboard
 
