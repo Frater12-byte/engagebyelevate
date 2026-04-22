@@ -231,9 +231,9 @@
         </div>
         <div id="review-summary" style="margin-top:20px"></div>
         <div id="review-error" style="display:none;margin-top:16px;padding:16px;background:var(--danger-dim);border:1px solid rgba(255,59,59,0.2);border-radius:var(--radius-sm);color:var(--danger);font-size:14px"></div>
-        <div class="wizard-nav">
-          <button type="button" class="btn btn-ghost" id="back-to-4">Back to edit</button>
-          <button type="button" class="btn" id="confirm-submit">Confirm & create account</button>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:24px">
+          <button type="button" class="btn" id="confirm-submit" style="width:100%">Confirm & Create Account</button>
+          <button type="button" class="btn btn-ghost" id="back-to-4" style="width:100%">Back to Edit</button>
         </div>
       </div>
     </form>
@@ -358,27 +358,21 @@
     const markets = body.target_markets ? body.target_markets.split(',').map(s => s.trim()).filter(Boolean) : [];
     const isHotel = body.type === 'hotel';
 
+    const lbl = (t) => `<div style="color:var(--ink-muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${t}</div>`;
     document.getElementById('review-summary').innerHTML = `
       <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:16px">${isHotel ? 'Hotel' : 'Agency'}</div>
-      <div style="display:grid;gap:12px">
-        <div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Organization</span><div style="color:var(--white);font-size:1.1rem;font-weight:600;margin-top:2px">${escapeHtml(body.org_name)}</div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Contact</span><div style="margin-top:2px">${escapeHtml(body.contact_name)}</div></div>
-          <div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Email (your login)</span><div style="margin-top:2px;color:var(--orange);font-weight:600">${escapeHtml(body.email)}</div></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          ${body.phone ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Phone</span><div style="margin-top:2px">${escapeHtml(body.phone)}</div></div>` : ''}
-          <div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Location</span><div style="margin-top:2px">${escapeHtml([body.city, body.country].filter(Boolean).join(', '))}</div></div>
-        </div>
-        ${isHotel && (body.star_rating || body.room_count) ? `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          ${body.star_rating ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Star Rating</span><div style="margin-top:2px">${body.star_rating} Stars</div></div>` : ''}
-          ${body.room_count ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Rooms</span><div style="margin-top:2px">${body.room_count}</div></div>` : ''}
-        </div>` : ''}
-        ${body.description ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Description</span><div style="margin-top:2px;color:var(--ink-soft)">${escapeHtml(body.description)}</div></div>` : ''}
-        ${specialties.length ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Specialties</span><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${specialties.map(s => `<span class="badge badge-gold">${escapeHtml(s)}</span>`).join('')}</div></div>` : ''}
-        ${markets.length ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Target Markets</span><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${markets.map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}</div></div>` : ''}
-        ${body.website ? `<div><span style="color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Website</span><div style="margin-top:2px">${escapeHtml(body.website)}</div></div>` : ''}
+      <div style="display:grid;gap:16px">
+        <div>${lbl('Organization')}<div style="color:var(--white);font-size:1.1rem;font-weight:600">${escapeHtml(body.org_name)}</div></div>
+        <div>${lbl('Contact')}<div>${escapeHtml(body.contact_name)}</div></div>
+        <div>${lbl('Email (your login)')}<div style="color:var(--orange);font-weight:600;word-break:break-all;font-size:14px">${escapeHtml(body.email)}</div></div>
+        ${body.phone ? `<div>${lbl('Phone')}<div>${escapeHtml(body.phone)}</div></div>` : ''}
+        <div>${lbl('Location')}<div>${escapeHtml([body.city, body.country].filter(Boolean).join(', '))}</div></div>
+        ${isHotel && body.star_rating ? `<div>${lbl('Star Rating')}<div>${body.star_rating} Stars</div></div>` : ''}
+        ${isHotel && body.room_count ? `<div>${lbl('Rooms')}<div>${body.room_count}</div></div>` : ''}
+        ${body.description ? `<div>${lbl('Description')}<div style="color:var(--ink-soft);font-size:14px">${escapeHtml(body.description)}</div></div>` : ''}
+        ${specialties.length ? `<div>${lbl('Specialties')}<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${specialties.map(s => `<span class="badge badge-gold">${escapeHtml(s)}</span>`).join('')}</div></div>` : ''}
+        ${markets.length ? `<div>${lbl('Target Markets')}<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${markets.map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}</div></div>` : ''}
+        ${body.website ? `<div>${lbl('Website')}<div style="word-break:break-all">${escapeHtml(body.website)}</div></div>` : ''}
       </div>
     `;
     document.getElementById('review-error').style.display = 'none';

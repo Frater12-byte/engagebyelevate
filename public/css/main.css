@@ -904,10 +904,14 @@ html.is-guest .nav-links .guest-only { display: inline-block; }
 
 .wizard-nav {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   margin-top: 24px;
 }
-.wizard-nav .btn { flex: 1; }
+.wizard-nav .btn { flex: 1; min-width: 0; }
+@media (max-width: 480px) {
+  .wizard-nav { flex-direction: column; }
+  .wizard-nav .btn { width: 100%; }
+}
 
 /* ========== Page transitions ========== */
 section {
