@@ -18,9 +18,9 @@ Matchmaking platform for **Engage by Elevate 2026** — three days of curated 1:
 
 | Day | Date | Hotels | Agents | Agenda |
 |---|---|---|---|---|
-| 1 | Jun 1 | UAE | All | Samir opening (11:00) + 2 tour operator keynotes + Tourism Board 1 |
-| 2 | Jun 2 | UAE | All | Tourism Boards 2 & 3 |
-| 3 | Jun 3 | International (Thailand, Qatar, …) | All | Tourism Boards 4 & 5 |
+| 1 | Jun 2 | UAE | All | Samir opening (11:00) + 2 tour operator keynotes + Tourism Board 1 |
+| 2 | Jun 3 | UAE | All | Tourism Boards 2 & 3 |
+| 3 | Jun 4 | International (Thailand, Qatar, …) | All | Tourism Boards 4 & 5 |
 
 Meeting slots are 20 minutes, 1:1, Mon–Wed 09:00–17:00 local (Dubai, UTC+4), with lunch 13:00–14:00 blocked.
 
