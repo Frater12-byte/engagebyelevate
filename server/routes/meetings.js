@@ -60,6 +60,15 @@ router.get('/me/meetings', requireAuth, (req, res) => {
   res.json({ meetings: list });
 });
 
+// ---------- Notification count (lightweight) ----------
+router.get('/me/notifications', requireAuth, (req, res) => {
+  const db = getDb();
+  const pending = db.prepare(
+    "SELECT COUNT(*) AS n FROM meetings WHERE recipient_id = ? AND status = 'pending'"
+  ).get(req.user.id);
+  res.json({ count: pending.n });
+});
+
 // ---------- Availability of another user ----------
 router.get('/users/:id/availability', requireAuth, (req, res) => {
   const db = getDb();

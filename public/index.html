@@ -375,15 +375,7 @@
   });
 
   // Show Dashboard link when logged in
-  (async () => {
-    const me = await getMe();
-    if (me) {
-      const authLink = document.getElementById('nav-auth-link');
-      if (authLink) { authLink.textContent = 'My Dashboard'; authLink.href = '/dashboard'; }
-      const ctaLink = document.getElementById('nav-cta-link');
-      if (ctaLink) { ctaLink.textContent = 'Sign out'; ctaLink.href = '#'; ctaLink.className = ''; ctaLink.onclick = async (e) => { e.preventDefault(); await api.post('/auth/logout'); location.href = '/'; }; }
-    }
-  })();
+  (async () => { const me = await getMe(); await updateNavForUser(me); })();
 
   // Participant marquee
   (async () => {

@@ -76,6 +76,30 @@ async function getMe() {
   catch { return null; }
 }
 
+/** Update nav for logged-in user: My Dashboard (with notification count) + Sign out */
+async function updateNavForUser(me) {
+  if (!me) return;
+  const authLink = document.getElementById('nav-auth-link');
+  if (authLink) {
+    authLink.textContent = 'My Dashboard';
+    authLink.href = '/dashboard';
+    // Fetch notification count
+    try {
+      const { count } = await api.get('/api/me/notifications');
+      if (count > 0) {
+        authLink.insertAdjacentHTML('beforeend', `<span class="nav-notif">${count}</span>`);
+      }
+    } catch {}
+  }
+  const ctaLink = document.getElementById('nav-cta-link');
+  if (ctaLink) {
+    ctaLink.textContent = 'Sign out';
+    ctaLink.href = '#';
+    ctaLink.className = '';
+    ctaLink.onclick = async (e) => { e.preventDefault(); await api.post('/auth/logout'); location.href = '/'; };
+  }
+}
+
 function openModal(contentNode) {
   const backdrop = el('div', { class: 'modal-backdrop', onclick: (e) => {
     if (e.target === backdrop) backdrop.remove();

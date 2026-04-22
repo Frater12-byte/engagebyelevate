@@ -28,7 +28,7 @@
     <div class="nav-links" id="nav-links">
       <a href="/agenda">Agenda</a>
       <a href="/directory">Directory</a>
-      <a href="/dashboard" class="active">My Dashboard</a>
+      <a href="/dashboard" class="active" id="nav-dash-link">My Dashboard</a>
       <a href="#" id="logout">Sign out</a>
     </div>
     <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
@@ -167,6 +167,13 @@ async function loadAll() {
     const badge = document.getElementById('badge-pending');
     if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
     else badge.style.display = 'none';
+    // Update nav badge
+    const dashLink = document.getElementById('nav-dash-link');
+    if (dashLink) {
+      const existing = dashLink.querySelector('.nav-notif');
+      if (existing) existing.remove();
+      if (pending > 0) dashLink.insertAdjacentHTML('beforeend', `<span class="nav-notif">${pending}</span>`);
+    }
   } catch (err) { console.error(err); }
 }
 

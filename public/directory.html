@@ -95,12 +95,7 @@
 
   async function init() {
     me = await getMe();
-    if (me) {
-      document.getElementById('nav-auth-link').textContent = 'My Dashboard';
-      document.getElementById('nav-auth-link').href = '/dashboard';
-      const ctaLink = document.getElementById('nav-cta-link');
-      if (ctaLink) { ctaLink.textContent = 'Sign out'; ctaLink.href = '#'; ctaLink.className = ''; ctaLink.onclick = async (e) => { e.preventDefault(); await api.post('/auth/logout'); location.href = '/'; }; }
-    }
+    await updateNavForUser(me);
     await Promise.all([loadHotels(), loadAgents(), loadBoards()]);
     document.getElementById('count-hotels').textContent = `(${data.hotels.length})`;
     document.getElementById('count-agents').textContent = `(${data.agents.length})`;

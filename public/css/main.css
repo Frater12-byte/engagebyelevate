@@ -809,6 +809,22 @@ textarea { resize: vertical; min-height: 100px; }
 }
 .nav-links a.nav-cta:hover { background: var(--orange-hover); color: var(--white) !important; transform: none; }
 
+.nav-notif {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--orange);
+  color: var(--white);
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 6px;
+  line-height: 1;
+}
+
 /* ========== Team section ========== */
 .team-grid {
   display: grid;
