@@ -641,7 +641,7 @@ textarea { resize: vertical; min-height: 100px; }
   display: grid;
   grid-template-columns: 1fr auto auto;
   gap: 24px;
-  align-items: center;
+  align-items: end;
 }
 .meeting-card-info { min-width: 0; }
 .meeting-card-calendar { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
