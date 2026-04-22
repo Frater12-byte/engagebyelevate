@@ -78,23 +78,21 @@ router.get('/users/:id/availability', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'Exhibitors do not have bookable meeting slots. Use the messaging feature instead.' });
   }
 
-  // Intersect both users' slots: only time windows where BOTH have a slot are bookable
+  // Show all of the other user's slots, mark bookable where viewer also has a matching free slot
   const mySlots = db.prepare(`SELECT * FROM slots WHERE user_id = ? ORDER BY start_time`).all(req.user.id);
   const theirSlots = db.prepare(`SELECT * FROM slots WHERE user_id = ? ORDER BY start_time`).all(other.id);
-  const theirByStart = new Map(theirSlots.map(s => [s.start_time, s]));
+  const myByStart = new Map(mySlots.map(s => [s.start_time, s]));
 
   const bookable = [];
-  for (const mine of mySlots) {
-    const theirs = theirByStart.get(mine.start_time);
-    if (!theirs) continue; // not eligible for same day
+  for (const theirs of theirSlots) {
+    const mine = myByStart.get(theirs.start_time);
     bookable.push({
-      start_time: mine.start_time,
-      end_time: mine.end_time,
-      day: mine.day,
-      my_status: mine.status,
+      start_time: theirs.start_time,
+      end_time: theirs.end_time,
+      day: theirs.day,
+      my_status: mine ? mine.status : 'no_slot',
       their_status: theirs.status,
-      // Only 'free' on both sides is truly available
-      available: mine.status === 'free' && theirs.status === 'free'
+      available: mine && mine.status === 'free' && theirs.status === 'free'
     });
   }
 

@@ -446,11 +446,18 @@ window.openAvailabilityModal = async function(otherId) {
               ${daySlots.map(s => {
                 const locked = isLocked(s.start_time);
                 const cls = s.available && !locked ? 'free' :
+                            s.my_status === 'no_slot' ? 'blocked' :
                             s.my_status !== 'free' ? 'held' : 'blocked';
                 const clickable = s.available && !locked;
+                let statusLabel = 'Blocked';
+                if (locked) statusLabel = 'Locked';
+                else if (s.available) statusLabel = 'Available';
+                else if (s.my_status === 'no_slot') statusLabel = 'Not your day';
+                else if (s.my_status === 'booked' || s.my_status === 'held') statusLabel = 'You busy';
+                else if (s.their_status !== 'free') statusLabel = 'They busy';
                 return `<div class="slot ${cls}${locked ? ' locked' : ''}" ${clickable ? `onclick="requestMeetingModal(${otherId}, '${s.start_time}', '${escapeHtml(other.org_name)}')"` : ''} style="${clickable ? 'cursor:pointer' : 'cursor:not-allowed'}">
                   <div class="slot-time">${fmtTime(s.start_time)}</div>
-                  <div class="slot-status">${locked ? 'Locked' : s.available ? 'Available' : s.my_status === 'booked' ? 'You busy' : s.their_status !== 'free' ? 'They busy' : 'Blocked'}</div>
+                  <div class="slot-status">${statusLabel}</div>
                 </div>`;
               }).join('')}
             </div>
