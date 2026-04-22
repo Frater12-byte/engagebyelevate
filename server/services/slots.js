@@ -75,9 +75,9 @@ function isBlocked(slotStart, slotEnd, blockedRanges) {
 
 /** Days this user is eligible for */
 function eligibleDaysFor(user) {
-  const day1 = process.env.EVENT_DAY_1 || '2026-06-01';
-  const day2 = process.env.EVENT_DAY_2 || '2026-06-02';
-  const day3 = process.env.EVENT_DAY_3 || '2026-06-03';
+  const day1 = process.env.EVENT_DAY_1 || '2026-06-02';
+  const day2 = process.env.EVENT_DAY_2 || '2026-06-03';
+  const day3 = process.env.EVENT_DAY_3 || '2026-06-04';
 
   if (user.type === 'agent' || user.type === 'exhibitor') return [day1, day2, day3];
   if (user.type === 'hotel') {
