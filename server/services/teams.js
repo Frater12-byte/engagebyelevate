@@ -114,7 +114,8 @@ async function createMeeting({ subject, startTime, endTime, attendeeEmails }) {
         'Content-Type': 'application/json'
       }
     });
-    console.log(`[TEAMS] Meeting created: joinUrl=${res.data.joinWebUrl} id=${res.data.id}`);
+    console.log(`[TEAMS] Meeting created successfully`);
+    console.log(`[TEAMS] Response: ${JSON.stringify({ id: res.data.id, joinWebUrl: res.data.joinWebUrl, subject: res.data.subject, startDateTime: res.data.startDateTime, endDateTime: res.data.endDateTime })}`);
     return {
       joinUrl: res.data.joinWebUrl,
       meetingId: res.data.id

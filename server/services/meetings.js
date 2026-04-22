@@ -129,21 +129,18 @@ async function approveMeeting(meetingId, actingUserId) {
     throw new Error('This slot is now locked (within 48h of start).');
   }
 
-  // Generate Teams meeting link
-  let teamsInfo = { joinUrl: null, meetingId: null };
-  try {
-    teamsInfo = await teams.createMeeting({
-      subject: `Engage by Elevate: ${meeting.requester_org} × ${meeting.recipient_org}`,
-      startTime: meeting.start_time,
-      endTime: meeting.end_time,
-      attendeeEmails: [meeting.requester_email, meeting.recipient_email]
-    });
-    console.log(`[TEAMS OK] Meeting ${meetingId}: joinUrl=${teamsInfo.joinUrl}`);
-  } catch (err) {
-    const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-    console.error(`[TEAMS FAIL] Meeting ${meetingId}: ${detail}`);
-    // Non-fatal: we still approve; link will show as pending.
-  }
+  // Generate Teams meeting link — required, not optional
+  const endTime30 = dayjs(meeting.start_time).add(30, 'minute').toISOString();
+  const teamsSubject = `Engage by Elevate \u2014 ${meeting.requester_org} \u00d7 ${meeting.recipient_org}`;
+
+  console.log(`[APPROVE] Meeting ${meetingId}: creating Teams link...`);
+  const teamsInfo = await teams.createMeeting({
+    subject: teamsSubject,
+    startTime: meeting.start_time,
+    endTime: endTime30,
+    attendeeEmails: [meeting.requester_email, meeting.recipient_email]
+  });
+  console.log(`[APPROVE] Meeting ${meetingId}: Teams link created: ${teamsInfo.joinUrl}`);
 
   const tx = db.transaction(() => {
     db.prepare(`
@@ -164,6 +161,7 @@ async function approveMeeting(meetingId, actingUserId) {
   tx();
 
   const updated = getMeeting(meetingId);
+  console.log(`[APPROVE] Meeting ${meetingId}: approved, teams_join_url=${updated.teams_join_url}`);
   email.sendMeetingApproved(updated).catch(console.error);
   return updated;
 }

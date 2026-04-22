@@ -123,7 +123,9 @@ router.post('/meetings/:id/approve', requireAuth, async (req, res) => {
     const m = await meetings.approveMeeting(parseInt(req.params.id, 10), req.user.id);
     res.json({ ok: true, meeting: m });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(`[APPROVE FAIL] Meeting ${req.params.id}:`, err.message);
+    const status = err.message.includes('Teams') || err.message.includes('Graph') ? 500 : 400;
+    res.status(status).json({ error: err.message });
   }
 });
 
