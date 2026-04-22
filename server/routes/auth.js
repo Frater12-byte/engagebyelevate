@@ -91,6 +91,12 @@ router.post('/signup', (req, res) => {
       type, org_name, contact_name, email: emailNorm, country: country || '', city: city || ''
     }).catch(console.error);
 
+    // Auto-login the new user so they can upload logo immediately
+    const sessionToken = jwt.sign({ uid: userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const cookieOpts = { secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 };
+    res.cookie('session', sessionToken, { ...cookieOpts, httpOnly: true });
+    res.cookie('logged_in', '1', { ...cookieOpts, httpOnly: false });
+
     res.json({ ok: true, userId, message: 'Registration successful. Check your email for the access link.' });
   } catch (err) {
     if (err.message.includes('UNIQUE')) {

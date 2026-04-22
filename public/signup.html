@@ -394,6 +394,16 @@
 
     try {
       await api.post('/auth/signup', body);
+
+      // Upload logo if selected (session cookie is now set by signup)
+      if (logoFile) {
+        try {
+          const logoFd = new FormData();
+          logoFd.append('logo', logoFile);
+          await fetch('/api/upload-logo', { method: 'POST', credentials: 'include', body: logoFd });
+        } catch (e) { console.error('Logo upload after signup failed:', e); }
+      }
+
       form.style.display = 'none';
       document.querySelector('.wizard-steps').style.display = 'none';
       const result = document.getElementById('result');
