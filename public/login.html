@@ -93,6 +93,7 @@
   // Auth check: redirect logged-in users to dashboard
   (async () => {
     const me = await getMe();
+    await updateNavForUser(me);
     if (me) return location.href = '/dashboard';
   })();
 

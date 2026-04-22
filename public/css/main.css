@@ -817,6 +817,10 @@ textarea { resize: vertical; min-height: 100px; }
 }
 .nav-links a.nav-cta:hover { background: var(--orange-hover); color: var(--white) !important; transform: none; }
 
+/* Hide auth links until JS resolves state — prevents flash of wrong links */
+#nav-auth-link, #nav-cta-link { visibility: hidden; }
+.nav-ready #nav-auth-link, .nav-ready #nav-cta-link { visibility: visible; }
+
 .nav-notif {
   display: inline-flex;
   align-items: center;

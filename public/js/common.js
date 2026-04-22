@@ -78,6 +78,8 @@ async function getMe() {
 
 /** Update nav for logged-in user: My Dashboard (with notification count) + Sign out */
 async function updateNavForUser(me) {
+  // Reveal nav links (hidden by CSS until auth state is known)
+  document.body.classList.add('nav-ready');
   if (!me) return;
   const authLink = document.getElementById('nav-auth-link');
   if (authLink) {
