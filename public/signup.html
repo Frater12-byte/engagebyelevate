@@ -328,6 +328,21 @@
   document.getElementById('back-to-2').addEventListener('click', () => goToStep(2));
   document.getElementById('next-to-4').addEventListener('click', () => goToStep(4));
 
+  // Logo preview (must be before step handlers that reference logoFile)
+  let logoFile = null;
+  document.getElementById('logo-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    logoFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.getElementById('logo-preview').src = reader.result;
+      document.getElementById('logo-preview').style.display = 'block';
+      document.getElementById('logo-placeholder').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
   // Step 4 nav
   document.getElementById('back-to-3').addEventListener('click', () => goToStep(3));
   document.getElementById('next-to-5').addEventListener('click', async () => {
@@ -395,12 +410,17 @@
     try {
       await api.post('/auth/signup', body);
 
-      // Upload logo if selected (session cookie is now set by signup)
+      // Upload logo if selected (session cookie was set by signup response)
       if (logoFile) {
         try {
+          // Small delay to ensure browser has processed Set-Cookie from signup response
+          await new Promise(r => setTimeout(r, 500));
           const logoFd = new FormData();
           logoFd.append('logo', logoFile);
-          await fetch('/api/upload-logo', { method: 'POST', credentials: 'include', body: logoFd });
+          const uploadRes = await fetch('/api/upload-logo', { method: 'POST', credentials: 'include', body: logoFd });
+          const uploadData = await uploadRes.json();
+          if (uploadRes.ok) console.log('Logo uploaded:', uploadData.logo_url);
+          else console.error('Logo upload failed:', uploadData.error);
         } catch (e) { console.error('Logo upload after signup failed:', e); }
       }
 
@@ -422,20 +442,6 @@
     }
   });
 
-  // Logo preview
-  let logoFile = null;
-  document.getElementById('logo-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    logoFile = file;
-    const reader = new FileReader();
-    reader.onload = () => {
-      document.getElementById('logo-preview').src = reader.result;
-      document.getElementById('logo-preview').style.display = 'block';
-      document.getElementById('logo-placeholder').style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-  });
 </script>
 </body>
 </html>
