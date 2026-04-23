@@ -251,8 +251,10 @@ function getMeeting(id) {
     SELECT m.*,
       ru.org_name AS requester_org, ru.contact_name AS requester_name,
       ru.email AS requester_email, ru.type AS requester_type,
+      ru.timezone AS requester_timezone, ru.attendance_mode AS requester_attendance_mode,
       eu.org_name AS recipient_org, eu.contact_name AS recipient_name,
-      eu.email AS recipient_email, eu.type AS recipient_type
+      eu.email AS recipient_email, eu.type AS recipient_type,
+      eu.timezone AS recipient_timezone, eu.attendance_mode AS recipient_attendance_mode
     FROM meetings m
     JOIN users ru ON m.requester_id = ru.id
     JOIN users eu ON m.recipient_id = eu.id
