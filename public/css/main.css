@@ -819,6 +819,11 @@ textarea { resize: vertical; min-height: 100px; }
   .stat-num { font-size: clamp(2.2rem, 9vw, 3.2rem); }
 }
 
+/* Prevent long words/emails from overflowing containers */
+body { overflow-wrap: break-word; word-break: break-word; }
+h1, h2, h3, h4, p, div, span, a, td, li { overflow-wrap: break-word; word-break: break-word; }
+.notice, .card, .org-card, .meeting-card, .modal, .badge { overflow-wrap: break-word; word-break: break-word; }
+
 ::selection { background: var(--orange-dim); color: var(--white); }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
