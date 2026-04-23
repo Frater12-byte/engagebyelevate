@@ -200,6 +200,12 @@ function renderAgenda() {
         </div>
         <div class="slot-grid">
           ${slots.map(s => {
+            const past = isPastSlot(s.start_time);
+            const _t = fmtTimeDual(s.start_time, MY_TZ);
+            if (past) return `<div class="slot past">
+              <div class="slot-time">${_t.primary}</div>${_t.secondary ? `<div class="slot-time-sub">${_t.secondary}</div>` : ''}
+              <div class="slot-status">Past</div>
+            </div>`;
             const locked = isLocked(s.start_time);
             const cls = `slot ${s.status}${locked ? ' locked' : ''}`;
             const label = s.status === 'booked' ? (s.other_org || 'Meeting') :
@@ -209,7 +215,6 @@ function renderAgenda() {
             const canToggle = !locked && (s.status === 'free' || s.status === 'blocked');
             const onclick = s.meeting_id_full ? `onclick="showMeetingDetail(${s.meeting_id_full})"` :
                             canToggle ? `onclick="toggleSlot(${s.id})"` : '';
-            const _t = fmtTimeDual(s.start_time, MY_TZ);
             return `<div class="${cls}" ${onclick} ${canToggle ? 'title="Click to close/open this slot"' : ''}>
               <div class="slot-time">${_t.primary}</div>${_t.secondary ? `<div class="slot-time-sub">${_t.secondary}</div>` : ''}
               <div class="slot-status">${escapeHtml(label)}</div>
@@ -224,6 +229,9 @@ function renderAgenda() {
 function isLocked(startTime) {
   const hrs = (new Date(startTime) - new Date()) / 3600000;
   return hrs < 48;
+}
+function isPastSlot(startIso) {
+  return (new Date(startIso).getTime() + 10 * 60 * 1000) < Date.now();
 }
 
 
@@ -481,6 +489,12 @@ window.openAvailabilityModal = async function(otherId) {
             ${!anyAvailable ? '<p class="text-muted" style="font-size:13px">No available slots on this day.</p>' : ''}
             <div class="slot-grid">
               ${daySlots.map(s => {
+                const past = isPastSlot(s.start_time);
+                const _st = fmtTimeDual(s.start_time, MY_TZ);
+                if (past) return `<div class="slot past">
+                  <div class="slot-time">${_st.primary}</div>${_st.secondary ? `<div class="slot-time-sub">${_st.secondary}</div>` : ''}
+                  <div class="slot-status">Past</div>
+                </div>`;
                 const locked = isLocked(s.start_time);
                 const cls = s.available && !locked ? 'free' :
                             s.my_status === 'no_slot' ? 'blocked' :
@@ -492,7 +506,6 @@ window.openAvailabilityModal = async function(otherId) {
                 else if (s.my_status === 'no_slot') statusLabel = 'Not your day';
                 else if (s.my_status === 'booked' || s.my_status === 'held') statusLabel = 'You busy';
                 else if (s.their_status !== 'free') statusLabel = 'They busy';
-                const _st = fmtTimeDual(s.start_time, MY_TZ);
                 return `<div class="slot ${cls}${locked ? ' locked' : ''}" ${clickable ? `onclick="requestMeetingModal(${otherId}, '${s.start_time}', '${escapeHtml(other.org_name)}')"` : ''} style="${clickable ? 'cursor:pointer' : 'cursor:not-allowed'}">
                   <div class="slot-time">${_st.primary}</div>${_st.secondary ? `<div class="slot-time-sub">${_st.secondary}</div>` : ''}
                   <div class="slot-status">${statusLabel}</div>

@@ -609,6 +609,8 @@ textarea { resize: vertical; min-height: 100px; }
 .slot.booked .slot-time { color: var(--orange); }
 .slot.booked .slot-status { color: var(--orange); }
 .slot.blocked { background: var(--bg-elevated); color: var(--ink-muted); cursor: not-allowed; opacity: 0.35; }
+.slot.past { opacity: 0.3; cursor: not-allowed; pointer-events: none; filter: grayscale(1); }
+.slot.past .slot-time, .slot.past .slot-time-sub { color: var(--ink-muted); }
 .slot.locked { opacity: 0.25; cursor: not-allowed; position: relative; }
 .slot.locked::after {
   content: 'LOCKED';
