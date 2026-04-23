@@ -49,14 +49,13 @@ function dbLog(row) {
 
 async function send(to, subject, html, text, meta = {}) {
   try {
-    const info = await getTransporter().sendMail({
+    const mailOpts = {
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       replyTo: REPLY_TO,
-      to,
-      subject,
-      html,
-      text
-    });
+      to, subject, html, text
+    };
+    if (meta.attachments) mailOpts.attachments = meta.attachments;
+    const info = await getTransporter().sendMail(mailOpts);
     console.log(`[EMAIL OK] to=${to} subject="${subject}" messageId=${info.messageId} response="${info.response || ''}"`);
     dbLog({ to_email: to, subject, template: meta.template, meeting_id: meta.meeting_id, user_id: meta.user_id, status: 'sent' });
     return info;
@@ -278,6 +277,26 @@ function fallbackLink(url) {
   return `<div style="margin-top:12px;font-size:13px;color:${C_MUTED};word-break:break-all;line-height:1.6">Or copy this link:<br><a href="${url}" style="color:${C_RUST};text-decoration:none">${url}</a></div>`;
 }
 
+function buildIcs(meeting) {
+  const dtStart = dayjs(meeting.start_time).utc().format('YYYYMMDD[T]HHmmss') + 'Z';
+  const dtEnd = dayjs(meeting.start_time).add(20, 'minute').utc().format('YYYYMMDD[T]HHmmss') + 'Z';
+  const dtStamp = dayjs().utc().format('YYYYMMDD[T]HHmmss') + 'Z';
+  const summary = `Engage by Elevate — ${meeting.requester_org} × ${meeting.recipient_org}`;
+  const description = meeting.teams_join_url ? `Join Teams: ${meeting.teams_join_url}` : 'Engage by Elevate meeting';
+  const location = meeting.teams_join_url || 'Microsoft Teams';
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Engage by Elevate//EN',
+    'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+    `UID:engage-${meeting.id}@engagebyelevate.com`, `DTSTAMP:${dtStamp}`,
+    `DTSTART:${dtStart}`, `DTEND:${dtEnd}`, `SUMMARY:${summary}`,
+    `DESCRIPTION:${description.replace(/\n/g, '\\n')}`, `LOCATION:${location}`,
+    `ORGANIZER;CN=Engage by Elevate:mailto:engage.meetings@elevatedmc.com`,
+    'STATUS:CONFIRMED',
+    ...(meeting.teams_join_url ? [`URL:${meeting.teams_join_url}`] : []),
+    'END:VEVENT', 'END:VCALENDAR'
+  ].join('\r\n');
+}
+
 function footnote(text) {
   return `<div style="margin-top:36px;padding-top:20px;border-top:1px solid #1a1a1f;font-size:13px;color:${C_MUTED};line-height:1.6">${text}</div>`;
 }
@@ -373,24 +392,35 @@ async function sendMeetingApproved(meeting) {
     ? btn('Join Teams Meeting', meeting.teams_join_url, '#5B5FC7')
     : '';
 
-  // Google Calendar link
+  // Calendar links
   const gcalStart = dayjs(meeting.start_time).utc().format('YYYYMMDDTHHmmss') + 'Z';
   const gcalEnd = dayjs(meeting.start_time).add(20, 'minute').utc().format('YYYYMMDDTHHmmss') + 'Z';
   const gcalSubject = encodeURIComponent(`Engage by Elevate — ${meeting.requester_org} × ${meeting.recipient_org}`);
   const gcalDetails = encodeURIComponent(meeting.teams_join_url ? `Join Teams: ${meeting.teams_join_url}` : 'Engage by Elevate meeting');
   const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalSubject}&dates=${gcalStart}/${gcalEnd}&details=${gcalDetails}&location=${encodeURIComponent(meeting.teams_join_url || 'Microsoft Teams')}`;
-  const icsUrl = `${SITE}/api/meetings/${meeting.id}/calendar.ics`;
+  const outlookUrl = `https://outlook.office.com/calendar/0/action/compose?subject=${gcalSubject}&startdt=${encodeURIComponent(meeting.start_time)}&enddt=${encodeURIComponent(dayjs(meeting.start_time).add(20,'minute').toISOString())}&body=${gcalDetails}&location=${encodeURIComponent(meeting.teams_join_url || 'Microsoft Teams')}`;
 
   const calendarBlock = `
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 0">
-      <tr>
-        <td align="center" style="font-family:${F_BODY};font-size:13px;color:${C_MUTED}">
-          <a href="${icsUrl}" style="color:${C_RUST};text-decoration:none;font-weight:600">Download .ics</a>
-          &nbsp;&nbsp;&middot;&nbsp;&nbsp;
-          <a href="${gcalUrl}" style="color:${C_RUST};text-decoration:none;font-weight:600">Google Calendar</a>
-        </td>
-      </tr>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0 0">
+      <tr><td align="center" style="font-family:${F_BODY};font-size:11px;color:${C_MUTED};text-transform:uppercase;letter-spacing:1.5px;padding-bottom:10px">Save invite</td></tr>
+      <tr><td align="center">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:0 10px"><a href="${outlookUrl}" target="_blank" title="Add to Outlook"><img src="${SITE}/img/icon-outlook.png" width="40" height="40" alt="Outlook" style="border-radius:6px;display:block;border:0"></a></td>
+            <td style="padding:0 10px"><a href="${gcalUrl}" target="_blank" title="Add to Google Calendar"><img src="${SITE}/img/icon-gcal.png" width="40" height="40" alt="Google Calendar" style="border-radius:6px;display:block;border:0"></a></td>
+          </tr>
+        </table>
+      </td></tr>
+      <tr><td align="center" style="font-family:${F_BODY};font-size:11px;color:${C_MUTED};padding-top:10px">A calendar invite (.ics) is attached to this email</td></tr>
     </table>`;
+
+  // .ics attachment
+  const icsContent = buildIcs(meeting);
+  const icsAttachment = {
+    filename: `engage-meeting-${meeting.id}.ics`,
+    content: icsContent,
+    contentType: 'text/calendar; charset=utf-8; method=PUBLISH'
+  };
 
   const buildHtml = (toName, otherOrg, otherContact, toTz) => wrap(`
     ${heading('Meeting Confirmed')}
@@ -413,8 +443,9 @@ Your meeting with ${otherOrg} (${otherContact}) is confirmed.
 When: ${fmtShortDual(meeting.start_time, toTz)}
 Duration: 20 minutes
 ${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : ''}
-Add to calendar: ${icsUrl}
-Google Calendar: ${gcalUrl}
+Add to Outlook: ${outlookUrl}
+Add to Google Calendar: ${gcalUrl}
+A calendar invite (.ics) is attached to this email.
 
 View all your meetings on your dashboard:
 ${SITE}/dashboard
@@ -430,14 +461,14 @@ ${SITE}`;
     subjectFor(meeting.recipient_org),
     buildHtml(meeting.requester_name, meeting.recipient_org, meeting.recipient_name, meeting.requester_timezone),
     buildText(meeting.requester_name, meeting.recipient_org, meeting.recipient_name, meeting.requester_timezone),
-    { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.requester_id }
+    { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.requester_id, attachments: [icsAttachment] }
   );
   await send(
     meeting.recipient_email,
     subjectFor(meeting.requester_org),
     buildHtml(meeting.recipient_name, meeting.requester_org, meeting.requester_name, meeting.recipient_timezone),
     buildText(meeting.recipient_name, meeting.requester_org, meeting.requester_name, meeting.recipient_timezone),
-    { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.recipient_id }
+    { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.recipient_id, attachments: [icsAttachment] }
   );
 }
 
