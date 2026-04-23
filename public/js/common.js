@@ -42,16 +42,26 @@ function fmtDateShort(iso, tz = 'Asia/Dubai') {
 function tzAbbr(iso, tz) {
   return new Date(iso).toLocaleTimeString('en-GB', { timeZone: tz, timeZoneName: 'short' }).split(' ').pop();
 }
+function tzCity(tz) {
+  var map = {
+    'Asia/Dubai':'Dubai','Asia/Bangkok':'Bangkok','Europe/London':'London',
+    'Europe/Paris':'Paris','Europe/Madrid':'Madrid','Europe/Lisbon':'Lisbon',
+    'Europe/Bucharest':'Bucharest','Indian/Maldives':'Maldives','Indian/Mauritius':'Mauritius'
+  };
+  if (map[tz]) return map[tz];
+  if (!tz) return 'Dubai';
+  var parts = tz.split('/');
+  return (parts[parts.length - 1] || tz).replace(/_/g, ' ');
+}
 function fmtTimeRange(startIso, endIso, userTz) {
-  const dubaiStr = fmtTime(startIso, 'Asia/Dubai') + ' \u2013 ' + fmtTime(endIso, 'Asia/Dubai') + ' GST';
-  if (!userTz || userTz === 'Asia/Dubai') return dubaiStr;
-  const localStr = fmtTime(startIso, userTz) + ' \u2013 ' + fmtTime(endIso, userTz) + ' ' + tzAbbr(startIso, userTz);
-  return localStr + ' (' + dubaiStr + ')';
+  var dubai = fmtTime(startIso, 'Asia/Dubai') + ' \u2013 ' + fmtTime(endIso, 'Asia/Dubai') + ' Dubai';
+  if (!userTz || userTz === 'Asia/Dubai') return { primary: dubai, secondary: '' };
+  var local = fmtTime(startIso, userTz) + ' \u2013 ' + fmtTime(endIso, userTz) + ' ' + tzCity(userTz);
+  return { primary: local, secondary: dubai };
 }
 function fmtTimeDual(iso, userTz) {
-  const dubaiStr = fmtTime(iso, 'Asia/Dubai') + ' GST';
-  if (!userTz || userTz === 'Asia/Dubai') return dubaiStr;
-  return fmtTime(iso, userTz) + ' ' + tzAbbr(iso, userTz) + ' (' + dubaiStr + ')';
+  if (!userTz || userTz === 'Asia/Dubai') return { primary: fmtTime(iso, 'Asia/Dubai') + ' Dubai', secondary: '' };
+  return { primary: fmtTime(iso, userTz) + ' ' + tzCity(userTz), secondary: fmtTime(iso, 'Asia/Dubai') + ' Dubai' };
 }
 
 function toast(msg, type = '') {
