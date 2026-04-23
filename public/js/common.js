@@ -48,6 +48,11 @@ function fmtTimeRange(startIso, endIso, userTz) {
   const localStr = fmtTime(startIso, userTz) + ' \u2013 ' + fmtTime(endIso, userTz) + ' ' + tzAbbr(startIso, userTz);
   return localStr + ' (' + dubaiStr + ')';
 }
+function fmtTimeDual(iso, userTz) {
+  const dubaiStr = fmtTime(iso, 'Asia/Dubai') + ' GST';
+  if (!userTz || userTz === 'Asia/Dubai') return dubaiStr;
+  return fmtTime(iso, userTz) + ' ' + tzAbbr(iso, userTz) + ' (' + dubaiStr + ')';
+}
 
 function toast(msg, type = '') {
   const t = document.createElement('div');

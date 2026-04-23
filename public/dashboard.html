@@ -210,7 +210,7 @@ function renderAgenda() {
             const onclick = s.meeting_id_full ? `onclick="showMeetingDetail(${s.meeting_id_full})"` :
                             canToggle ? `onclick="toggleSlot(${s.id})"` : '';
             return `<div class="${cls}" ${onclick} ${canToggle ? 'title="Click to close/open this slot"' : ''}>
-              <div class="slot-time">${fmtTime(s.start_time, MY_TZ)}</div>
+              <div class="slot-time">${fmtTimeDual(s.start_time, MY_TZ)}</div>
               <div class="slot-status">${escapeHtml(label)}</div>
             </div>`;
           }).join('')}
@@ -492,7 +492,7 @@ window.openAvailabilityModal = async function(otherId) {
                 else if (s.my_status === 'booked' || s.my_status === 'held') statusLabel = 'You busy';
                 else if (s.their_status !== 'free') statusLabel = 'They busy';
                 return `<div class="slot ${cls}${locked ? ' locked' : ''}" ${clickable ? `onclick="requestMeetingModal(${otherId}, '${s.start_time}', '${escapeHtml(other.org_name)}')"` : ''} style="${clickable ? 'cursor:pointer' : 'cursor:not-allowed'}">
-                  <div class="slot-time">${fmtTime(s.start_time, MY_TZ)}</div>
+                  <div class="slot-time">${fmtTimeDual(s.start_time, MY_TZ)}</div>
                   <div class="slot-status">${statusLabel}</div>
                 </div>`;
               }).join('')}
