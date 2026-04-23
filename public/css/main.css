@@ -853,6 +853,17 @@ html.is-guest .nav-links .guest-only { display: inline-block; }
   html.is-guest .nav-links.open .auth-only { display: none; }
 }
 
+.nav-clock {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--ink-muted);
+  letter-spacing: 0.5px;
+  padding: 0 12px;
+  align-self: center;
+  white-space: nowrap;
+}
+@media (max-width: 768px) { .nav-clock { display: none; } }
+
 .nav-notif {
   display: inline-flex;
   align-items: center;

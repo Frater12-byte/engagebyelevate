@@ -152,3 +152,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (href === path || (href !== '/' && path.startsWith(href))) a.classList.add('active');
   });
 });
+
+/* Live Dubai clock in nav */
+function injectDubaiClock() {
+  const host = document.querySelector('.nav-inner');
+  if (!host) return;
+  const el = document.createElement('span');
+  el.id = 'dubai-clock';
+  el.className = 'nav-clock';
+  el.setAttribute('aria-label', 'Current Dubai time');
+  const toggle = host.querySelector('.nav-toggle');
+  if (toggle) host.insertBefore(el, toggle);
+  else host.appendChild(el);
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Dubai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+  const tick = () => { el.textContent = 'Dubai \u00b7 ' + fmt.format(new Date()); };
+  tick();
+  setInterval(tick, 1000);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectDubaiClock);
+else injectDubaiClock();
