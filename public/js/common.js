@@ -54,14 +54,13 @@ function tzCity(tz) {
   return (parts[parts.length - 1] || tz).replace(/_/g, ' ');
 }
 function fmtTimeRange(startIso, endIso, userTz) {
-  var dubai = fmtTime(startIso, 'Asia/Dubai') + ' \u2013 ' + fmtTime(endIso, 'Asia/Dubai') + ' Dubai';
-  if (!userTz || userTz === 'Asia/Dubai') return { primary: dubai, secondary: '' };
+  if (!userTz || userTz === 'Asia/Dubai') return { primary: fmtTime(startIso, 'Asia/Dubai') + ' \u2013 ' + fmtTime(endIso, 'Asia/Dubai') + ' Dubai', secondary: '' };
   var local = fmtTime(startIso, userTz) + ' \u2013 ' + fmtTime(endIso, userTz);
-  return { primary: local, secondary: dubai };
+  return { primary: local, secondary: fmtTime(startIso, 'Asia/Dubai') + ' \u2013 ' + fmtTime(endIso, 'Asia/Dubai') + ' (Dubai)' };
 }
 function fmtTimeDual(iso, userTz) {
   if (!userTz || userTz === 'Asia/Dubai') return { primary: fmtTime(iso, 'Asia/Dubai') + ' Dubai', secondary: '' };
-  return { primary: fmtTime(iso, userTz), secondary: fmtTime(iso, 'Asia/Dubai') + ' Dubai' };
+  return { primary: fmtTime(iso, userTz), secondary: fmtTime(iso, 'Asia/Dubai') + ' (Dubai)' };
 }
 
 function toast(msg, type = '') {

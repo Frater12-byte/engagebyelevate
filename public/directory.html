@@ -62,7 +62,8 @@
 <section style="padding-top:0">
   <div class="container">
     <div class="dash-tabs" style="margin-bottom:12px">
-      <button class="dash-tab active" data-view="hotels">Hotels <span class="tab-count" id="count-hotels"></span></button>
+      <button class="dash-tab active" data-view="all">All <span class="tab-count" id="count-all"></span></button>
+      <button class="dash-tab" data-view="hotels">Hotels <span class="tab-count" id="count-hotels"></span></button>
       <button class="dash-tab" data-view="agents">Agencies <span class="tab-count" id="count-agents"></span></button>
       <button class="dash-tab" data-view="boards">Exhibitors <span class="tab-count" id="count-boards"></span></button>
     </div>
@@ -93,13 +94,14 @@
     document.getElementById('nav-toggle').classList.toggle('open');
   });
 
-  let me = null, currentView = 'hotels';
+  let me = null, currentView = 'all';
   let data = { hotels: [], agents: [], boards: [], exhibitorProfiles: [] };
 
   async function init() {
     me = await getMe();
     await updateNavForUser(me);
     await Promise.all([loadHotels(), loadAgents(), loadBoards(), loadExhibitorProfiles()]);
+    document.getElementById('count-all').textContent = `(${data.hotels.length + data.agents.length + data.boards.length + data.exhibitorProfiles.length})`;
     document.getElementById('count-hotels').textContent = `(${data.hotels.length})`;
     document.getElementById('count-agents').textContent = `(${data.agents.length})`;
     document.getElementById('count-boards').textContent = `(${(data.boards.length + data.exhibitorProfiles.length)})`;
@@ -131,11 +133,58 @@
            (item.category || '').toLowerCase().includes(q);
   }
 
+  function renderUserCard(o) {
+    const initials = (o.org_name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const isHotel = o.type === 'hotel';
+    const typeClass = isHotel ? 'type-hotel' : 'type-agent';
+    const cardClass = isHotel ? 'card-hotel' : 'card-agent';
+    const typeIcon = isHotel
+      ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>'
+      : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>';
+    const typeLabel = isHotel ? `Hotel${o.star_rating ? ' · ' + o.star_rating + ' Stars' : ''}${o.region ? ' · ' + o.region : ''}` : 'Agency';
+    return `<a class="org-card ${cardClass}" href="/profile.html?id=${o.id}">
+      ${o.logo_url ? `<img class="org-logo" src="${escapeHtml(o.logo_url)}" alt="">` : `<div class="org-logo" style="display:flex;align-items:center;justify-content:center;font-weight:800;color:${isHotel ? '#4EA8DE' : '#A78BFA'};font-size:16px">${initials}</div>`}
+      <div class="type-icon ${typeClass}">${typeIcon}${typeLabel}</div>
+      <h3>${escapeHtml(o.org_name)}</h3>
+      <div class="org-meta">${escapeHtml([o.city, o.country].filter(Boolean).join(', '))}</div>
+      <div class="org-desc">${escapeHtml(o.description || '')}</div>
+      ${(o.specialties && o.specialties.length) ? `<div class="tags">${o.specialties.slice(0,3).map(s => `<span class="badge">${escapeHtml(s)}</span>`).join('')}</div>` : ''}
+    </a>`;
+  }
+  function renderBoardCard(b) {
+    return `<div class="org-card card-exhibitor"><div class="type-icon type-exhibitor"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Exhibitor</div><h3>${escapeHtml(b.name)}</h3><div class="org-meta">${escapeHtml(b.country || '')}</div><div class="org-desc">${escapeHtml(b.description || '')}</div></div>`;
+  }
+  function renderExhibitorCard(ex) {
+    return `<a class="org-card card-exhibitor" href="/exhibitor/${encodeURIComponent(ex.slug)}">
+      <div class="exhibitor-eyebrow"><span class="exhibitor-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></span><span class="exhibitor-tag">Exhibitor</span>${ex.logo_url ? `<img src="${escapeHtml(ex.logo_url)}" alt="" style="width:28px;height:28px;border-radius:4px;object-fit:contain;margin-left:auto">` : ''}</div>
+      <div class="exhibitor-meta">${ex.category ? `<span class="exhibitor-category">${escapeHtml(ex.category)}</span>` : ''}${ex.booth_number ? `<span class="exhibitor-booth">Booth ${escapeHtml(ex.booth_number)}</span>` : ''}</div>
+      <h3 class="exhibitor-name">${escapeHtml(ex.name)}</h3>
+      <p class="exhibitor-desc">${escapeHtml(ex.description || '')}</p>
+    </a>`;
+  }
+
   function render() {
     const container = document.getElementById('directory-content');
     const q = document.getElementById('search').value;
 
     let items, extraItems, empty;
+    if (currentView === 'all') {
+      // Merge all types, sorted alphabetically
+      const allMerged = [
+        ...data.hotels.filter(h => matches(h, q)).map(h => ({...h, _render: 'hotel'})),
+        ...data.agents.filter(a => matches(a, q)).map(a => ({...a, _render: 'agent'})),
+        ...data.boards.filter(b => matches(b, q)).map(b => ({...b, _render: 'board'})),
+        ...data.exhibitorProfiles.filter(b => matches(b, q)).map(b => ({...b, _render: 'exhibitor'}))
+      ].sort((a, b) => (a.org_name || a.name || '').toLowerCase().localeCompare((b.org_name || b.name || '').toLowerCase()));
+      document.getElementById('count-all').textContent = '(' + allMerged.length + ')';
+      if (!allMerged.length) { container.innerHTML = '<div class="empty-state"><h3>No results</h3></div>'; return; }
+      container.innerHTML = '<div class="directory-grid">' + allMerged.map(o => {
+        if (o._render === 'hotel' || o._render === 'agent') return renderUserCard(o);
+        if (o._render === 'exhibitor') return renderExhibitorCard(o);
+        return renderBoardCard(o);
+      }).join('') + '</div>';
+      return;
+    }
     if (currentView === 'hotels') { items = data.hotels.filter(h => matches(h, q)); empty = 'No hotels yet.'; }
     else if (currentView === 'agents') { items = data.agents.filter(a => matches(a, q)); empty = 'No agencies yet.'; }
     else {
