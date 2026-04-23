@@ -68,7 +68,7 @@
     </div>
 
     <div style="margin-bottom:16px">
-      <input id="search" placeholder="Search by name, country...">
+      <input id="search" placeholder="Search by name, contact, country, city...">
     </div>
 
     <div id="directory-content">
@@ -125,8 +125,10 @@
     if (!query) return true;
     const q = query.toLowerCase();
     return (item.org_name || item.name || '').toLowerCase().includes(q) ||
-           (item.country || item.category || '').toLowerCase().includes(q) ||
-           (item.city || '').toLowerCase().includes(q);
+           (item.contact_name || '').toLowerCase().includes(q) ||
+           (item.country || '').toLowerCase().includes(q) ||
+           (item.city || '').toLowerCase().includes(q) ||
+           (item.category || '').toLowerCase().includes(q);
   }
 
   function render() {

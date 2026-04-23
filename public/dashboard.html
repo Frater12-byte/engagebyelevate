@@ -395,7 +395,7 @@ async function renderBookTab() {
       <button class="dash-tab" data-bookfilter="agent">Agencies</button>
       <button class="dash-tab" data-bookfilter="exhibitor">Exhibitors</button>
     </div>
-    <input id="book-search" placeholder="Search by name or country..." style="margin-bottom:16px">
+    <input id="book-search" placeholder="Search by name, contact, country, city..." style="margin-bottom:16px">
     <div id="book-list" class="directory-grid"></div>
   `;
 
@@ -415,7 +415,7 @@ async function renderBookTab() {
     const filtered = allOthers.filter(o => {
       if (bookTypeFilter !== 'all' && o.type !== bookTypeFilter) return false;
       if (!q) return true;
-      return (o.org_name || '').toLowerCase().includes(q) || (o.country || '').toLowerCase().includes(q) || (o.category || '').toLowerCase().includes(q);
+      return (o.org_name || '').toLowerCase().includes(q) || (o.contact_name || '').toLowerCase().includes(q) || (o.country || '').toLowerCase().includes(q) || (o.city || '').toLowerCase().includes(q) || (o.category || '').toLowerCase().includes(q);
     });
     list.innerHTML = filtered.map(o => {
       const typeClass = o.type === 'hotel' ? 'card-hotel' : o.type === 'exhibitor' ? 'card-exhibitor' : 'card-agent';
