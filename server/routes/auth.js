@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const dayjs = require('dayjs');
 const { nowUtc } = require('../utils/time');
+const { countryToTimezone, regionToAttendanceMode } = require('../utils/timezone');
 
 const { getDb } = require('../db/connection');
 const { generateSlotsForUser } = require('../services/slots');
@@ -64,14 +65,17 @@ router.post('/signup', (req, res) => {
   }
   if (type === 'agent') userRegion = null;
 
+  const userTimezone = countryToTimezone(country);
+  const userAttendanceMode = regionToAttendanceMode(userRegion);
+
   try {
     const signupNow = nowUtc();
     const info = db.prepare(`
       INSERT INTO users (
         type, email, contact_name, phone, org_name, country, city, website,
         description, specialties, target_markets, room_count, star_rating, region,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        timezone, attendance_mode, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       type, emailNorm, contact_name, phone || null, org_name,
       country || null, city || null, website || null,
@@ -79,7 +83,7 @@ router.post('/signup', (req, res) => {
       specialties ? JSON.stringify(specialties) : null,
       target_markets ? JSON.stringify(target_markets) : null,
       room_count || null, star_rating || null, userRegion,
-      signupNow, signupNow
+      userTimezone, userAttendanceMode, signupNow, signupNow
     );
 
     const userId = info.lastInsertRowid;
