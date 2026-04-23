@@ -119,8 +119,8 @@ const C_SOFT = '#b0b0b8';
 const C_MUTED = '#6a6a75';
 const C_FAINT = '#3a3a42';
 
-function headerDashboardButton() {
-  return `<a href="${SITE}/dashboard" style="display:inline-block;padding:8px 16px;background:${C_ORANGE};color:${C_WHITE};text-decoration:none;font-family:${F_DISPLAY};font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;line-height:1">My Dashboard</a>`;
+function headerLoginIcon() {
+  return `<a href="${SITE}/dashboard" title="My Dashboard" aria-label="My Dashboard" style="display:inline-block;width:36px;height:36px;line-height:36px;text-align:center;background:${C_ORANGE};color:${C_WHITE};text-decoration:none;font-family:${F_DISPLAY};font-size:18px;font-weight:700;border-radius:50%;mso-line-height-rule:exactly">&rarr;</a>`;
 }
 
 function countdownBlock(targetIso, eyebrow = 'MEETING STARTS IN') {
@@ -228,9 +228,6 @@ function wrap(content, preheader = '') {
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     @media only screen and (max-width: 480px) {
-      .stack-cell { display: block !important; width: 100% !important; text-align: left !important; padding: 0 !important; }
-      .stack-cell.stack-right { text-align: left !important; padding-top: 16px !important; }
-      .stack-spacer { display: none !important; }
       .full-width-button-cell { width: 100% !important; }
       .full-width-button { display: block !important; width: auto !important; text-align: center !important; }
     }
@@ -252,12 +249,12 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;c
                 <td style="padding-bottom:20px">
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
-                      <td align="left" class="stack-cell" style="vertical-align:middle">
+                      <td align="left" style="vertical-align:middle">
                         <a href="${SITE}" style="text-decoration:none"><img src="${LOGO_URL}" alt="Engage by Elevate" width="180" style="display:block;height:auto;border:0;max-width:180px" /></a>
                       </td>
-                      <td width="20" class="stack-spacer" style="font-size:0;line-height:0">&nbsp;</td>
-                      <td align="right" class="stack-cell stack-right" style="vertical-align:middle">
-                        ${headerDashboardButton()}
+                      <td width="20" style="font-size:0;line-height:0">&nbsp;</td>
+                      <td align="right" style="vertical-align:middle">
+                        ${headerLoginIcon()}
                       </td>
                     </tr>
                   </table>
