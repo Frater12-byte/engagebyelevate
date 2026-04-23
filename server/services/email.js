@@ -167,18 +167,18 @@ function btn(label, href, bg = C_ORANGE) {
   return `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:28px 0">
   <tr>
-    <td align="center">
+    <td align="center" class="full-width-button-cell">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td align="center" style="border-radius:4px;background:${bg}">
             <!--[if mso]>
-            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:52px;v-text-anchor:middle;width:280px" arcsize="8%" stroke="f" fillcolor="${bg}">
+            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:54px;v-text-anchor:middle;width:280px" arcsize="8%" stroke="f" fillcolor="${bg}">
               <w:anchorlock/>
-              <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:1px">${esc(label)}</center>
+              <center style="color:${C_WHITE};font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:1.5px">${esc(label)}</center>
             </v:roundrect>
             <![endif]-->
             <!--[if !mso]><!-->
-            <a href="${href}" target="_blank" style="display:inline-block;padding:18px 48px;background:${bg};color:#ffffff;text-decoration:none;font-family:${F_DISPLAY};font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:4px;line-height:1;mso-hide:all">${esc(label)}</a>
+            <a href="${href}" target="_blank" class="full-width-button" style="display:inline-block;padding:18px 48px;background:${bg};color:${C_WHITE};text-decoration:none;font-family:${F_DISPLAY};font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;line-height:1;mso-hide:all">${esc(label)}</a>
             <!--<![endif]-->
           </td>
         </tr>
@@ -226,6 +226,15 @@ function wrap(content, preheader = '') {
   <meta name="supported-color-schemes" content="dark">
   <title>Engage by Elevate</title>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    @media only screen and (max-width: 480px) {
+      .stack-cell { display: block !important; width: 100% !important; text-align: left !important; padding: 0 !important; }
+      .stack-cell.stack-right { text-align: left !important; padding-top: 16px !important; }
+      .stack-spacer { display: none !important; }
+      .full-width-button-cell { width: 100% !important; }
+      .full-width-button { display: block !important; width: auto !important; text-align: center !important; }
+    }
+  </style>
   <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 </head>
 <body style="margin:0;padding:0;background-color:${C_BG};color:#ffffff;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%">
@@ -243,10 +252,11 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;c
                 <td style="padding-bottom:20px">
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
-                      <td style="vertical-align:middle">
+                      <td align="left" class="stack-cell" style="vertical-align:middle">
                         <a href="${SITE}" style="text-decoration:none"><img src="${LOGO_URL}" alt="Engage by Elevate" width="180" style="display:block;height:auto;border:0;max-width:180px" /></a>
                       </td>
-                      <td align="right" style="vertical-align:middle">
+                      <td width="20" class="stack-spacer" style="font-size:0;line-height:0">&nbsp;</td>
+                      <td align="right" class="stack-cell stack-right" style="vertical-align:middle">
                         ${headerDashboardButton()}
                       </td>
                     </tr>
