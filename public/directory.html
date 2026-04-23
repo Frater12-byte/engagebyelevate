@@ -165,17 +165,23 @@
           <div class="org-desc">${escapeHtml(b.description || '')}</div>
         </div>
       `).join('');
-      const exhibitorCards = (extraItems || []).map(ex => `
+      const exhibitorCards = (extraItems || []).map(ex => {
+        const initials = (ex.name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+        return `
         <a class="org-card card-exhibitor" href="/exhibitor/${encodeURIComponent(ex.slug)}">
-          ${ex.logo_url
-            ? `<img class="org-logo" src="${escapeHtml(ex.logo_url)}" alt="">`
-            : `<div class="org-logo" style="display:flex;align-items:center;justify-content:center;font-weight:800;color:#F59E0B;font-size:16px">${(ex.name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()}</div>`
-          }
-          <div class="type-icon type-exhibitor"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Exhibitor${ex.category ? ' · ' + escapeHtml(ex.category) : ''}${ex.booth_number ? ' · Booth ' + escapeHtml(ex.booth_number) : ''}</div>
-          <h3>${escapeHtml(ex.name)}</h3>
-          <div class="org-desc">${escapeHtml(ex.description || '')}</div>
-        </a>
-      `).join('');
+          <div class="exhibitor-eyebrow">
+            <span class="exhibitor-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></span>
+            <span class="exhibitor-tag">Exhibitor</span>
+            ${ex.logo_url ? `<img src="${escapeHtml(ex.logo_url)}" alt="" style="width:28px;height:28px;border-radius:4px;object-fit:contain;margin-left:auto">` : ''}
+          </div>
+          <div class="exhibitor-meta">
+            ${ex.category ? `<span class="exhibitor-category">${escapeHtml(ex.category)}</span>` : ''}
+            ${ex.booth_number ? `<span class="exhibitor-booth">Booth ${escapeHtml(ex.booth_number)}</span>` : ''}
+          </div>
+          <h3 class="exhibitor-name">${escapeHtml(ex.name)}</h3>
+          <p class="exhibitor-desc">${escapeHtml(ex.description || '')}</p>
+        </a>`;
+      }).join('');
       container.innerHTML = `<div class="directory-grid">${boardCards}${exhibitorCards}</div>`;
       return;
     }

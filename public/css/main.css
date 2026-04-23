@@ -1544,3 +1544,65 @@ a, .btn, .dash-tab, .slot, .nav-links a {
 .org-card.card-hotel { border-left: 3px solid rgba(78,168,222,0.3); }
 .org-card.card-agent { border-left: 3px solid rgba(167,139,250,0.3); }
 .org-card.card-exhibitor { border-left: 3px solid rgba(245,158,11,0.3); }
+
+/* ========== Exhibitor card layout ========== */
+.exhibitor-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.exhibitor-icon {
+  display: inline-flex;
+  width: 30px; height: 30px;
+  align-items: center; justify-content: center;
+  background: var(--orange-dim);
+  color: var(--orange);
+  border-radius: var(--radius-xs);
+  flex-shrink: 0;
+}
+.exhibitor-tag {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+.exhibitor-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.exhibitor-category {
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.exhibitor-booth {
+  display: inline-block;
+  background: var(--orange-dim);
+  color: var(--orange);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+}
+.exhibitor-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+.exhibitor-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
