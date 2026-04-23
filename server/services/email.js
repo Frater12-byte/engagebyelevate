@@ -83,6 +83,27 @@ function fmtShort(iso) {
   return dayjs(iso).tz(EVENT_TZ).format('ddd, MMM D [at] HH:mm') + ' GST';
 }
 
+function tzCity(tz) {
+  const map = {
+    'Asia/Dubai':'Dubai','Asia/Bangkok':'Bangkok','Europe/London':'London',
+    'Europe/Paris':'Paris','Europe/Madrid':'Madrid','Europe/Lisbon':'Lisbon',
+    'Europe/Bucharest':'Bucharest','Indian/Maldives':'Maldives','Indian/Mauritius':'Mauritius'
+  };
+  if (map[tz]) return map[tz];
+  if (!tz) return 'Dubai';
+  const parts = tz.split('/');
+  return (parts[parts.length - 1] || tz).replace(/_/g, ' ');
+}
+
+function fmtShortDual(iso, userTz) {
+  const dubaiTime = dayjs(iso).tz(EVENT_TZ).format('HH:mm');
+  const dateStr = dayjs(iso).tz(EVENT_TZ).format('ddd, MMM D');
+  if (!userTz || userTz === EVENT_TZ) return `${dateStr} at ${dubaiTime} Dubai`;
+  const localTime = dayjs(iso).tz(userTz).format('HH:mm');
+  const localDate = dayjs(iso).tz(userTz).format('ddd, MMM D');
+  return `${localDate} at ${localTime} ${tzCity(userTz)} (${dubaiTime} Dubai)`;
+}
+
 // Font stacks matching the website
 const F_DISPLAY = "'Archivo', Georgia, serif";
 const F_BODY = "'Manrope', -apple-system, 'Segoe UI', sans-serif";
@@ -312,7 +333,7 @@ async function sendMeetingRequest(meeting, requester, recipient) {
     ${meetingCard({
       org: requester.org_name,
       contact: requester.contact_name,
-      datetime: fmtShort(meeting.start_time)
+      datetime: fmtShortDual(meeting.start_time, recipient.timezone)
     })}
     ${meeting.message ? blockquote(meeting.message) : ''}
     ${btn('Review Request', dashUrl)}
@@ -326,7 +347,7 @@ async function sendMeetingRequest(meeting, requester, recipient) {
 
 You have a new meeting request from ${requester.org_name} (${requester.contact_name}).
 
-When: ${fmtShort(meeting.start_time)}
+When: ${fmtShortDual(meeting.start_time, recipient.timezone)}
 Duration: 20 minutes
 ${meeting.message ? `\nMessage: "${meeting.message}"\n` : ''}
 Review this request on your dashboard:
@@ -371,25 +392,25 @@ async function sendMeetingApproved(meeting) {
       </tr>
     </table>`;
 
-  const buildHtml = (toName, otherOrg, otherContact) => wrap(`
+  const buildHtml = (toName, otherOrg, otherContact, toTz) => wrap(`
     ${heading('Meeting Confirmed')}
     ${greeting(toName)}
     ${subheading(`Your meeting with <strong style="color:${C_WHITE}">${esc(otherOrg)}</strong> is confirmed.`)}
     ${meetingCard({
       org: otherOrg,
       contact: otherContact,
-      datetime: fmtShort(meeting.start_time)
+      datetime: fmtShortDual(meeting.start_time, toTz)
     })}
     ${teamsBlock}
     ${calendarBlock}
     ${footnote('View all your meetings on your <a href="' + SITE + '/dashboard" style="color:' + C_RUST + ';text-decoration:none">dashboard</a>.')}
   `);
 
-  const buildText = (toName, otherOrg, otherContact) => `Hello ${toName || ''},
+  const buildText = (toName, otherOrg, otherContact, toTz) => `Hello ${toName || ''},
 
 Your meeting with ${otherOrg} (${otherContact}) is confirmed.
 
-When: ${fmtShort(meeting.start_time)}
+When: ${fmtShortDual(meeting.start_time, toTz)}
 Duration: 20 minutes
 ${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : ''}
 Add to calendar: ${icsUrl}
@@ -407,15 +428,15 @@ ${SITE}`;
   await send(
     meeting.requester_email,
     subjectFor(meeting.recipient_org),
-    buildHtml(meeting.requester_name, meeting.recipient_org, meeting.recipient_name),
-    buildText(meeting.requester_name, meeting.recipient_org, meeting.recipient_name),
+    buildHtml(meeting.requester_name, meeting.recipient_org, meeting.recipient_name, meeting.requester_timezone),
+    buildText(meeting.requester_name, meeting.recipient_org, meeting.recipient_name, meeting.requester_timezone),
     { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.requester_id }
   );
   await send(
     meeting.recipient_email,
     subjectFor(meeting.requester_org),
-    buildHtml(meeting.recipient_name, meeting.requester_org, meeting.requester_name),
-    buildText(meeting.recipient_name, meeting.requester_org, meeting.requester_name),
+    buildHtml(meeting.recipient_name, meeting.requester_org, meeting.requester_name, meeting.recipient_timezone),
+    buildText(meeting.recipient_name, meeting.requester_org, meeting.requester_name, meeting.recipient_timezone),
     { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.recipient_id }
   );
 }
@@ -434,7 +455,7 @@ async function sendMeetingDeclined(meeting) {
     ${subheading(`<strong style="color:${C_WHITE}">${esc(meeting.recipient_org)}</strong> is unable to meet at the proposed time. You can try another slot.`)}
     ${meetingCard({
       org: meeting.recipient_org,
-      datetime: fmtShort(meeting.start_time)
+      datetime: fmtShortDual(meeting.start_time, meeting.requester_timezone)
     })}
     ${meeting.decline_reason ? blockquote(meeting.decline_reason) : ''}
     ${btn('Back to Dashboard', dashUrl)}
@@ -442,7 +463,7 @@ async function sendMeetingDeclined(meeting) {
 
   const text = `Hello ${meeting.requester_name || ''},
 
-Your meeting request with ${meeting.recipient_org} at ${fmtShort(meeting.start_time)} was declined.
+Your meeting request with ${meeting.recipient_org} at ${fmtShortDual(meeting.start_time, meeting.requester_timezone)} was declined.
 
 ${meeting.recipient_org} is unable to meet at the time you proposed. You may be able to find another slot that works for both of you.
 ${meeting.decline_reason ? `\nReason: "${meeting.decline_reason}"\n` : ''}
@@ -467,6 +488,7 @@ async function sendMeetingCancelled(meeting, cancelledByUserId) {
   const otherName = cancelledByUserId === meeting.requester_id ? meeting.recipient_name : meeting.requester_name;
   const cancellerOrg = cancelledByUserId === meeting.requester_id ? meeting.requester_org : meeting.recipient_org;
   const otherUserId = cancelledByUserId === meeting.requester_id ? meeting.recipient_id : meeting.requester_id;
+  const otherTz = cancelledByUserId === meeting.requester_id ? meeting.recipient_timezone : meeting.requester_timezone;
   const dashUrl = `${process.env.BASE_URL}/dashboard`;
   const subject = `Meeting with ${cancellerOrg} was cancelled`;
 
@@ -476,14 +498,14 @@ async function sendMeetingCancelled(meeting, cancelledByUserId) {
     ${subheading(`<strong style="color:${C_WHITE}">${esc(cancellerOrg)}</strong> has cancelled your meeting. Your slot is now free.`)}
     ${meetingCard({
       org: cancellerOrg,
-      datetime: fmtShort(meeting.start_time)
+      datetime: fmtShortDual(meeting.start_time, otherTz)
     })}
     ${btn('Back to Dashboard', dashUrl)}
   `);
 
   const text = `Hello ${otherName || ''},
 
-${cancellerOrg} has cancelled your meeting scheduled for ${fmtShort(meeting.start_time)}. Your slot is now free for other requests.
+${cancellerOrg} has cancelled your meeting scheduled for ${fmtShortDual(meeting.start_time, otherTz)}. Your slot is now free for other requests.
 
 Return to your dashboard:
 ${dashUrl}
