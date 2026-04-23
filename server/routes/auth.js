@@ -10,6 +10,7 @@ const express = require('express');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const dayjs = require('dayjs');
+const { nowUtc } = require('../utils/time');
 
 const { getDb } = require('../db/connection');
 const { generateSlotsForUser } = require('../services/slots');
@@ -64,18 +65,21 @@ router.post('/signup', (req, res) => {
   if (type === 'agent') userRegion = null;
 
   try {
+    const signupNow = nowUtc();
     const info = db.prepare(`
       INSERT INTO users (
         type, email, contact_name, phone, org_name, country, city, website,
-        description, specialties, target_markets, room_count, star_rating, region
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        description, specialties, target_markets, room_count, star_rating, region,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       type, emailNorm, contact_name, phone || null, org_name,
       country || null, city || null, website || null,
       description || null,
       specialties ? JSON.stringify(specialties) : null,
       target_markets ? JSON.stringify(target_markets) : null,
-      room_count || null, star_rating || null, userRegion
+      room_count || null, star_rating || null, userRegion,
+      signupNow, signupNow
     );
 
     const userId = info.lastInsertRowid;
@@ -137,8 +141,8 @@ async function sendMagicLinkFor(userId) {
   const expiresAt = dayjs().add(expiryHours, 'hour').toISOString();
 
   db.prepare(`
-    INSERT INTO magic_tokens (user_id, token, expires_at) VALUES (?, ?, ?)
-  `).run(userId, token, expiresAt);
+    INSERT INTO magic_tokens (user_id, token, expires_at, created_at) VALUES (?, ?, ?, ?)
+  `).run(userId, token, expiresAt, nowUtc());
 
   await email.sendMagicLink(user, token);
 }
@@ -162,7 +166,7 @@ router.get('/verify', (req, res) => {
   if (row.used_at) return res.status(400).send('This link has already been used. Request a new one from the sign-in page.');
 
   // Mark token as used — single use only
-  db.prepare("UPDATE magic_tokens SET used_at = datetime('now') WHERE id = ?").run(row.id);
+  db.prepare("UPDATE magic_tokens SET used_at = ? WHERE id = ?").run(nowUtc(), row.id);
 
   // Invalidate any previous sessions by using a unique session ID
   const sessionId = crypto.randomBytes(16).toString('hex');

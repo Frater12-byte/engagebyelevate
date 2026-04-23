@@ -15,6 +15,7 @@ const { getDb } = require('../db/connection');
 const { requireAuth } = require('../middleware/auth');
 const meetings = require('../services/meetings');
 const { eligibleDaysFor } = require('../services/slots');
+const { nowUtc } = require('../utils/time');
 
 const router = express.Router();
 
@@ -216,10 +217,10 @@ router.post('/me/slots/:id/toggle', requireAuth, (req, res) => {
 
   // Only free <-> blocked transitions allowed
   if (slot.status === 'free') {
-    db.prepare("UPDATE slots SET status = 'blocked', updated_at = datetime('now') WHERE id = ?").run(slot.id);
+    db.prepare("UPDATE slots SET status = 'blocked', updated_at = ? WHERE id = ?").run(nowUtc(), slot.id);
     res.json({ ok: true, status: 'blocked' });
   } else if (slot.status === 'blocked') {
-    db.prepare("UPDATE slots SET status = 'free', updated_at = datetime('now') WHERE id = ?").run(slot.id);
+    db.prepare("UPDATE slots SET status = 'free', updated_at = ? WHERE id = ?").run(nowUtc(), slot.id);
     res.json({ ok: true, status: 'free' });
   } else {
     res.status(400).json({ error: `Cannot toggle a slot with status "${slot.status}"` });
@@ -285,8 +286,8 @@ router.put('/me/profile', requireAuth, (req, res) => {
     }
   }
   if (!updates.length) return res.json({ ok: true });
-  values.push(req.user.id);
-  db.prepare(`UPDATE users SET ${updates.join(',')}, updated_at = datetime('now') WHERE id = ?`).run(...values);
+  values.push(nowUtc(), req.user.id);
+  db.prepare(`UPDATE users SET ${updates.join(',')}, updated_at = ? WHERE id = ?`).run(...values);
   res.json({ ok: true });
 });
 

@@ -18,6 +18,7 @@ const dayjs = require('dayjs');
 const { getDb } = require('../db/connection');
 const teams = require('./teams');
 const email = require('./email');
+const { nowUtc } = require('../utils/time');
 
 const LOCK_HOURS = parseInt(process.env.SLOT_LOCK_HOURS || '48', 10);
 
@@ -83,24 +84,25 @@ function requestMeeting(requesterId, recipientId, startTime, message) {
   if (dup) throw new Error('A meeting already exists between you two at that time');
 
   const tx = db.transaction(() => {
+    const now = nowUtc();
     const insert = db.prepare(`
       INSERT INTO meetings
         (requester_id, recipient_id, requester_slot_id, recipient_slot_id,
-         day, start_time, end_time, status, message)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+         day, start_time, end_time, status, message, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
     `);
     const info = insert.run(
       requesterId, recipientId, rSlot.id, eSlot.id,
-      rSlot.day, rSlot.start_time, rSlot.end_time, message || null
+      rSlot.day, rSlot.start_time, rSlot.end_time, message || null, now, now
     );
     const meetingId = info.lastInsertRowid;
 
     // Flip both slots to 'held' so nobody else grabs them
     const updSlot = db.prepare(
-      "UPDATE slots SET status = 'held', meeting_id = ?, updated_at = datetime('now') WHERE id = ?"
+      "UPDATE slots SET status = 'held', meeting_id = ?, updated_at = ? WHERE id = ?"
     );
-    updSlot.run(meetingId, rSlot.id);
-    updSlot.run(meetingId, eSlot.id);
+    updSlot.run(meetingId, now, rSlot.id);
+    updSlot.run(meetingId, now, eSlot.id);
 
     return meetingId;
   });
@@ -142,21 +144,21 @@ async function approveMeeting(meetingId, actingUserId) {
   });
   console.log(`[APPROVE] Meeting ${meetingId}: Teams link created: ${teamsInfo.joinUrl}`);
 
+  const approveNow = nowUtc();
   const tx = db.transaction(() => {
     db.prepare(`
       UPDATE meetings
       SET status = 'approved',
           teams_join_url = ?,
           teams_meeting_id = ?,
-          responded_at = datetime('now'),
-          updated_at = datetime('now')
+          responded_at = ?,
+          updated_at = ?
       WHERE id = ?
-    `).run(teamsInfo.joinUrl, teamsInfo.meetingId, meetingId);
+    `).run(teamsInfo.joinUrl, teamsInfo.meetingId, approveNow, approveNow, meetingId);
 
-    // Slots go from 'held' -> 'booked'
     db.prepare(
-      "UPDATE slots SET status = 'booked', updated_at = datetime('now') WHERE id IN (?, ?)"
-    ).run(meeting.requester_slot_id, meeting.recipient_slot_id);
+      "UPDATE slots SET status = 'booked', updated_at = ? WHERE id IN (?, ?)"
+    ).run(approveNow, meeting.requester_slot_id, meeting.recipient_slot_id);
   });
   tx();
 
@@ -176,21 +178,21 @@ function declineMeeting(meetingId, actingUserId, reason) {
   if (meeting.status !== 'pending') throw new Error('Meeting is not pending');
   if (meeting.recipient_id !== actingUserId) throw new Error('Only the recipient can decline');
 
+  const declineNow = nowUtc();
   const tx = db.transaction(() => {
     db.prepare(`
       UPDATE meetings
       SET status = 'declined',
           decline_reason = ?,
-          responded_at = datetime('now'),
-          updated_at = datetime('now')
+          responded_at = ?,
+          updated_at = ?
       WHERE id = ?
-    `).run(reason || null, meetingId);
+    `).run(reason || null, declineNow, declineNow, meetingId);
 
-    // Release both slots back to 'free'
     db.prepare(`
-      UPDATE slots SET status = 'free', meeting_id = NULL, updated_at = datetime('now')
+      UPDATE slots SET status = 'free', meeting_id = NULL, updated_at = ?
       WHERE id IN (?, ?)
-    `).run(meeting.requester_slot_id, meeting.recipient_slot_id);
+    `).run(declineNow, meeting.requester_slot_id, meeting.recipient_slot_id);
   });
   tx();
 
@@ -217,15 +219,16 @@ function cancelMeeting(meetingId, actingUserId) {
     throw new Error('Cannot cancel within 48h of start');
   }
 
+  const cancelNow = nowUtc();
   const tx = db.transaction(() => {
     db.prepare(`
-      UPDATE meetings SET status = 'cancelled', updated_at = datetime('now') WHERE id = ?
-    `).run(meetingId);
+      UPDATE meetings SET status = 'cancelled', updated_at = ? WHERE id = ?
+    `).run(cancelNow, meetingId);
 
     db.prepare(`
-      UPDATE slots SET status = 'free', meeting_id = NULL, updated_at = datetime('now')
+      UPDATE slots SET status = 'free', meeting_id = NULL, updated_at = ?
       WHERE id IN (?, ?)
-    `).run(meeting.requester_slot_id, meeting.recipient_slot_id);
+    `).run(cancelNow, meeting.requester_slot_id, meeting.recipient_slot_id);
   });
   tx();
 
@@ -288,11 +291,12 @@ function expireStalePending() {
   `).all(threshold);
 
   let expired = 0;
+  const expireNow = nowUtc();
   const tx = db.transaction(() => {
     for (const m of pending) {
-      db.prepare("UPDATE meetings SET status = 'expired', updated_at = datetime('now') WHERE id = ?").run(m.id);
-      db.prepare("UPDATE slots SET status = 'free', meeting_id = NULL, updated_at = datetime('now') WHERE id IN (?, ?)")
-        .run(m.requester_slot_id, m.recipient_slot_id);
+      db.prepare("UPDATE meetings SET status = 'expired', updated_at = ? WHERE id = ?").run(expireNow, m.id);
+      db.prepare("UPDATE slots SET status = 'free', meeting_id = NULL, updated_at = ? WHERE id IN (?, ?)")
+        .run(expireNow, m.requester_slot_id, m.recipient_slot_id);
       expired++;
     }
   });

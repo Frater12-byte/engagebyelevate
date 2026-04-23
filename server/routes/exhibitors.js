@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { getDb } = require('../db/connection');
 const { requireAuth } = require('../middleware/auth');
+const { nowUtc } = require('../utils/time');
 
 const router = express.Router();
 
@@ -37,8 +38,8 @@ router.post('/:slug/contact', requireAuth, contactLimiter, async (req, res) => {
   const sender_company = req.user.org_name;
   const sender_email = req.user.email;
 
-  db.prepare('INSERT INTO exhibitor_contacts (exhibitor_id, sender_name, sender_company, sender_email, message) VALUES (?, ?, ?, ?, ?)').run(
-    exhibitor.id, sender_name, sender_company, sender_email, message.trim()
+  db.prepare('INSERT INTO exhibitor_contacts (exhibitor_id, sender_name, sender_company, sender_email, message, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
+    exhibitor.id, sender_name, sender_company, sender_email, message.trim(), nowUtc()
   );
 
   const submission = { sender_name, sender_company, sender_email, message: message.trim() };

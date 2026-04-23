@@ -36,12 +36,14 @@ function getTransporter() {
   return transporter;
 }
 
+const { nowUtc } = require('../utils/time');
+
 function dbLog(row) {
   try {
     getDb().prepare(`
-      INSERT INTO email_log (to_email, subject, template, meeting_id, user_id, status, error)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(row.to_email, row.subject, row.template, row.meeting_id || null, row.user_id || null, row.status || 'sent', row.error || null);
+      INSERT INTO email_log (to_email, subject, template, meeting_id, user_id, status, error, sent_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(row.to_email, row.subject, row.template, row.meeting_id || null, row.user_id || null, row.status || 'sent', row.error || null, nowUtc());
   } catch (e) { console.error('email_log insert failed:', e.message); }
 }
 

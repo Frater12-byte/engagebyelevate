@@ -15,6 +15,7 @@ const jwt = require('jsonwebtoken');
 
 const { getDb } = require('./db/connection');
 const meetingsService = require('./services/meetings');
+const { nowUtc } = require('./utils/time');
 
 // Logo upload config
 const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
@@ -71,7 +72,7 @@ app.post('/api/upload-logo', upload.single('logo'), (req, res) => {
     if (!payload) return res.status(401).json({ error: 'Not authenticated' });
     if (!req.file) return res.status(400).json({ error: 'No valid image file provided (max 2MB, PNG/JPG/SVG/WebP)' });
     const logoUrl = `/uploads/${req.file.filename}`;
-    getDb().prepare(`UPDATE users SET logo_url = ?, updated_at = datetime('now') WHERE id = ?`).run(logoUrl, payload.uid);
+    getDb().prepare(`UPDATE users SET logo_url = ?, updated_at = ? WHERE id = ?`).run(logoUrl, nowUtc(), payload.uid);
     res.json({ ok: true, logo_url: logoUrl });
   } catch (err) {
     console.error('[UPLOAD LOGO FAIL]', err.message);
@@ -87,7 +88,7 @@ app.post('/api/upload-photo', upload.single('photo'), (req, res) => {
     const photoUrl = `/uploads/${req.file.filename}`;
     // Ensure photo_url column exists (migration may not have run)
     try { getDb().exec('ALTER TABLE users ADD COLUMN photo_url TEXT'); } catch {}
-    getDb().prepare(`UPDATE users SET photo_url = ?, updated_at = datetime('now') WHERE id = ?`).run(photoUrl, payload.uid);
+    getDb().prepare(`UPDATE users SET photo_url = ?, updated_at = ? WHERE id = ?`).run(photoUrl, nowUtc(), payload.uid);
     res.json({ ok: true, photo_url: photoUrl });
   } catch (err) {
     console.error('[UPLOAD PHOTO FAIL]', err.message);
@@ -110,10 +111,10 @@ app.post('/admin/exhibitors', (req, res) => {
   const { slug, name, category, description, logo_url, website, contact_name, contact_email, booth_number } = req.body;
   if (!slug || !name || !contact_email) return res.status(400).json({ error: 'slug, name, contact_email required' });
   const db = getDb();
-  db.prepare(`INSERT INTO exhibitors (slug, name, category, description, logo_url, website, contact_name, contact_email, booth_number)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  db.prepare(`INSERT INTO exhibitors (slug, name, category, description, logo_url, website, contact_name, contact_email, booth_number, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(slug) DO UPDATE SET name=?, category=?, description=?, logo_url=?, website=?, contact_name=?, contact_email=?, booth_number=?`
-  ).run(slug, name, category||null, description||null, logo_url||null, website||null, contact_name||null, contact_email, booth_number||null,
+  ).run(slug, name, category||null, description||null, logo_url||null, website||null, contact_name||null, contact_email, booth_number||null, nowUtc(),
         name, category||null, description||null, logo_url||null, website||null, contact_name||null, contact_email, booth_number||null);
   res.json({ ok: true });
 });
