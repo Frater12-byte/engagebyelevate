@@ -204,7 +204,7 @@ function meetingCard(data) {
           </td>
           <td style="vertical-align:top">
             <div style="font-family:${F_CONDENSED};font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${C_MUTED};margin-bottom:6px">Duration</div>
-            <div style="font-family:${F_CONDENSED};font-size:16px;font-weight:600;color:${C_WHITE}">20 min</div>
+            <div style="font-family:${F_DISPLAY};font-size:16px;font-weight:600;color:${C_WHITE}">20 min</div>
           </td>
         </tr>
       </table>
@@ -424,7 +424,6 @@ async function sendMeetingRequest(meeting, requester, recipient) {
       datetime: fmtShortDual(meeting.start_time, recipient.timezone)
     })}
     ${meeting.message ? blockquote(meeting.message) : ''}
-    ${countdownBlock(meeting.start_time, 'MEETING STARTS IN')}
     ${btn('Review Request', dashUrl)}
     <div style="text-align:center;margin-top:-8px">
       <a href="${profileUrl}" style="font-family:${F_BODY};font-size:13px;color:${C_ORANGE};text-decoration:none">View their profile</a>
@@ -432,14 +431,13 @@ async function sendMeetingRequest(meeting, requester, recipient) {
     ${footnote('This request expires 48 hours before the meeting time if not actioned.')}
   `, `New meeting request from ${requester.org_name} \u00b7 Engage by Elevate`);
 
-  const cdText = countdownText(meeting.start_time);
   const text = `Hello ${recipient.contact_name || ''},
 
 You have a new meeting request from ${requester.org_name} (${requester.contact_name}).
 
 When: ${fmtShortDual(meeting.start_time, recipient.timezone)}
 Duration: 20 minutes
-${cdText ? cdText + '\n' : ''}${meeting.message ? `\nMessage: "${meeting.message}"\n` : ''}
+${meeting.message ? `\nMessage: "${meeting.message}"\n` : ''}
 Review this request on your dashboard:
 ${dashUrl}
 
@@ -507,20 +505,18 @@ async function sendMeetingApproved(meeting) {
       contact: otherContact,
       datetime: fmtShortDual(meeting.start_time, toTz)
     })}
-    ${countdownBlock(meeting.start_time, 'MEETING STARTS IN')}
     ${teamsBlock}
     ${calendarBlock}
     ${footnote('View all your meetings on your <a href="' + toDashUrl + '" style="color:' + C_ORANGE + ';text-decoration:none">dashboard</a>.')}
   `, `Meeting confirmed with ${otherOrg} \u00b7 Engage by Elevate`);
 
-  const cdText = countdownText(meeting.start_time);
   const buildText = (toName, otherOrg, otherContact, toTz, toDashUrl) => `Hello ${toName || ''},
 
 Your meeting with ${otherOrg} (${otherContact}) is confirmed.
 
 When: ${fmtShortDual(meeting.start_time, toTz)}
 Duration: 20 minutes
-${cdText ? cdText + '\n' : ''}${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : ''}
+${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : ''}
 Add to Outlook: ${outlookUrl}
 Add to Google Calendar: ${gcalUrl}
 A calendar invite (.ics) is attached to this email.
