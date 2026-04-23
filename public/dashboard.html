@@ -320,7 +320,7 @@ function meetingCard(m, kind) {
     const gcalStart = new Date(m.start_time).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const gcalEnd = new Date(new Date(m.start_time).getTime() + 20*60000).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const gcalSubject = encodeURIComponent(`Engage by Elevate — ${otherOrg}`);
-    const gcalDetails = encodeURIComponent(m.teams_join_url ? `Join Teams: ${m.teams_join_url}` : 'Engage by Elevate meeting');
+    const gcalDetails = encodeURIComponent(m.teams_join_url ? `Join Meeting: ${m.teams_join_url}` : 'Engage by Elevate meeting');
     const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalSubject}&dates=${gcalStart}/${gcalEnd}&details=${gcalDetails}&location=${encodeURIComponent(m.teams_join_url || 'Microsoft Teams')}`;
     const outlookUrl = `https://outlook.office.com/calendar/0/action/compose?subject=${gcalSubject}&startdt=${encodeURIComponent(m.start_time)}&enddt=${encodeURIComponent(new Date(new Date(m.start_time).getTime()+20*60000).toISOString())}&body=${gcalDetails}&location=${encodeURIComponent(m.teams_join_url || 'Microsoft Teams')}`;
 
@@ -335,7 +335,7 @@ function meetingCard(m, kind) {
       </div>`;
 
     btnsHtml = `
-      ${m.teams_join_url ? `<a class="btn btn-small" href="${m.teams_join_url}" target="_blank">Join Teams</a>` : ''}
+      ${m.teams_join_url ? `<a class="btn btn-small" href="${m.teams_join_url}" target="_blank">Join Meeting</a>` : ''}
       ${!locked ? `<button class="btn btn-small btn-ghost" data-action="cancel" data-id="${m.id}">Cancel</button>` : ''}
     `;
   }

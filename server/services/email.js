@@ -350,7 +350,7 @@ function buildIcs(meeting) {
   const dtEnd = dayjs(meeting.start_time).add(20, 'minute').utc().format('YYYYMMDD[T]HHmmss') + 'Z';
   const dtStamp = dayjs().utc().format('YYYYMMDD[T]HHmmss') + 'Z';
   const summary = `Engage by Elevate — ${meeting.requester_org} × ${meeting.recipient_org}`;
-  const description = meeting.teams_join_url ? `Join Teams: ${meeting.teams_join_url}` : 'Engage by Elevate meeting';
+  const description = meeting.teams_join_url ? `Join Meeting: ${meeting.teams_join_url}` : 'Engage by Elevate meeting';
   const location = meeting.teams_join_url || 'Microsoft Teams';
   return [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Engage by Elevate//EN',
@@ -458,14 +458,14 @@ ${SITE}`;
 
 async function sendMeetingApproved(meeting) {
   const teamsBlock = meeting.teams_join_url
-    ? btn('Join Teams Meeting', meeting.teams_join_url, C_ORANGE)
+    ? btn('Join Meeting', meeting.teams_join_url, C_ORANGE)
     : '';
 
   // Calendar links
   const gcalStart = dayjs(meeting.start_time).utc().format('YYYYMMDDTHHmmss') + 'Z';
   const gcalEnd = dayjs(meeting.start_time).add(20, 'minute').utc().format('YYYYMMDDTHHmmss') + 'Z';
   const gcalSubject = encodeURIComponent(`Engage by Elevate — ${meeting.requester_org} × ${meeting.recipient_org}`);
-  const gcalDetails = encodeURIComponent(meeting.teams_join_url ? `Join Teams: ${meeting.teams_join_url}` : 'Engage by Elevate meeting');
+  const gcalDetails = encodeURIComponent(meeting.teams_join_url ? `Join Meeting: ${meeting.teams_join_url}` : 'Engage by Elevate meeting');
   const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalSubject}&dates=${gcalStart}/${gcalEnd}&details=${gcalDetails}&location=${encodeURIComponent(meeting.teams_join_url || 'Microsoft Teams')}`;
   const outlookUrl = `https://outlook.office.com/calendar/0/action/compose?subject=${gcalSubject}&startdt=${encodeURIComponent(meeting.start_time)}&enddt=${encodeURIComponent(dayjs(meeting.start_time).add(20,'minute').toISOString())}&body=${gcalDetails}&location=${encodeURIComponent(meeting.teams_join_url || 'Microsoft Teams')}`;
 
@@ -516,7 +516,7 @@ Your meeting with ${otherOrg} (${otherContact}) is confirmed.
 
 When: ${fmtShortDual(meeting.start_time, toTz)}
 Duration: 20 minutes
-${meeting.teams_join_url ? `\nJoin Teams: ${meeting.teams_join_url}\n` : ''}
+${meeting.teams_join_url ? `\nJoin Meeting: ${meeting.teams_join_url}\n` : ''}
 Add to Outlook: ${outlookUrl}
 Add to Google Calendar: ${gcalUrl}
 A calendar invite (.ics) is attached to this email.

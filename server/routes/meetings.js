@@ -177,7 +177,7 @@ router.get('/meetings/:id/calendar.ics', requireAuth, (req, res) => {
   const summary = `Engage by Elevate — ${m.requester_org} × ${m.recipient_org}`;
   const otherOrg = req.user.id === m.requester_id ? m.recipient_org : m.requester_org;
   const otherName = req.user.id === m.requester_id ? m.recipient_name : m.requester_name;
-  const description = `Meeting with ${otherOrg} (${otherName})\\n\\nDuration: 20 minutes${m.teams_join_url ? '\\n\\nJoin Teams: ' + m.teams_join_url : ''}\\n\\nManage your meetings: https://engagebyelevate.com/dashboard`;
+  const description = `Meeting with ${otherOrg} (${otherName})\\n\\nDuration: 20 minutes${m.teams_join_url ? '\\n\\nJoin Meeting: ' + m.teams_join_url : ''}\\n\\nManage your meetings: https://engagebyelevate.com/dashboard`;
   const location = m.teams_join_url ? `Microsoft Teams: ${m.teams_join_url}` : 'Microsoft Teams';
 
   const ics = [
