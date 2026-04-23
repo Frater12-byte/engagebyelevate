@@ -30,17 +30,23 @@ const api = {
   }
 };
 
-function fmtTime(iso) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Dubai' });
+function fmtTime(iso, tz = 'Asia/Dubai') {
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz });
 }
-function fmtDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Dubai' });
+function fmtDate(iso, tz = 'Asia/Dubai') {
+  return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: tz });
 }
-function fmtDateShort(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'Asia/Dubai' });
+function fmtDateShort(iso, tz = 'Asia/Dubai') {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: tz });
+}
+function tzAbbr(iso, tz) {
+  return new Date(iso).toLocaleTimeString('en-GB', { timeZone: tz, timeZoneName: 'short' }).split(' ').pop();
+}
+function fmtTimeRange(startIso, endIso, userTz) {
+  const dubaiStr = fmtTime(startIso, 'Asia/Dubai') + ' \u2013 ' + fmtTime(endIso, 'Asia/Dubai') + ' GST';
+  if (!userTz || userTz === 'Asia/Dubai') return dubaiStr;
+  const localStr = fmtTime(startIso, userTz) + ' \u2013 ' + fmtTime(endIso, userTz) + ' ' + tzAbbr(startIso, userTz);
+  return localStr + ' (' + dubaiStr + ')';
 }
 
 function toast(msg, type = '') {

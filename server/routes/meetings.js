@@ -49,7 +49,7 @@ router.get('/me/agenda', requireAuth, (req, res) => {
   }
 
   res.json({
-    user: { id: me.id, type: me.type, org_name: me.org_name, region: me.region },
+    user: { id: me.id, type: me.type, org_name: me.org_name, region: me.region, timezone: me.timezone, attendance_mode: me.attendance_mode },
     eligible_days: eligibleDaysFor(me),
     agenda: byDay
   });
@@ -100,7 +100,8 @@ router.get('/users/:id/availability', requireAuth, (req, res) => {
   res.json({
     other: {
       id: other.id, type: other.type, org_name: other.org_name,
-      contact_name: other.contact_name, country: other.country, logo_url: other.logo_url
+      contact_name: other.contact_name, country: other.country, logo_url: other.logo_url,
+      timezone: other.timezone, attendance_mode: other.attendance_mode
     },
     slots: bookable
   });

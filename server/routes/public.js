@@ -27,7 +27,9 @@ function publicUserFields(rows) {
     specialties: r.specialties ? safeJSON(r.specialties) : [],
     target_markets: r.target_markets ? safeJSON(r.target_markets) : [],
     room_count: r.room_count,
-    star_rating: r.star_rating
+    star_rating: r.star_rating,
+    timezone: r.timezone,
+    attendance_mode: r.attendance_mode
   }));
 }
 function safeJSON(s) { try { return JSON.parse(s); } catch { return []; } }

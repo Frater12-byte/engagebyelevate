@@ -96,10 +96,13 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 });
 
 let me = null, agenda = null, meetings = [];
+let MY_TZ = 'Asia/Dubai', MY_MODE = 'remote';
 
 (async () => {
   me = await getMe();
   if (!me) return location.href = '/login.html';
+  MY_TZ = me.timezone || 'Asia/Dubai';
+  MY_MODE = me.attendance_mode || 'remote';
 
   document.getElementById('user-type').textContent = me.type === 'hotel' ? 'Hotel' : me.type === 'agent' ? 'Agency' : me.type;
   document.getElementById('user-org').textContent = me.org_name;
@@ -192,7 +195,7 @@ function renderAgenda() {
     return `
       <div style="margin-bottom:40px">
         <div class="agenda-day-head">
-          <div class="day-date">${fmtDate(day)}</div>
+          <div class="day-date">${fmtDate(day, MY_TZ)}</div>
           <div class="day-theme">${slots.filter(s => s.status === 'booked').length} booked · ${slots.filter(s => s.status === 'free').length} free</div>
         </div>
         <div class="slot-grid">
@@ -207,7 +210,7 @@ function renderAgenda() {
             const onclick = s.meeting_id_full ? `onclick="showMeetingDetail(${s.meeting_id_full})"` :
                             canToggle ? `onclick="toggleSlot(${s.id})"` : '';
             return `<div class="${cls}" ${onclick} ${canToggle ? 'title="Click to close/open this slot"' : ''}>
-              <div class="slot-time">${fmtTime(s.start_time)}</div>
+              <div class="slot-time">${fmtTime(s.start_time, MY_TZ)}</div>
               <div class="slot-status">${escapeHtml(label)}</div>
             </div>`;
           }).join('')}
@@ -222,13 +225,6 @@ function isLocked(startTime) {
   return hrs < 48;
 }
 
-function localTzNote(start, end) {
-  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  if (userTz === 'Asia/Dubai') return '';
-  const fmt = (iso) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: userTz, hour: '2-digit', minute: '2-digit' });
-  const tzAbbr = new Date(start).toLocaleTimeString('en-GB', { timeZone: userTz, timeZoneName: 'short' }).split(' ').pop();
-  return ` · ${fmt(start)} – ${fmt(end)} ${tzAbbr}`;
-}
 
 function renderMeetings() {
   const el = document.getElementById('tab-meetings');
@@ -341,8 +337,8 @@ function meetingCard(m, kind) {
     <div class="meeting-card card-${m.status}">
       <div class="meeting-card-body">
         <div class="meeting-card-info">
-          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);font-weight:700">${fmtDate(m.start_time)}</div>
-          <div style="font-size:14px;color:var(--ink-muted);margin-top:3px">${fmtTime(m.start_time)} – ${fmtTime(m.end_time)} GST${localTzNote(m.start_time, m.end_time)}</div>
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);font-weight:700">${fmtDate(m.start_time, MY_TZ)}</div>
+          <div style="font-size:14px;color:var(--ink-muted);margin-top:3px">${fmtTimeRange(m.start_time, m.end_time, MY_TZ)}</div>
           <h4 style="margin-top:8px">${escapeHtml(otherOrg)}</h4>
           <div class="meeting-meta">${escapeHtml(otherName || '')} · ${statusDot}${locked ? ' · <span class="badge">Locked</span>' : ''}</div>
           ${m.message && kind === 'incoming' ? `<div class="notice" style="margin-top:12px;margin-bottom:0;padding:12px 16px"><p style="font-style:italic;font-size:13px">"${escapeHtml(m.message)}"</p></div>` : ''}
@@ -480,7 +476,7 @@ window.openAvailabilityModal = async function(otherId) {
         const anyAvailable = daySlots.some(s => s.available && !isLocked(s.start_time));
         return `
           <div style="margin-bottom:20px">
-            <div class="eyebrow" style="margin-bottom:8px">${fmtDate(day)}</div>
+            <div class="eyebrow" style="margin-bottom:8px">${fmtDate(day, MY_TZ)}</div>
             ${!anyAvailable ? '<p class="text-muted" style="font-size:13px">No available slots on this day.</p>' : ''}
             <div class="slot-grid">
               ${daySlots.map(s => {
@@ -496,7 +492,7 @@ window.openAvailabilityModal = async function(otherId) {
                 else if (s.my_status === 'booked' || s.my_status === 'held') statusLabel = 'You busy';
                 else if (s.their_status !== 'free') statusLabel = 'They busy';
                 return `<div class="slot ${cls}${locked ? ' locked' : ''}" ${clickable ? `onclick="requestMeetingModal(${otherId}, '${s.start_time}', '${escapeHtml(other.org_name)}')"` : ''} style="${clickable ? 'cursor:pointer' : 'cursor:not-allowed'}">
-                  <div class="slot-time">${fmtTime(s.start_time)}</div>
+                  <div class="slot-time">${fmtTime(s.start_time, MY_TZ)}</div>
                   <div class="slot-status">${statusLabel}</div>
                 </div>`;
               }).join('')}
@@ -516,7 +512,7 @@ window.requestMeetingModal = function(otherId, startTime, orgName) {
   const modal = document.createElement('div');
   modal.innerHTML = `
     <h3>Request Meeting</h3>
-    <p class="text-muted" style="margin-top:8px;margin-bottom:20px">With <strong>${orgName}</strong> on ${fmtDate(startTime)} at ${fmtTime(startTime)}</p>
+    <p class="text-muted" style="margin-top:8px;margin-bottom:20px">With <strong>${orgName}</strong> on ${fmtDate(startTime, MY_TZ)} at ${fmtTime(startTime, MY_TZ)} ${tzAbbr(startTime, MY_TZ)}</p>
     <div class="field">
       <label>Optional Message</label>
       <textarea id="req-message" placeholder="Introduce yourself or mention what you'd like to discuss..." rows="4"></textarea>

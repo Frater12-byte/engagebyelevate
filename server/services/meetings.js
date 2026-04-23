@@ -269,8 +269,10 @@ function listMeetingsForUser(userId) {
     SELECT m.*,
       ru.org_name AS requester_org, ru.contact_name AS requester_name,
       ru.logo_url AS requester_logo, ru.type AS requester_type,
+      ru.timezone AS requester_timezone, ru.attendance_mode AS requester_attendance_mode,
       eu.org_name AS recipient_org, eu.contact_name AS recipient_name,
-      eu.logo_url AS recipient_logo, eu.type AS recipient_type
+      eu.logo_url AS recipient_logo, eu.type AS recipient_type,
+      eu.timezone AS recipient_timezone, eu.attendance_mode AS recipient_attendance_mode
     FROM meetings m
     JOIN users ru ON m.requester_id = ru.id
     JOIN users eu ON m.recipient_id = eu.id
