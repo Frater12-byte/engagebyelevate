@@ -105,7 +105,8 @@ function fmtShortDual(iso, userTz) {
 }
 
 // Font stacks matching the website
-const F_DISPLAY = "'Barlow Condensed', 'Oswald', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif";
+const F_DISPLAY = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
+const F_CONDENSED = "'Barlow Condensed', 'Oswald', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif";
 const F_BODY = "'Manrope', -apple-system, 'Segoe UI', Arial, sans-serif";
 const C_BG = '#080808';
 const C_ELEV = '#141416';
@@ -118,12 +119,8 @@ const C_SOFT = '#b0b0b8';
 const C_MUTED = '#6a6a75';
 const C_FAINT = '#3a3a42';
 
-function dubaiClockBadge() {
-  const now = dayjs().tz('Asia/Dubai').format('HH:mm');
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-    <td style="font-family:${F_DISPLAY};font-size:10px;font-weight:600;letter-spacing:2px;color:${C_MUTED};text-transform:uppercase;padding-right:8px;vertical-align:middle">Dubai</td>
-    <td style="font-family:${F_DISPLAY};font-size:18px;font-weight:700;color:${C_ORANGE};letter-spacing:1px;vertical-align:middle">${now}</td>
-  </tr></table>`;
+function headerDashboardButton() {
+  return `<a href="${SITE}/dashboard" style="display:inline-block;padding:8px 16px;background:${C_ORANGE};color:${C_WHITE};text-decoration:none;font-family:${F_DISPLAY};font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;line-height:1">My Dashboard</a>`;
 }
 
 function countdownBlock(targetIso, eyebrow = 'MEETING STARTS IN') {
@@ -135,11 +132,11 @@ function countdownBlock(targetIso, eyebrow = 'MEETING STARTS IN') {
   const hours = Math.floor((diff % 86400000) / 3600000);
   const minutes = Math.floor((diff % 3600000) / 60000);
   const cell = (num, label) => `<td align="center" style="padding:0 8px">
-    <div style="font-family:${F_DISPLAY};font-size:42px;font-weight:800;color:${C_ORANGE};line-height:1">${String(num).padStart(2,'0')}</div>
-    <div style="font-family:${F_DISPLAY};font-size:10px;font-weight:600;color:${C_MUTED};text-transform:uppercase;letter-spacing:1.5px;margin-top:6px">${label}</div>
+    <div style="font-family:${F_CONDENSED};font-size:42px;font-weight:800;color:${C_ORANGE};line-height:1">${String(num).padStart(2,'0')}</div>
+    <div style="font-family:${F_CONDENSED};font-size:10px;font-weight:600;color:${C_MUTED};text-transform:uppercase;letter-spacing:1.5px;margin-top:6px">${label}</div>
   </td>`;
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:28px 0">
-    <tr><td align="center" style="font-family:${F_DISPLAY};font-size:11px;font-weight:600;color:${C_ORANGE};text-transform:uppercase;letter-spacing:2px;padding-bottom:16px">${eyebrow}</td></tr>
+    <tr><td align="center" style="font-family:${F_CONDENSED};font-size:11px;font-weight:600;color:${C_ORANGE};text-transform:uppercase;letter-spacing:2px;padding-bottom:16px">${eyebrow}</td></tr>
     <tr><td align="center"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${cell(days,'Days')}${cell(hours,'Hours')}${cell(minutes,'Min')}</tr></table></td></tr>
   </table>`;
 }
@@ -162,7 +159,7 @@ function pill(label, variant = 'outline') {
     neutral: `background:${C_BORDER};color:${C_SOFT};border:1px solid ${C_BORDER}`,
     red: `background:rgba(220,80,80,0.12);color:#d55050;border:1px solid rgba(220,80,80,0.3)`
   };
-  return `<span style="display:inline-block;font-family:${F_DISPLAY};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:999px;${styles[variant] || styles.outline}">${esc(label)}</span>`;
+  return `<span style="display:inline-block;font-family:${F_CONDENSED};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:999px;${styles[variant] || styles.outline}">${esc(label)}</span>`;
 }
 
 /** Outlook-safe CTA button — large, prominent */
@@ -202,12 +199,12 @@ function meetingCard(data) {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td style="padding-right:32px;vertical-align:top">
-            <div style="font-family:${F_BODY};font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${C_MUTED};margin-bottom:6px">When</div>
+            <div style="font-family:${F_CONDENSED};font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${C_MUTED};margin-bottom:6px">When</div>
             <div style="font-family:${F_DISPLAY};font-size:16px;font-weight:600;color:${C_WHITE}">${data.datetime}</div>
           </td>
           <td style="vertical-align:top">
-            <div style="font-family:${F_BODY};font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${C_MUTED};margin-bottom:6px">Duration</div>
-            <div style="font-family:${F_DISPLAY};font-size:16px;font-weight:600;color:${C_WHITE}">20 min</div>
+            <div style="font-family:${F_CONDENSED};font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${C_MUTED};margin-bottom:6px">Duration</div>
+            <div style="font-family:${F_CONDENSED};font-size:16px;font-weight:600;color:${C_WHITE}">20 min</div>
           </td>
         </tr>
       </table>
@@ -228,7 +225,7 @@ function wrap(content, preheader = '') {
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
   <title>Engage by Elevate</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
   <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 </head>
 <body style="margin:0;padding:0;background-color:${C_BG};color:#ffffff;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%">
@@ -250,7 +247,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;c
                         <a href="${SITE}" style="text-decoration:none"><img src="${LOGO_URL}" alt="Engage by Elevate" width="180" style="display:block;height:auto;border:0;max-width:180px" /></a>
                       </td>
                       <td align="right" style="vertical-align:middle">
-                        ${dubaiClockBadge()}
+                        ${headerDashboardButton()}
                       </td>
                     </tr>
                   </table>
