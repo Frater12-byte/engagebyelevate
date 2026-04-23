@@ -56,12 +56,12 @@ function tzCity(tz) {
 function fmtTimeRange(startIso, endIso, userTz) {
   var dubai = fmtTime(startIso, 'Asia/Dubai') + ' \u2013 ' + fmtTime(endIso, 'Asia/Dubai') + ' Dubai';
   if (!userTz || userTz === 'Asia/Dubai') return { primary: dubai, secondary: '' };
-  var local = fmtTime(startIso, userTz) + ' \u2013 ' + fmtTime(endIso, userTz) + ' ' + tzCity(userTz);
+  var local = fmtTime(startIso, userTz) + ' \u2013 ' + fmtTime(endIso, userTz);
   return { primary: local, secondary: dubai };
 }
 function fmtTimeDual(iso, userTz) {
   if (!userTz || userTz === 'Asia/Dubai') return { primary: fmtTime(iso, 'Asia/Dubai') + ' Dubai', secondary: '' };
-  return { primary: fmtTime(iso, userTz) + ' ' + tzCity(userTz), secondary: fmtTime(iso, 'Asia/Dubai') + ' Dubai' };
+  return { primary: fmtTime(iso, userTz), secondary: fmtTime(iso, 'Asia/Dubai') + ' Dubai' };
 }
 
 function toast(msg, type = '') {
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-/* Live Dubai clock in nav */
+/* Live Dubai clock in nav — airport-board style */
 function injectDubaiClock() {
   const host = document.querySelector('.nav-inner');
   if (!host) return;
@@ -161,13 +161,15 @@ function injectDubaiClock() {
   el.id = 'dubai-clock';
   el.className = 'nav-clock';
   el.setAttribute('aria-label', 'Current Dubai time');
+  el.innerHTML = '<span class="nav-clock-label">DUBAI</span><span class="nav-clock-digits">--:--:--</span>';
   const toggle = host.querySelector('.nav-toggle');
   if (toggle) host.insertBefore(el, toggle);
   else host.appendChild(el);
+  const digits = el.querySelector('.nav-clock-digits');
   const fmt = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Dubai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   });
-  const tick = () => { el.textContent = 'Dubai \u00b7 ' + fmt.format(new Date()); };
+  const tick = () => { digits.textContent = fmt.format(new Date()); };
   tick();
   setInterval(tick, 1000);
 }
