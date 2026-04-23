@@ -175,3 +175,20 @@ function injectDubaiClock() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectDubaiClock);
 else injectDubaiClock();
+
+/* Session switch toast */
+function maybeShowSwitchToast() {
+  if (!document.cookie.includes('just_switched=1')) return;
+  document.cookie = 'just_switched=; path=/; max-age=0';
+  getMe().then(me => {
+    if (!me) return;
+    const t = document.createElement('div');
+    t.className = 'toast-switch';
+    t.innerHTML = 'Signed in as <strong>' + escapeHtml(me.contact_name || me.email) + '</strong>' + (me.org_name ? ' (' + escapeHtml(me.org_name) + ')' : '');
+    document.body.appendChild(t);
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 4500);
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', maybeShowSwitchToast);
+else maybeShowSwitchToast();

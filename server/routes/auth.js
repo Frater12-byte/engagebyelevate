@@ -16,6 +16,7 @@ const { countryToTimezone, regionToAttendanceMode } = require('../utils/timezone
 const { getDb } = require('../db/connection');
 const { generateSlotsForUser } = require('../services/slots');
 const email = require('../services/email');
+const actionTokens = require('../services/actionTokens');
 
 const router = express.Router();
 
@@ -186,6 +187,24 @@ router.post('/logout', (req, res) => {
   res.clearCookie('session');
   res.clearCookie('logged_in');
   res.json({ ok: true });
+});
+
+// ---------- Auto-switch session via action token ----------
+router.get('/action', (req, res) => {
+  const { token, next } = req.query;
+  if (!token) return res.status(400).send('Missing token');
+  const result = actionTokens.consume(token);
+  if (!result) return res.redirect('/login.html?reason=expired');
+  const user = getDb().prepare('SELECT id, active FROM users WHERE id = ?').get(result.user_id);
+  if (!user || !user.active) return res.redirect('/login.html?reason=inactive');
+  const sessionId = crypto.randomBytes(16).toString('hex');
+  const sessionToken = jwt.sign({ uid: user.id, sid: sessionId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  const cookieOpts = { secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 };
+  res.cookie('session', sessionToken, { ...cookieOpts, httpOnly: true });
+  res.cookie('logged_in', '1', { ...cookieOpts, httpOnly: false });
+  res.cookie('just_switched', '1', { sameSite: 'lax', maxAge: 60 * 1000 });
+  const safeNext = (typeof next === 'string' && next.startsWith('/')) ? next : '/dashboard';
+  res.redirect(safeNext);
 });
 
 // ---------- Current user ----------

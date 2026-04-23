@@ -60,6 +60,7 @@
 
 <section style="padding-top:40px">
   <div class="container-narrow" style="max-width:480px">
+    <div id="login-notice" style="display:none;margin-bottom:20px;padding:16px;background:var(--orange-dim);border:1px solid rgba(232,97,42,0.2);border-radius:var(--radius-sm);font-size:14px;color:var(--ink-soft)"></div>
     <form id="login-form">
       <div class="field">
         <label>Company Email</label>
@@ -92,6 +93,15 @@
     document.getElementById('nav-links').classList.toggle('open');
     document.getElementById('nav-toggle').classList.toggle('open');
   });
+
+  const reason = new URLSearchParams(location.search).get('reason');
+  if (reason === 'expired') {
+    document.getElementById('login-notice').textContent = 'Your email link has expired. Enter your email below to get a fresh link.';
+    document.getElementById('login-notice').style.display = 'block';
+  } else if (reason === 'inactive') {
+    document.getElementById('login-notice').textContent = 'This account is inactive. Contact engage.meetings@elevatedmc.com for help.';
+    document.getElementById('login-notice').style.display = 'block';
+  }
 
   // Auth check: redirect logged-in users to dashboard
   (async () => {

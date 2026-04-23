@@ -13,6 +13,7 @@ const timezone = require('dayjs/plugin/timezone');
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const { getDb } = require('../db/connection');
+const actionTokens = require('./actionTokens');
 
 const EVENT_TZ = 'Asia/Dubai';
 const REPLY_TO = process.env.REPLY_TO_EMAIL || 'engage.meetings@elevatedmc.com';
@@ -341,7 +342,8 @@ ${SITE}`;
 // ================================================================
 
 async function sendMeetingRequest(meeting, requester, recipient) {
-  const dashUrl = `${process.env.BASE_URL}/dashboard?meeting=${meeting.id}`;
+  const recipientToken = actionTokens.generate(recipient.id, meeting.id);
+  const dashUrl = `${process.env.BASE_URL}/auth/action?token=${recipientToken}&next=${encodeURIComponent('/dashboard?meeting=' + meeting.id)}`;
   const profileUrl = `${process.env.BASE_URL}/profile.html?id=${requester.id}`;
   const subject = `${requester.org_name} wants to meet with you`;
 
@@ -422,7 +424,12 @@ async function sendMeetingApproved(meeting) {
     contentType: 'text/calendar; charset=utf-8; method=PUBLISH'
   };
 
-  const buildHtml = (toName, otherOrg, otherContact, toTz) => wrap(`
+  const requesterToken = actionTokens.generate(meeting.requester_id, meeting.id);
+  const recipientToken = actionTokens.generate(meeting.recipient_id, meeting.id);
+  const requesterDashUrl = `${process.env.BASE_URL}/auth/action?token=${requesterToken}&next=${encodeURIComponent('/dashboard')}`;
+  const recipientDashUrl = `${process.env.BASE_URL}/auth/action?token=${recipientToken}&next=${encodeURIComponent('/dashboard')}`;
+
+  const buildHtml = (toName, otherOrg, otherContact, toTz, toDashUrl) => wrap(`
     ${heading('Meeting Confirmed')}
     ${greeting(toName)}
     ${subheading(`Your meeting with <strong style="color:${C_WHITE}">${esc(otherOrg)}</strong> is confirmed.`)}
@@ -433,10 +440,10 @@ async function sendMeetingApproved(meeting) {
     })}
     ${teamsBlock}
     ${calendarBlock}
-    ${footnote('View all your meetings on your <a href="' + SITE + '/dashboard" style="color:' + C_RUST + ';text-decoration:none">dashboard</a>.')}
+    ${footnote('View all your meetings on your <a href="' + toDashUrl + '" style="color:' + C_RUST + ';text-decoration:none">dashboard</a>.')}
   `);
 
-  const buildText = (toName, otherOrg, otherContact, toTz) => `Hello ${toName || ''},
+  const buildText = (toName, otherOrg, otherContact, toTz, toDashUrl) => `Hello ${toName || ''},
 
 Your meeting with ${otherOrg} (${otherContact}) is confirmed.
 
@@ -448,7 +455,7 @@ Add to Google Calendar: ${gcalUrl}
 A calendar invite (.ics) is attached to this email.
 
 View all your meetings on your dashboard:
-${SITE}/dashboard
+${toDashUrl}
 
 ---
 Engage by Elevate - ${EVENT_DATES} - ${EVENT_LOCATION}
@@ -459,15 +466,15 @@ ${SITE}`;
   await send(
     meeting.requester_email,
     subjectFor(meeting.recipient_org),
-    buildHtml(meeting.requester_name, meeting.recipient_org, meeting.recipient_name, meeting.requester_timezone),
-    buildText(meeting.requester_name, meeting.recipient_org, meeting.recipient_name, meeting.requester_timezone),
+    buildHtml(meeting.requester_name, meeting.recipient_org, meeting.recipient_name, meeting.requester_timezone, requesterDashUrl),
+    buildText(meeting.requester_name, meeting.recipient_org, meeting.recipient_name, meeting.requester_timezone, requesterDashUrl),
     { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.requester_id, attachments: [icsAttachment] }
   );
   await send(
     meeting.recipient_email,
     subjectFor(meeting.requester_org),
-    buildHtml(meeting.recipient_name, meeting.requester_org, meeting.requester_name, meeting.recipient_timezone),
-    buildText(meeting.recipient_name, meeting.requester_org, meeting.requester_name, meeting.recipient_timezone),
+    buildHtml(meeting.recipient_name, meeting.requester_org, meeting.requester_name, meeting.recipient_timezone, recipientDashUrl),
+    buildText(meeting.recipient_name, meeting.requester_org, meeting.requester_name, meeting.recipient_timezone, recipientDashUrl),
     { template: 'meeting_approved', meeting_id: meeting.id, user_id: meeting.recipient_id, attachments: [icsAttachment] }
   );
 }
@@ -477,7 +484,8 @@ ${SITE}`;
 // ================================================================
 
 async function sendMeetingDeclined(meeting) {
-  const dashUrl = `${process.env.BASE_URL}/dashboard`;
+  const requesterToken = actionTokens.generate(meeting.requester_id, meeting.id);
+  const dashUrl = `${process.env.BASE_URL}/auth/action?token=${requesterToken}&next=${encodeURIComponent('/dashboard')}`;
   const subject = `Meeting request with ${meeting.recipient_org} was declined`;
 
   const html = wrap(`
@@ -520,7 +528,8 @@ async function sendMeetingCancelled(meeting, cancelledByUserId) {
   const cancellerOrg = cancelledByUserId === meeting.requester_id ? meeting.requester_org : meeting.recipient_org;
   const otherUserId = cancelledByUserId === meeting.requester_id ? meeting.recipient_id : meeting.requester_id;
   const otherTz = cancelledByUserId === meeting.requester_id ? meeting.recipient_timezone : meeting.requester_timezone;
-  const dashUrl = `${process.env.BASE_URL}/dashboard`;
+  const otherToken = actionTokens.generate(otherUserId, meeting.id);
+  const dashUrl = `${process.env.BASE_URL}/auth/action?token=${otherToken}&next=${encodeURIComponent('/dashboard')}`;
   const subject = `Meeting with ${cancellerOrg} was cancelled`;
 
   const html = wrap(`

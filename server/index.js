@@ -146,6 +146,7 @@ app.use((err, req, res, next) => {
 
 // Initialize DB on boot
 getDb();
+require('./services/actionTokens').cleanup();
 
 // Expire stale pending meetings every 10 minutes
 setInterval(() => {

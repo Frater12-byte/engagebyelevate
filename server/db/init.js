@@ -83,6 +83,20 @@ function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_magic_token ON magic_tokens(token);
 
     -- =========================================================
+    -- ACTION TOKENS (one-click auth from email links)
+    -- =========================================================
+    CREATE TABLE IF NOT EXISTS action_tokens (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token        TEXT NOT NULL UNIQUE,
+      meeting_id   INTEGER,
+      uses_remaining INTEGER NOT NULL DEFAULT 5,
+      expires_at   TEXT NOT NULL,
+      created_at   TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_action_token ON action_tokens(token);
+
+    -- =========================================================
     -- SLOTS: every 20-minute slot for every user
     -- Pre-generated when user registers.
     -- A slot belongs to one user. Booked meetings reference TWO slots.
