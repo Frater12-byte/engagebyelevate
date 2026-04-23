@@ -195,7 +195,7 @@ router.get('/me', (req, res) => {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const user = getDb().prepare(
-      'SELECT id, type, email, contact_name, org_name, country, region, logo_url FROM users WHERE id = ?'
+      'SELECT id, type, email, contact_name, org_name, country, region, logo_url, timezone, attendance_mode FROM users WHERE id = ?'
     ).get(payload.uid);
     res.json({ user });
   } catch {
