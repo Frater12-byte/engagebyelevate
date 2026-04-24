@@ -16,6 +16,9 @@
   .topbar-email { font-size: 12px; color: #6a6a75; }
   .topbar-out { background: none; border: 1px solid #27272a; color: #b0b0b8; padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
   .topbar-out:hover { border-color: #EC672C; color: #EC672C; }
+  .topbar-clock { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 4px; background: rgba(255,255,255,0.04); border: 1px solid rgba(236,103,44,0.25); line-height: 1; }
+  .topbar-clock-label { font-size: 9px; letter-spacing: 1.5px; color: rgba(255,255,255,0.4); font-weight: 600; }
+  .topbar-clock-time { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; color: #EC672C; font-variant-numeric: tabular-nums; }
   .tabs { display: flex; gap: 0; border-bottom: 1px solid #27272a; padding: 0 16px; background: #0e0e10; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
   .tab { padding: 14px 16px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; white-space: nowrap; }
@@ -103,6 +106,7 @@
 <div class="topbar">
   <img src="/img/logo.png" alt="Elevate">
   <span class="topbar-title">Admin Panel</span>
+  <span class="topbar-clock"><span class="topbar-clock-label">DUBAI</span><span class="topbar-clock-time" id="dubai-clock">--:--:--</span></span>
   <span class="topbar-spacer"></span>
   <span class="topbar-email" id="admin-email"></span>
   <button class="topbar-out" id="sign-out">Sign Out</button>
@@ -135,6 +139,15 @@ document.getElementById('sign-out').addEventListener('click', async () => {
   await apiPost('/admin-logout');
   location.href = '/admin-login';
 });
+
+// Dubai clock
+(function() {
+  const el = document.getElementById('dubai-clock');
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dubai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  const tick = () => { el.textContent = fmt.format(new Date()); };
+  tick();
+  setInterval(tick, 1000);
+})();
 
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
@@ -320,7 +333,10 @@ async function renderUsers(el) {
   if (!d) return;
   el.innerHTML = `
     <h2>Users (${d.users.length})</h2>
-    <div class="filter-row"><input id="user-search" placeholder="Search by name, email, country..."></div>
+    <div class="filter-row">
+      <input id="user-search" placeholder="Search by name, email, country...">
+      <select id="user-type-filter"><option value="">All types</option><option value="hotel">Hotels</option><option value="agent">Agencies</option><option value="exhibitor">Exhibitors</option><option value="admin">Admins</option></select>
+    </div>
     <div class="scroll-x"><table><thead><tr><th>Type</th><th>Organization</th><th>Email</th><th>Country</th><th>Verified</th><th>Active</th><th>Created</th><th>Actions</th></tr></thead><tbody id="user-rows"></tbody></table></div>
   `;
   const tbody = document.getElementById('user-rows');
@@ -343,11 +359,18 @@ async function renderUsers(el) {
       </td>
     </tr>`).join('');
   }
-  render(d.users);
-  document.getElementById('user-search').addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase();
-    render(d.users.filter(u => (u.org_name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.country||'').toLowerCase().includes(q) || (u.contact_name||'').toLowerCase().includes(q)));
-  });
+  function applyFilters() {
+    const q = (document.getElementById('user-search').value || '').toLowerCase();
+    const typeF = document.getElementById('user-type-filter').value;
+    render(d.users.filter(u => {
+      if (typeF && u.type !== typeF) return false;
+      if (q && !(u.org_name||'').toLowerCase().includes(q) && !(u.email||'').toLowerCase().includes(q) && !(u.country||'').toLowerCase().includes(q) && !(u.contact_name||'').toLowerCase().includes(q)) return false;
+      return true;
+    }));
+  }
+  applyFilters();
+  document.getElementById('user-search').addEventListener('input', applyFilters);
+  document.getElementById('user-type-filter').addEventListener('change', applyFilters);
 }
 
 window.adminUserAction = async function(action, id) {
