@@ -689,6 +689,10 @@ async function sendExhibitorContactAck(exhibitor, sub) {
   return send(sub.sender_email, subject, html, text, { template: 'exhibitor_contact_ack' });
 }
 
+async function sendRaw(to, subject, html, text, meta = {}) {
+  return send(to, subject, html, text, meta);
+}
+
 module.exports = {
   sendMagicLink,
   sendMeetingRequest,
@@ -697,5 +701,6 @@ module.exports = {
   sendMeetingCancelled,
   sendAdminNotification,
   sendExhibitorContact,
-  sendExhibitorContactAck
+  sendExhibitorContactAck,
+  sendRaw
 };

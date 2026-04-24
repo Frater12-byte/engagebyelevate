@@ -58,6 +58,10 @@ app.use('/auth', authLimiter);
 const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 120 });
 app.use('/api', apiLimiter);
 
+const { blockAdminOnMain, blockMainOnAdmin } = require('./middleware/hostGuard');
+app.use(blockAdminOnMain);
+app.use(blockMainOnAdmin);
+
 // File upload endpoints (before route mounting — multer needs direct access)
 function authFromCookie(req) {
   const token = req.cookies?.session;
@@ -102,6 +106,10 @@ app.use('/api/public', require('./routes/public'));
 app.use('/api/n8n', require('./routes/n8n'));
 app.use('/api/exhibitors', require('./routes/exhibitors'));
 app.use('/api', require('./routes/meetings'));
+
+// Admin panel routes
+app.use('/', require('./routes/adminAuth'));
+app.use('/admin', require('./routes/admin'));
 
 // Admin: create/update exhibitor
 app.post('/admin/exhibitors', (req, res) => {

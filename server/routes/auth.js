@@ -17,6 +17,7 @@ const { getDb } = require('../db/connection');
 const { generateSlotsForUser } = require('../services/slots');
 const email = require('../services/email');
 const actionTokens = require('../services/actionTokens');
+const { sendMagicLinkFor } = require('../services/magicLink');
 
 const router = express.Router();
 
@@ -146,22 +147,6 @@ router.post('/resend-magic', async (req, res) => {
   }
   res.json({ ok: true });
 });
-
-async function sendMagicLinkFor(userId) {
-  const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-  if (!user) throw new Error('User not found');
-
-  const token = crypto.randomBytes(32).toString('hex');
-  const expiryHours = parseInt(process.env.MAGIC_LINK_EXPIRY_HOURS || '24', 10);
-  const expiresAt = dayjs().add(expiryHours, 'hour').toISOString();
-
-  db.prepare(`
-    INSERT INTO magic_tokens (user_id, token, expires_at, created_at) VALUES (?, ?, ?, ?)
-  `).run(userId, token, expiresAt, nowUtc());
-
-  await email.sendMagicLink(user, token);
-}
 
 // ---------- Verify magic link ----------
 router.get('/verify', (req, res) => {

@@ -308,6 +308,44 @@ function expireStalePending() {
   return expired;
 }
 
+function cancelMeetingForce(meetingId) {
+  const db = getDb();
+  const meeting = getMeeting(meetingId);
+  if (!meeting) throw new Error('Meeting not found');
+  if (meeting.status === 'cancelled') throw new Error('Already cancelled');
+  const cancelNow = nowUtc();
+  const tx = db.transaction(() => {
+    db.prepare('UPDATE meetings SET status = ?, updated_at = ? WHERE id = ?').run('cancelled', cancelNow, meetingId);
+    if (meeting.requester_slot_id && meeting.recipient_slot_id) {
+      db.prepare("UPDATE slots SET status = 'free', meeting_id = NULL, updated_at = ? WHERE id IN (?, ?)").run(cancelNow, meeting.requester_slot_id, meeting.recipient_slot_id);
+    }
+  });
+  tx();
+  if (meeting.teams_meeting_id) teams.deleteMeeting(meeting.teams_meeting_id).catch(() => {});
+  const updated = getMeeting(meetingId);
+  email.sendMeetingCancelled(updated, meeting.requester_id).catch(console.error);
+  return updated;
+}
+
+async function approveMeetingForce(meetingId) {
+  const db = getDb();
+  const meeting = getMeeting(meetingId);
+  if (!meeting) throw new Error('Meeting not found');
+  if (meeting.status !== 'pending') throw new Error('Meeting is not pending');
+  const meetingEndTime = dayjs(meeting.start_time).add(20, 'minute').toISOString();
+  const teamsSubject = `Engage by Elevate \u2014 ${meeting.requester_org} \u00d7 ${meeting.recipient_org}`;
+  const teamsInfo = await teams.createMeeting({ subject: teamsSubject, startTime: meeting.start_time, endTime: meetingEndTime, attendeeEmails: [meeting.requester_email, meeting.recipient_email] });
+  const approveNow = nowUtc();
+  const tx = db.transaction(() => {
+    db.prepare('UPDATE meetings SET status = ?, teams_join_url = ?, teams_meeting_id = ?, responded_at = ?, updated_at = ? WHERE id = ?').run('approved', teamsInfo.joinUrl, teamsInfo.meetingId, approveNow, approveNow, meetingId);
+    db.prepare("UPDATE slots SET status = 'booked', updated_at = ? WHERE id IN (?, ?)").run(approveNow, meeting.requester_slot_id, meeting.recipient_slot_id);
+  });
+  tx();
+  const updated = getMeeting(meetingId);
+  email.sendMeetingApproved(updated).catch(console.error);
+  return updated;
+}
+
 module.exports = {
   requestMeeting,
   approveMeeting,
@@ -316,5 +354,7 @@ module.exports = {
   getMeeting,
   listMeetingsForUser,
   expireStalePending,
-  isSlotLocked
+  isSlotLocked,
+  cancelMeetingForce,
+  approveMeetingForce
 };

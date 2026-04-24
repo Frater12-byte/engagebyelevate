@@ -1,0 +1,225 @@
+const express = require('express');
+const { getDb } = require('../db/connection');
+const { requireAdmin } = require('../middleware/requireAdmin');
+const { nowUtc } = require('../utils/time');
+const { sendMagicLinkFor } = require('../services/magicLink');
+const { generateSlotsForUser } = require('../services/slots');
+const meetings = require('../services/meetings');
+
+const router = express.Router();
+router.use(requireAdmin);
+
+function auditLog(adminId, action, entityType, entityId, details) {
+  getDb().prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
+    adminId, action, entityType, entityId, details ? JSON.stringify(details) : null, nowUtc()
+  );
+}
+
+// === STATS ===
+router.get('/stats', (req, res) => {
+  const db = getDb();
+  const userTotal = db.prepare('SELECT COUNT(*) as n FROM users').get().n;
+  const byType = {};
+  db.prepare("SELECT type, COUNT(*) as n FROM users GROUP BY type").all().forEach(r => byType[r.type] = r.n);
+  const byRegion = {};
+  db.prepare("SELECT COALESCE(region,'none') as r, COUNT(*) as n FROM users GROUP BY region").all().forEach(r => byRegion[r.r] = r.n);
+  const verified = db.prepare("SELECT COUNT(*) as n FROM users WHERE email_verified_at IS NOT NULL").get().n;
+  const unverified = db.prepare("SELECT COUNT(*) as n FROM users WHERE email_verified_at IS NULL AND type != 'admin'").get().n;
+  const inactive = db.prepare("SELECT COUNT(*) as n FROM users WHERE active = 0").get().n;
+
+  const meetingTotal = db.prepare('SELECT COUNT(*) as n FROM meetings').get().n;
+  const meetingByStatus = {};
+  db.prepare("SELECT status, COUNT(*) as n FROM meetings GROUP BY status").all().forEach(r => meetingByStatus[r.status] = r.n);
+
+  const emailSent7d = db.prepare("SELECT COUNT(*) as n FROM email_log WHERE status='sent' AND sent_at > datetime('now','-7 days')").get().n;
+  const emailErr7d = db.prepare("SELECT COUNT(*) as n FROM email_log WHERE status='failed' AND sent_at > datetime('now','-7 days')").get().n;
+  const emailSent24h = db.prepare("SELECT COUNT(*) as n FROM email_log WHERE status='sent' AND sent_at > datetime('now','-1 day')").get().n;
+  const emailErr24h = db.prepare("SELECT COUNT(*) as n FROM email_log WHERE status='failed' AND sent_at > datetime('now','-1 day')").get().n;
+  const byTemplate7d = {};
+  db.prepare("SELECT template, COUNT(*) as n FROM email_log WHERE sent_at > datetime('now','-7 days') GROUP BY template").all().forEach(r => byTemplate7d[r.template] = r.n);
+  const magicTotal7d = db.prepare("SELECT COUNT(*) as n FROM magic_tokens WHERE created_at > datetime('now','-7 days')").get().n;
+  const magicUsed7d = db.prepare("SELECT COUNT(*) as n FROM magic_tokens WHERE created_at > datetime('now','-7 days') AND used_at IS NOT NULL").get().n;
+
+  const slotTotal = db.prepare('SELECT COUNT(*) as n FROM slots').get().n;
+  const slotByStatus = {};
+  db.prepare("SELECT status, COUNT(*) as n FROM slots GROUP BY status").all().forEach(r => slotByStatus[r.status] = r.n);
+
+  res.json({
+    users: { total: userTotal, by_type: byType, by_region: byRegion, verified, unverified, inactive },
+    meetings: { total: meetingTotal, by_status: meetingByStatus },
+    emails: { last_7d: { sent: emailSent7d, errored: emailErr7d }, last_24h: { sent: emailSent24h, errored: emailErr24h }, by_template_7d: byTemplate7d, magic_link_click_rate_7d: magicTotal7d > 0 ? magicUsed7d / magicTotal7d : 0 },
+    slots: { total: slotTotal, by_status: slotByStatus }
+  });
+});
+
+// === USERS ===
+router.get('/users', (req, res) => {
+  const db = getDb();
+  const users = db.prepare('SELECT id, type, email, contact_name, org_name, country, city, region, timezone, attendance_mode, active, email_verified_at, created_at, updated_at, phone, website FROM users ORDER BY created_at DESC').all();
+  res.json({ users });
+});
+
+router.get('/users/:id', (req, res) => {
+  const db = getDb();
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+  if (!user) return res.status(404).json({ error: 'Not found' });
+  const userMeetings = db.prepare(`SELECT m.*, ru.org_name AS requester_org, eu.org_name AS recipient_org FROM meetings m JOIN users ru ON m.requester_id=ru.id JOIN users eu ON m.recipient_id=eu.id WHERE m.requester_id=? OR m.recipient_id=? ORDER BY m.start_time DESC LIMIT 50`).all(user.id, user.id);
+  const tokens = db.prepare('SELECT id, token, expires_at, used_at, created_at FROM magic_tokens WHERE user_id = ? ORDER BY created_at DESC LIMIT 10').all(user.id);
+  const emails = db.prepare('SELECT * FROM email_log WHERE user_id = ? ORDER BY sent_at DESC LIMIT 20').all(user.id);
+  res.json({ user, meetings: userMeetings, tokens, emails });
+});
+
+router.patch('/users/:id', (req, res) => {
+  const db = getDb();
+  const user = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
+  if (!user) return res.status(404).json({ error: 'Not found' });
+  const allowed = ['type','email','contact_name','phone','org_name','country','city','website','description','specialties','target_markets','room_count','star_rating','region','timezone','attendance_mode','active','email_verified_at'];
+  const updates = []; const values = [];
+  for (const f of allowed) {
+    if (req.body[f] !== undefined) {
+      updates.push(`${f} = ?`);
+      values.push(['specialties','target_markets'].includes(f) && Array.isArray(req.body[f]) ? JSON.stringify(req.body[f]) : req.body[f]);
+    }
+  }
+  if (!updates.length) return res.json({ ok: true });
+  values.push(nowUtc(), req.params.id);
+  db.prepare(`UPDATE users SET ${updates.join(',')}, updated_at = ? WHERE id = ?`).run(...values);
+  auditLog(req.admin.id, 'update_user', 'user', parseInt(req.params.id), req.body);
+  res.json({ ok: true });
+});
+
+router.delete('/users/:id', (req, res) => {
+  const db = getDb();
+  const id = parseInt(req.params.id);
+  if (id === req.admin.id) return res.status(400).json({ error: 'Cannot delete yourself' });
+  const approved = db.prepare("SELECT id FROM meetings WHERE (requester_id=? OR recipient_id=?) AND status='approved'").all(id, id);
+  if (approved.length) return res.status(409).json({ error: 'User has approved meetings — cancel them first', meeting_ids: approved.map(m => m.id) });
+  db.prepare('DELETE FROM slots WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM meetings WHERE requester_id = ? OR recipient_id = ?').run(id, id);
+  db.prepare('DELETE FROM magic_tokens WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM action_tokens WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM users WHERE id = ?').run(id);
+  auditLog(req.admin.id, 'delete_user', 'user', id, null);
+  res.json({ ok: true });
+});
+
+router.post('/users/:id/deactivate', (req, res) => {
+  const db = getDb();
+  db.prepare('UPDATE users SET active = 0, updated_at = ? WHERE id = ?').run(nowUtc(), req.params.id);
+  auditLog(req.admin.id, 'deactivate_user', 'user', parseInt(req.params.id), null);
+  res.json({ ok: true });
+});
+
+router.post('/users/:id/activate', (req, res) => {
+  const db = getDb();
+  db.prepare('UPDATE users SET active = 1, updated_at = ? WHERE id = ?').run(nowUtc(), req.params.id);
+  auditLog(req.admin.id, 'activate_user', 'user', parseInt(req.params.id), null);
+  res.json({ ok: true });
+});
+
+router.post('/users/:id/verify', (req, res) => {
+  const db = getDb();
+  db.prepare('UPDATE users SET email_verified_at = ? WHERE id = ? AND email_verified_at IS NULL').run(nowUtc(), req.params.id);
+  auditLog(req.admin.id, 'verify_user', 'user', parseInt(req.params.id), null);
+  res.json({ ok: true });
+});
+
+router.post('/users/:id/resend-magic', async (req, res) => {
+  try {
+    await sendMagicLinkFor(parseInt(req.params.id));
+    auditLog(req.admin.id, 'resend_magic', 'user', parseInt(req.params.id), null);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/users/:id/regenerate-slots', (req, res) => {
+  const db = getDb();
+  const id = parseInt(req.params.id);
+  db.prepare("DELETE FROM slots WHERE user_id = ? AND status IN ('free','blocked')").run(id);
+  const result = generateSlotsForUser(id);
+  auditLog(req.admin.id, 'regenerate_slots', 'user', id, result);
+  res.json({ ok: true, ...result });
+});
+
+// === MEETINGS ===
+router.get('/meetings', (req, res) => {
+  const db = getDb();
+  let sql = `SELECT m.*, ru.org_name AS requester_org, ru.contact_name AS requester_name, eu.org_name AS recipient_org, eu.contact_name AS recipient_name FROM meetings m JOIN users ru ON m.requester_id=ru.id JOIN users eu ON m.recipient_id=eu.id`;
+  const where = []; const params = [];
+  if (req.query.status) { where.push('m.status = ?'); params.push(req.query.status); }
+  if (req.query.user_id) { where.push('(m.requester_id = ? OR m.recipient_id = ?)'); params.push(req.query.user_id, req.query.user_id); }
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  sql += ' ORDER BY m.start_time DESC LIMIT 200';
+  res.json({ meetings: db.prepare(sql).all(...params) });
+});
+
+router.post('/meetings/:id/force-cancel', async (req, res) => {
+  try {
+    const m = meetings.cancelMeetingForce(parseInt(req.params.id));
+    auditLog(req.admin.id, 'force_cancel', 'meeting', parseInt(req.params.id), null);
+    res.json({ ok: true, meeting: m });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+router.post('/meetings/:id/force-approve', async (req, res) => {
+  try {
+    const m = await meetings.approveMeetingForce(parseInt(req.params.id));
+    auditLog(req.admin.id, 'force_approve', 'meeting', parseInt(req.params.id), null);
+    res.json({ ok: true, meeting: m });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// === EMAILS ===
+router.get('/emails', (req, res) => {
+  const db = getDb();
+  const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+  const offset = parseInt(req.query.offset) || 0;
+  let sql = 'SELECT * FROM email_log';
+  const where = []; const params = [];
+  if (req.query.template) { where.push('template = ?'); params.push(req.query.template); }
+  if (req.query.status) { where.push('status = ?'); params.push(req.query.status); }
+  if (req.query.q) { where.push("(subject LIKE ? OR to_email LIKE ?)"); params.push(`%${req.query.q}%`, `%${req.query.q}%`); }
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  sql += ' ORDER BY sent_at DESC LIMIT ? OFFSET ?';
+  params.push(limit, offset);
+  res.json({ emails: db.prepare(sql).all(...params) });
+});
+
+// === BULK ===
+router.post('/bulk/resend-unverified', async (req, res) => {
+  if (!req.body.confirm) return res.status(400).json({ error: 'Set confirm: true' });
+  const db = getDb();
+  const users = db.prepare("SELECT id FROM users WHERE email_verified_at IS NULL AND active = 1 AND type != 'admin'").all();
+  let sent = 0; const errors = [];
+  for (const u of users) {
+    try { await sendMagicLinkFor(u.id); sent++; } catch (e) { errors.push({ id: u.id, error: e.message }); }
+    await new Promise(r => setTimeout(r, 150));
+  }
+  auditLog(req.admin.id, 'bulk_resend_unverified', 'users', null, { sent, errors: errors.length });
+  res.json({ sent, errors });
+});
+
+router.post('/bulk/email', async (req, res) => {
+  if (!req.body.confirm) return res.status(400).json({ error: 'Set confirm: true' });
+  const { audience, user_ids, subject, html, text } = req.body;
+  if (!subject || !html) return res.status(400).json({ error: 'subject and html required' });
+  const db = getDb();
+  let users;
+  if (audience === 'custom' && user_ids) users = db.prepare(`SELECT id, email FROM users WHERE id IN (${user_ids.map(() => '?').join(',')}) AND active = 1`).all(...user_ids);
+  else if (audience === 'unverified') users = db.prepare("SELECT id, email FROM users WHERE email_verified_at IS NULL AND active = 1 AND type != 'admin'").all();
+  else if (['hotel','agent','exhibitor'].includes(audience)) users = db.prepare('SELECT id, email FROM users WHERE type = ? AND active = 1').all(audience);
+  else users = db.prepare("SELECT id, email FROM users WHERE active = 1 AND type != 'admin'").all();
+  let sent = 0; const errors = [];
+  const emailService = require('../services/email');
+  for (const u of users) {
+    try {
+      await emailService.sendRaw(u.email, subject, html, text || '', { template: 'admin_bulk', user_id: u.id });
+      sent++;
+    } catch (e) { errors.push({ id: u.id, error: e.message }); }
+    await new Promise(r => setTimeout(r, 150));
+  }
+  auditLog(req.admin.id, 'bulk_email', 'users', null, { audience, sent, errors: errors.length });
+  res.json({ sent, errors });
+});
+
+module.exports = router;
