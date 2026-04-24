@@ -9,22 +9,23 @@
   @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #080808; color: #fff; font-family: 'Manrope', -apple-system, sans-serif; font-size: 14px; line-height: 1.6; }
-  .topbar { background: #0e0e10; border-bottom: 1px solid #27272a; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+  .topbar { background: #0e0e10; border-bottom: 1px solid #27272a; padding: 0 24px; min-height: 56px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
   .topbar img { height: 28px; }
-  .topbar-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #EC672C; }
+  .topbar-title { font-family: 'Manrope', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #EC672C; font-weight: 700; }
   .topbar-spacer { flex: 1; }
   .topbar-email { font-size: 12px; color: #6a6a75; }
   .topbar-out { background: none; border: 1px solid #27272a; color: #b0b0b8; padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
   .topbar-out:hover { border-color: #EC672C; color: #EC672C; }
-  .tabs { display: flex; gap: 0; border-bottom: 1px solid #27272a; padding: 0 24px; background: #0e0e10; }
-  .tab { padding: 14px 20px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #27272a; padding: 0 16px; background: #0e0e10; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 14px 16px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; white-space: nowrap; }
   .tab:hover { color: #b0b0b8; }
   .tab.active { color: #EC672C; border-bottom-color: #EC672C; }
-  .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .content { padding: 20px 16px; max-width: 1200px; margin: 0 auto; }
   .card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .stat-card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 16px; }
-  .stat-num { font-family: 'Archivo', sans-serif; font-size: 32px; font-weight: 800; color: #EC672C; }
+  .stat-num { font-family: 'Manrope', sans-serif; font-size: 32px; font-weight: 800; color: #EC672C; letter-spacing: -0.02em; }
   .stat-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-top: 4px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; padding: 10px 12px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; border-bottom: 1px solid #27272a; font-weight: 600; }
@@ -41,7 +42,7 @@
   .filter-row input { flex: 1; min-width: 200px; }
   .filter-row select { min-width: 120px; }
   .scroll-x { overflow-x: auto; }
-  h2 { font-family: 'Archivo', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  h2 { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.01em; }
   h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #b0b0b8; }
   .loader { display: inline-block; width: 20px; height: 20px; border: 2px solid #27272a; border-top-color: #EC672C; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -52,9 +53,29 @@
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 4px; font-weight: 600; }
   .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) {
+    .chart-row { grid-template-columns: 1fr; }
+    .topbar { padding: 8px 12px; gap: 8px; }
+    .topbar-email { display: none; }
+    .content { padding: 16px 12px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 12px; }
+    .stat-num { font-size: 24px; }
+    .card { padding: 16px; }
+    h2 { font-size: 18px; }
+    .filter-row input { min-width: 0; flex: 1; }
+    .filter-row select { min-width: 0; flex: 1; }
+    .filter-row { gap: 8px; }
+    .btn-sm { padding: 6px 8px; font-size: 10px; }
+    table { font-size: 12px; }
+    th, td { padding: 8px 6px; }
+    .modal-box { padding: 16px; margin: 8px; max-height: 95vh; }
+    .modal-box h2 { font-size: 16px; }
+    .donut-wrap { flex-direction: column; gap: 12px; }
+    .toast { bottom: 12px; right: 12px; left: 12px; text-align: center; }
+  }
   .chart-card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 20px; }
-  .chart-card h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 16px; }
+  .chart-card h3 { font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 16px; }
   .bar-chart { display: flex; flex-direction: column; gap: 8px; }
   .bar-row { display: flex; align-items: center; gap: 10px; }
   .bar-label { font-size: 12px; color: #b0b0b8; min-width: 80px; text-align: right; }
