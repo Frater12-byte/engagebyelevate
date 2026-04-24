@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Engage by Elevate</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #080808; color: #fff; font-family: 'Manrope', -apple-system, sans-serif; font-size: 14px; line-height: 1.6; }
+  .topbar { background: #0e0e10; border-bottom: 1px solid #27272a; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+  .topbar img { height: 28px; }
+  .topbar-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #EC672C; }
+  .topbar-spacer { flex: 1; }
+  .topbar-email { font-size: 12px; color: #6a6a75; }
+  .topbar-out { background: none; border: 1px solid #27272a; color: #b0b0b8; padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+  .topbar-out:hover { border-color: #EC672C; color: #EC672C; }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #27272a; padding: 0 24px; background: #0e0e10; }
+  .tab { padding: 14px 20px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+  .tab:hover { color: #b0b0b8; }
+  .tab.active { color: #EC672C; border-bottom-color: #EC672C; }
+  .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 16px; }
+  .stat-num { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 800; color: #EC672C; }
+  .stat-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; border-bottom: 1px solid #27272a; font-weight: 600; }
+  td { padding: 10px 12px; border-bottom: 1px solid #1a1a1d; color: #b0b0b8; }
+  tr:hover td { background: #1a1a1d; }
+  .btn-sm { padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; border: 1px solid #27272a; background: none; color: #b0b0b8; font-family: inherit; font-weight: 600; }
+  .btn-sm:hover { border-color: #EC672C; color: #EC672C; }
+  .btn-sm.danger { border-color: #ef4444; color: #ef4444; }
+  .btn-sm.danger:hover { background: #ef444420; }
+  .btn-sm.primary { background: #EC672C; border-color: #EC672C; color: #fff; }
+  .btn-sm.primary:hover { background: #d4551f; }
+  .filter-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-row input, .filter-row select { padding: 8px 12px; background: #141416; border: 1px solid #27272a; border-radius: 4px; color: #fff; font-family: inherit; font-size: 13px; }
+  .filter-row input { flex: 1; min-width: 200px; }
+  .filter-row select { min-width: 120px; }
+  .scroll-x { overflow-x: auto; }
+  h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #b0b0b8; }
+  .loader { display: inline-block; width: 20px; height: 20px; border: 2px solid #27272a; border-top-color: #EC672C; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: #141416; border: 1px solid #27272a; color: #fff; padding: 12px 20px; border-radius: 6px; font-size: 13px; z-index: 9999; }
+  .toast.ok { border-color: #22c55e; }
+  .toast.err { border-color: #ef4444; }
+  textarea { width: 100%; padding: 10px; background: #141416; border: 1px solid #27272a; border-radius: 4px; color: #fff; font-family: inherit; font-size: 13px; resize: vertical; min-height: 80px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 4px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <img src="/img/logo.png" alt="Elevate">
+  <span class="topbar-title">Admin Panel</span>
+  <span class="topbar-spacer"></span>
+  <span class="topbar-email" id="admin-email"></span>
+  <button class="topbar-out" id="sign-out">Sign Out</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="overview">Overview</button>
+  <button class="tab" data-tab="users">Users</button>
+  <button class="tab" data-tab="meetings">Meetings</button>
+  <button class="tab" data-tab="emails">Emails</button>
+  <button class="tab" data-tab="bulk">Bulk</button>
+</div>
+
+<div class="content" id="content">
+  <div class="loader"></div>
+</div>
+
+<script src="/js/admin.js"></script>
+<script>
+let currentTab = 'overview';
+
+(async () => {
+  const me = await apiGet('/admin/me');
+  if (!me) return;
+  document.getElementById('admin-email').textContent = me.admin?.email || '';
+  renderTab('overview');
+})();
+
+document.getElementById('sign-out').addEventListener('click', async () => {
+  await apiPost('/admin-logout');
+  location.href = '/admin-login';
+});
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentTab = t.dataset.tab;
+    renderTab(currentTab);
+  });
+});
+
+function showToast(msg, ok = true) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + (ok ? 'ok' : 'err');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+async function renderTab(tab) {
+  const el = document.getElementById('content');
+  el.innerHTML = '<div class="loader"></div>';
+  try {
+    if (tab === 'overview') await renderOverview(el);
+    else if (tab === 'users') await renderUsers(el);
+    else if (tab === 'meetings') await renderMeetings(el);
+    else if (tab === 'emails') await renderEmails(el);
+    else if (tab === 'bulk') await renderBulk(el);
+  } catch (err) { el.innerHTML = `<p style="color:#ef4444">${esc(err.message)}</p>`; }
+}
+
+// ========== OVERVIEW ==========
+async function renderOverview(el) {
+  const s = await apiGet('/admin/stats');
+  if (!s) return;
+  el.innerHTML = `
+    <h2>Overview</h2>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">${s.users.total}</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card"><div class="stat-num">${s.users.by_type.hotel||0}</div><div class="stat-label">Hotels</div></div>
+      <div class="stat-card"><div class="stat-num">${s.users.by_type.agent||0}</div><div class="stat-label">Agencies</div></div>
+      <div class="stat-card"><div class="stat-num">${s.users.by_type.exhibitor||0}</div><div class="stat-label">Exhibitors</div></div>
+      <div class="stat-card"><div class="stat-num">${s.users.verified}</div><div class="stat-label">Verified</div></div>
+      <div class="stat-card"><div class="stat-num">${s.users.unverified}</div><div class="stat-label">Unverified</div></div>
+      <div class="stat-card"><div class="stat-num">${s.meetings.total}</div><div class="stat-label">Total Meetings</div></div>
+      <div class="stat-card"><div class="stat-num">${s.meetings.by_status.approved||0}</div><div class="stat-label">Approved</div></div>
+      <div class="stat-card"><div class="stat-num">${s.meetings.by_status.pending||0}</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-num">${s.emails.last_24h.sent}</div><div class="stat-label">Emails (24h)</div></div>
+      <div class="stat-card"><div class="stat-num">${s.emails.last_7d.sent}</div><div class="stat-label">Emails (7d)</div></div>
+      <div class="stat-card"><div class="stat-num">${(s.emails.magic_link_click_rate_7d * 100).toFixed(0)}%</div><div class="stat-label">Magic Link Click Rate</div></div>
+    </div>
+    <h3>Slots</h3>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">${s.slots.by_status.free||0}</div><div class="stat-label">Free</div></div>
+      <div class="stat-card"><div class="stat-num">${s.slots.by_status.booked||0}</div><div class="stat-label">Booked</div></div>
+      <div class="stat-card"><div class="stat-num">${s.slots.by_status.held||0}</div><div class="stat-label">Held</div></div>
+      <div class="stat-card"><div class="stat-num">${s.slots.by_status.blocked||0}</div><div class="stat-label">Blocked</div></div>
+    </div>
+  `;
+}
+
+// ========== USERS ==========
+async function renderUsers(el) {
+  const d = await apiGet('/admin/users');
+  if (!d) return;
+  el.innerHTML = `
+    <h2>Users (${d.users.length})</h2>
+    <div class="filter-row"><input id="user-search" placeholder="Search by name, email, country..."></div>
+    <div class="scroll-x"><table><thead><tr><th>Type</th><th>Organization</th><th>Email</th><th>Country</th><th>Verified</th><th>Active</th><th>Created</th><th>Actions</th></tr></thead><tbody id="user-rows"></tbody></table></div>
+  `;
+  const tbody = document.getElementById('user-rows');
+  function render(users) {
+    tbody.innerHTML = users.map(u => `<tr>
+      <td>${typeBadge(u.type)}</td>
+      <td>${esc(u.org_name)}</td>
+      <td style="font-size:12px">${esc(u.email)}</td>
+      <td>${esc(u.country||'')}</td>
+      <td>${u.email_verified_at ? badge('Yes','#22c55e') : badge('No','#ef4444')}</td>
+      <td>${u.active ? badge('Active','#22c55e') : badge('Inactive','#ef4444')}</td>
+      <td style="font-size:12px;color:#6a6a75">${fmtDt(u.created_at)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-sm" onclick="adminUserAction('verify',${u.id})">Verify</button>
+        <button class="btn-sm" onclick="adminUserAction('${u.active?'deactivate':'activate'}',${u.id})">${u.active?'Deactivate':'Activate'}</button>
+        <button class="btn-sm" onclick="adminUserAction('resend-magic',${u.id})">Resend</button>
+        <button class="btn-sm" onclick="adminUserAction('regenerate-slots',${u.id})">Slots</button>
+        <button class="btn-sm danger" onclick="adminUserAction('delete',${u.id})">Delete</button>
+      </td>
+    </tr>`).join('');
+  }
+  render(d.users);
+  document.getElementById('user-search').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    render(d.users.filter(u => (u.org_name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.country||'').toLowerCase().includes(q) || (u.contact_name||'').toLowerCase().includes(q)));
+  });
+}
+
+window.adminUserAction = async function(action, id) {
+  try {
+    if (action === 'delete') {
+      if (!confirm('Delete this user permanently?')) return;
+      await apiDelete('/admin/users/' + id);
+    } else {
+      await apiPost('/admin/users/' + id + '/' + action);
+    }
+    showToast('Done');
+    renderTab('users');
+  } catch (err) { showToast(err.message, false); }
+};
+
+// ========== MEETINGS ==========
+async function renderMeetings(el) {
+  el.innerHTML = `
+    <h2>Meetings</h2>
+    <div class="filter-row"><select id="mtg-status"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option><option value="expired">Expired</option></select></div>
+    <div class="scroll-x"><table><thead><tr><th>ID</th><th>Day</th><th>Time</th><th>Requester</th><th>Recipient</th><th>Status</th><th>Teams</th><th>Actions</th></tr></thead><tbody id="mtg-rows"></tbody></table></div>
+  `;
+  async function load() {
+    const status = document.getElementById('mtg-status').value;
+    const d = await apiGet('/admin/meetings' + (status ? '?status=' + status : ''));
+    if (!d) return;
+    document.getElementById('mtg-rows').innerHTML = d.meetings.map(m => `<tr>
+      <td>${m.id}</td>
+      <td>${m.day||''}</td>
+      <td style="font-size:12px">${fmtDt(m.start_time)}</td>
+      <td>${esc(m.requester_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.requester_name||'')}</span></td>
+      <td>${esc(m.recipient_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.recipient_name||'')}</span></td>
+      <td>${statusBadge(m.status)}</td>
+      <td>${m.teams_join_url ? '<a href="'+esc(m.teams_join_url)+'" target="_blank" style="color:#EC672C;font-size:11px">Link</a>' : '-'}</td>
+      <td style="white-space:nowrap">
+        ${m.status==='pending' ? `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>` : ''}
+        ${!['cancelled','expired','declined'].includes(m.status) ? `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>` : ''}
+      </td>
+    </tr>`).join('');
+  }
+  load();
+  document.getElementById('mtg-status').addEventListener('change', load);
+}
+
+window.adminMtgAction = async function(action, id) {
+  if (!confirm('Are you sure?')) return;
+  try {
+    await apiPost('/admin/meetings/' + id + '/' + action);
+    showToast('Done');
+    renderTab('meetings');
+  } catch (err) { showToast(err.message, false); }
+};
+
+// ========== EMAILS ==========
+async function renderEmails(el) {
+  el.innerHTML = `
+    <h2>Email Log</h2>
+    <div class="filter-row">
+      <input id="email-search" placeholder="Search subject or recipient...">
+      <select id="email-tpl"><option value="">All templates</option><option value="magic_link">Magic Link</option><option value="meeting_request">Request</option><option value="meeting_approved">Approved</option><option value="meeting_declined">Declined</option><option value="meeting_cancelled">Cancelled</option><option value="admin_bulk">Bulk</option></select>
+      <select id="email-status"><option value="">All</option><option value="sent">Sent</option><option value="failed">Failed</option></select>
+    </div>
+    <div class="scroll-x"><table><thead><tr><th>Sent</th><th>To</th><th>Subject</th><th>Template</th><th>Status</th></tr></thead><tbody id="email-rows"></tbody></table></div>
+  `;
+  async function load() {
+    const q = document.getElementById('email-search').value;
+    const tpl = document.getElementById('email-tpl').value;
+    const st = document.getElementById('email-status').value;
+    let url = '/admin/emails?limit=100';
+    if (q) url += '&q=' + encodeURIComponent(q);
+    if (tpl) url += '&template=' + tpl;
+    if (st) url += '&status=' + st;
+    const d = await apiGet(url);
+    if (!d) return;
+    document.getElementById('email-rows').innerHTML = d.emails.map(e => `<tr>
+      <td style="font-size:12px;color:#6a6a75;white-space:nowrap">${fmtDt(e.sent_at)}</td>
+      <td style="font-size:12px">${esc(e.to_email)}</td>
+      <td>${esc(e.subject||'')}</td>
+      <td>${e.template ? badge(e.template,'#6a6a75') : '-'}</td>
+      <td>${e.status==='sent' ? badge('sent','#22c55e') : badge(e.status||'?','#ef4444')}</td>
+    </tr>`).join('');
+  }
+  load();
+  document.getElementById('email-search').addEventListener('input', load);
+  document.getElementById('email-tpl').addEventListener('change', load);
+  document.getElementById('email-status').addEventListener('change', load);
+}
+
+// ========== BULK ==========
+async function renderBulk(el) {
+  el.innerHTML = `
+    <h2>Bulk Operations</h2>
+    <div class="card">
+      <h3>Resend Magic Link to Unverified Users</h3>
+      <p style="color:#6a6a75;margin-bottom:12px;font-size:13px">Sends a fresh sign-in link to all active users who haven't verified their email.</p>
+      <button class="btn-sm primary" id="bulk-resend">Resend to All Unverified</button>
+      <div id="bulk-resend-result" style="margin-top:12px;font-size:13px"></div>
+    </div>
+    <div class="card" style="margin-top:24px">
+      <h3>Send Custom Email</h3>
+      <div class="field"><label>Audience</label><select id="bulk-audience" style="width:100%;padding:8px;background:#141416;border:1px solid #27272a;border-radius:4px;color:#fff"><option value="all">All active users</option><option value="hotel">Hotels only</option><option value="agent">Agents only</option><option value="exhibitor">Exhibitors only</option><option value="unverified">Unverified only</option></select></div>
+      <div class="field"><label>Subject</label><input id="bulk-subject" style="width:100%"></div>
+      <div class="field"><label>HTML Body</label><textarea id="bulk-html" rows="6"></textarea></div>
+      <div class="field"><label>Plain Text (optional)</label><textarea id="bulk-text" rows="4"></textarea></div>
+      <button class="btn-sm primary" id="bulk-send">Send Email</button>
+      <div id="bulk-send-result" style="margin-top:12px;font-size:13px"></div>
+    </div>
+  `;
+  document.getElementById('bulk-resend').addEventListener('click', async () => {
+    if (!confirm('Resend magic link to all unverified users?')) return;
+    try {
+      const r = await apiPost('/admin/bulk/resend-unverified', { confirm: true });
+      document.getElementById('bulk-resend-result').textContent = 'Sent: ' + r.sent + (r.errors?.length ? ', Errors: ' + r.errors.length : '');
+    } catch (err) { document.getElementById('bulk-resend-result').textContent = err.message; }
+  });
+  document.getElementById('bulk-send').addEventListener('click', async () => {
+    const audience = document.getElementById('bulk-audience').value;
+    const subject = document.getElementById('bulk-subject').value;
+    const html = document.getElementById('bulk-html').value;
+    const text = document.getElementById('bulk-text').value;
+    if (!subject || !html) { showToast('Subject and HTML required', false); return; }
+    if (!confirm('Send email to audience: ' + audience + '?')) return;
+    try {
+      const r = await apiPost('/admin/bulk/email', { audience, subject, html, text, confirm: true });
+      document.getElementById('bulk-send-result').textContent = 'Sent: ' + r.sent + (r.errors?.length ? ', Errors: ' + r.errors.length : '');
+    } catch (err) { document.getElementById('bulk-send-result').textContent = err.message; }
+  });
+}
+</script>
+</body>
+</html>

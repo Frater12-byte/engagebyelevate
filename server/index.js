@@ -127,6 +127,17 @@ app.post('/admin/exhibitors', (req, res) => {
   res.json({ ok: true });
 });
 
+// Admin frontend (only on admin host)
+const { isAdminHost } = require('./middleware/hostGuard');
+app.get('/admin-login', (req, res, next) => {
+  if (!isAdminHost(req)) return next();
+  res.sendFile(path.join(__dirname, '..', 'public', 'admin-login.html'));
+});
+app.get(['/', '/admin'], (req, res, next) => {
+  if (!isAdminHost(req)) return next();
+  res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
+});
+
 // Static files
 app.use(express.static(path.join(__dirname, '..', 'public')));
 

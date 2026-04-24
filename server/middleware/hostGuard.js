@@ -15,7 +15,7 @@ function blockAdminOnMain(req, res, next) {
 
 function blockMainOnAdmin(req, res, next) {
   if (!isAdminHost(req)) return next();
-  const allowed = req.path === '/admin-login' || req.path === '/admin' || req.path.startsWith('/admin/') ||
+  const allowed = req.path === '/' || req.path === '/admin-login' || req.path === '/admin' || req.path.startsWith('/admin/') ||
     req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/img/') ||
     req.path.startsWith('/favicon') || req.path.startsWith('/uploads/');
   if (!allowed) return res.status(404).send('Not found');

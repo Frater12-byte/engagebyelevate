@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Access — Engage by Elevate</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Manrope:wght@400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #080808; color: #fff; font-family: 'Manrope', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-wrap { width: 100%; max-width: 380px; padding: 40px 24px; text-align: center; }
+  .login-logo { height: 36px; margin-bottom: 32px; }
+  h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: 3px; color: #EC672C; margin-bottom: 32px; }
+  label { display: block; text-align: left; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 6px; font-weight: 600; }
+  input { width: 100%; padding: 14px 16px; background: #141416; border: 1px solid #27272a; border-radius: 6px; color: #fff; font-family: inherit; font-size: 15px; margin-bottom: 16px; outline: none; }
+  input:focus { border-color: #EC672C; }
+  input[readonly] { opacity: 0.5; cursor: not-allowed; }
+  button { width: 100%; padding: 14px; background: #EC672C; color: #fff; border: none; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; }
+  button:hover { background: #d4551f; }
+  .error { color: #ef4444; font-size: 13px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <img src="/img/logo.png" alt="Elevate" class="login-logo">
+  <h1>ADMIN ACCESS</h1>
+  <form id="login-form">
+    <label>Email</label>
+    <input type="email" name="email" value="hello@engagebyelevate.com" readonly>
+    <label>Password</label>
+    <input type="password" name="password" required autofocus>
+    <button type="submit">Sign In</button>
+    <p id="err" class="error" style="display:none"></p>
+  </form>
+</div>
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+  try {
+    const res = await fetch('/admin-login', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: e.target.email.value.trim(), password: e.target.password.value }) });
+    if (!res.ok) throw new Error((await res.json()).error || 'Login failed');
+    location.href = '/admin';
+  } catch (ex) { err.textContent = ex.message; err.style.display = 'block'; }
+});
+</script>
+</body>
+</html>
