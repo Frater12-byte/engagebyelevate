@@ -153,28 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-/* Live Dubai clock in nav — airport-board style */
-function injectDubaiClock() {
-  const host = document.querySelector('.nav-inner');
-  if (!host) return;
-  const el = document.createElement('span');
-  el.id = 'dubai-clock';
-  el.className = 'nav-clock';
-  el.setAttribute('aria-label', 'Current Dubai time');
-  el.innerHTML = '<span class="nav-clock-label">DUBAI</span><span class="nav-clock-digits">--:--:--</span>';
-  const toggle = host.querySelector('.nav-toggle');
-  if (toggle) host.insertBefore(el, toggle);
-  else host.appendChild(el);
-  const digits = el.querySelector('.nav-clock-digits');
-  const fmt = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Dubai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-  });
-  const tick = () => { digits.textContent = fmt.format(new Date()); };
-  tick();
-  setInterval(tick, 1000);
-}
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectDubaiClock);
-else injectDubaiClock();
 
 /* Session switch toast */
 function maybeShowSwitchToast() {

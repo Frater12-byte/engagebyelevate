@@ -4,6 +4,28 @@
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-HS8W2SFVZJ"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-HS8W2SFVZJ');</script>
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/69eb5d1ef851631c32b88e82/1jmvm7fv8';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<script>
+Tawk_API.onLoad = function() {
+  fetch('/auth/me',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{
+    if(d&&d.user&&d.user.email){
+      Tawk_API.setAttributes({name:d.user.contact_name||d.user.email,email:d.user.email,company:d.user.org_name||''},function(){});
+    }
+  }).catch(()=>{});
+};
+</script>
+<!--End of Tawk.to Script-->
 <script>document.documentElement.classList.add(document.cookie.includes("session=")?"is-authed":"is-guest")</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -23,14 +45,6 @@
 <meta name="twitter:description" content="Full three-day programme for Engage by Elevate 2026. Keynotes, exhibitor sessions, and 1:1 meeting blocks. Dubai, June 2–4.">
 <meta name="twitter:image" content="https://engagebyelevate.com/img/og-image.svg">
 <link rel="stylesheet" href="/css/main.css">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HS8W2SFVZJ"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-HS8W2SFVZJ');
-</script>
 </head>
 <body>
 
@@ -64,11 +78,21 @@
 
 <section style="padding-top:0">
   <div class="container">
+    <div id="tz-selector" style="display:none"></div>
     <div id="agenda-content">
       <div class="loader" style="margin:80px auto;display:block"></div>
     </div>
   </div>
 </section>
+<style>
+  .tz-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:28px; }
+  .tz-label { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#6a6a75; font-weight:600; margin-right:4px; }
+  .tz-pill { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:6px 14px; border-radius:999px; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:#b0b0b8; cursor:pointer; font-family:inherit; font-weight:600; min-height:32px; transition:border-color 0.15s,color 0.15s; }
+  .tz-pill:hover { border-color:#EC672C; color:#EC672C; }
+  .tz-pill.active { background:#EC672C; border-color:#EC672C; color:#fff; }
+  .tz-pill.active:hover { background:#d4551f; border-color:#d4551f; color:#fff; }
+  .agenda-fade { transition:opacity 0.2s ease; }
+</style>
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
@@ -88,20 +112,77 @@
 
   const DAY_THEMES = { 1: 'UAE Hotels · Opening', 2: 'UAE Hotels · Continued', 3: 'International Hotels' };
 
-  (async () => {
-    const me = await getMe();
-    await updateNavForUser(me);
+  const TZ_PRESETS = [
+    { label: 'Dubai', tz: 'Asia/Dubai' },
+    { label: 'Bangkok', tz: 'Asia/Bangkok' },
+    { label: 'Maldives', tz: 'Indian/Maldives' },
+    { label: 'London', tz: 'Europe/London' },
+    { label: 'Paris', tz: 'Europe/Paris' }
+  ];
 
-    const { agenda } = await api.get('/api/public/agenda');
+  function getInitialTz() {
+    const saved = localStorage.getItem('agenda_tz');
+    if (saved) return saved;
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dubai';
+    } catch { return 'Asia/Dubai'; }
+  }
+
+  let selectedTz = getInitialTz();
+  let agendaData = null;
+  let currentMe = null;
+
+  function fmtTimeInTz(iso, tz) {
+    return new Date(iso).toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  function fmtDateInTz(iso, tz) {
+    return new Date(iso).toLocaleDateString('en-GB', { timeZone: tz, weekday: 'long', month: 'long', day: 'numeric' });
+  }
+
+  function renderTzSelector() {
+    const sel = document.getElementById('tz-selector');
+    const browserTz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return null; } })();
+    const isPreset = TZ_PRESETS.some(p => p.tz === selectedTz);
+    const isBrowserPreset = TZ_PRESETS.some(p => p.tz === browserTz);
+
+    let html = '<div class="tz-row"><span class="tz-label">Viewing times in:</span>';
+    TZ_PRESETS.forEach(p => {
+      html += `<button class="tz-pill${selectedTz === p.tz ? ' active' : ''}" data-tz="${p.tz}">${p.label}</button>`;
+    });
+    if (browserTz && !isBrowserPreset) {
+      const cityName = browserTz.split('/').pop().replace(/_/g, ' ');
+      html += `<button class="tz-pill${selectedTz === browserTz ? ' active' : ''}" data-tz="${browserTz}">My timezone (${cityName})</button>`;
+    }
+    html += '</div>';
+    sel.innerHTML = html;
+    sel.style.display = '';
+
+    sel.querySelectorAll('.tz-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedTz = btn.dataset.tz;
+        localStorage.setItem('agenda_tz', selectedTz);
+        renderTzSelector();
+        const container = document.getElementById('agenda-content');
+        container.classList.add('agenda-fade');
+        container.style.opacity = '0.4';
+        setTimeout(() => {
+          renderAgenda(agendaData, currentMe);
+          container.style.opacity = '1';
+        }, 200);
+      });
+    });
+  }
+
+  function renderAgenda(agenda, me) {
     const container = document.getElementById('agenda-content');
     const days = Object.keys(agenda).sort();
-
-    if (!days.length) { container.innerHTML = `<div class="empty-state"><h3>Agenda coming soon</h3></div>`; return; }
+    if (!days.length) { container.innerHTML = '<div class="empty-state"><h3>Agenda coming soon</h3></div>'; return; }
 
     container.innerHTML = days.map((day, idx) => {
       const sessions = agenda[day];
-      const d = new Date(day);
-      const dateStr = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+      const firstStart = sessions[0]?.start_time;
+      const dateStr = firstStart ? fmtDateInTz(firstStart, selectedTz) : new Date(day).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
       return `
         <div class="agenda-day">
           <div class="agenda-day-head">
@@ -111,7 +192,7 @@
           </div>
           ${sessions.map(s => `
             <div class="agenda-item">
-              <div class="time">${fmtTime(s.start_time)}<small>--- ${fmtTime(s.end_time)}</small></div>
+              <div class="time">${fmtTimeInTz(s.start_time, selectedTz)}<small>--- ${fmtTimeInTz(s.end_time, selectedTz)}</small></div>
               <div>
                 <h4>${escapeHtml(s.title)}</h4>
                 <div class="session-meta">${[s.speaker, s.organization].filter(Boolean).map(escapeHtml).join(' · ')}${s.location ? ' · <span class="badge badge-gold">' + escapeHtml(s.location) + '</span>' : ''}${s.is_hybrid ? ' · <span class="badge badge-gold">Hybrid</span>' : ''}${s.is_online ? ' · <span class="badge badge-ink">Online</span>' : ''}</div>
@@ -138,6 +219,19 @@
         </div>
       `);
     }
+  }
+
+  (async () => {
+    currentMe = await getMe();
+    await updateNavForUser(currentMe);
+
+    const { agenda } = await api.get('/api/public/agenda');
+    agendaData = agenda;
+
+    renderTzSelector();
+    const container = document.getElementById('agenda-content');
+    container.classList.add('agenda-fade');
+    renderAgenda(agenda, currentMe);
   })();
 </script>
 </body>
