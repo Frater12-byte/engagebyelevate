@@ -410,14 +410,30 @@ window.adminUserAction = async function(action, id) {
 async function renderMeetings(el) {
   el.innerHTML = `
     <h2>Meetings</h2>
-    <div class="filter-row"><select id="mtg-status"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option><option value="expired">Expired</option></select></div>
+    <div class="filter-row">
+      <input id="mtg-search" placeholder="Search by participant name or org...">
+      <select id="mtg-status"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option><option value="expired">Expired</option></select>
+      <input id="mtg-date" type="date" style="color-scheme:dark" title="Filter by date">
+    </div>
     <div class="scroll-x"><table><thead><tr><th>ID</th><th>Day</th><th>Time</th><th>Requester</th><th>Recipient</th><th>Status</th><th>Teams</th><th>Actions</th></tr></thead><tbody id="mtg-rows"></tbody></table></div>
   `;
-  async function load() {
+  let allMeetings = [];
+  async function fetchMeetings() {
     const status = document.getElementById('mtg-status').value;
     const d = await apiGet('/admin/meetings' + (status ? '?status=' + status : ''));
     if (!d) return;
-    document.getElementById('mtg-rows').innerHTML = d.meetings.map(m => `<tr>
+    allMeetings = d.meetings;
+    filterAndRender();
+  }
+  function filterAndRender() {
+    const q = (document.getElementById('mtg-search').value || '').toLowerCase();
+    const dateVal = document.getElementById('mtg-date').value;
+    const filtered = allMeetings.filter(m => {
+      if (q && !(m.requester_org||'').toLowerCase().includes(q) && !(m.recipient_org||'').toLowerCase().includes(q) && !(m.requester_name||'').toLowerCase().includes(q) && !(m.recipient_name||'').toLowerCase().includes(q)) return false;
+      if (dateVal && m.day !== dateVal) return false;
+      return true;
+    });
+    document.getElementById('mtg-rows').innerHTML = filtered.map(m => `<tr>
       <td>${m.id}</td>
       <td>${m.day||''}</td>
       <td style="font-size:12px">${fmtDt(m.start_time)}</td>
@@ -429,10 +445,12 @@ async function renderMeetings(el) {
         ${m.status==='pending' ? `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>` : ''}
         ${!['cancelled','expired','declined'].includes(m.status) ? `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>` : ''}
       </td>
-    </tr>`).join('');
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:#6a6a75">No meetings match</td></tr>';
   }
-  load();
-  document.getElementById('mtg-status').addEventListener('change', load);
+  fetchMeetings();
+  document.getElementById('mtg-status').addEventListener('change', fetchMeetings);
+  document.getElementById('mtg-search').addEventListener('input', filterAndRender);
+  document.getElementById('mtg-date').addEventListener('change', filterAndRender);
 }
 
 window.adminMtgAction = async function(action, id) {
@@ -452,32 +470,50 @@ async function renderEmails(el) {
       <input id="email-search" placeholder="Search subject or recipient...">
       <select id="email-tpl"><option value="">All templates</option><option value="magic_link">Magic Link</option><option value="meeting_request">Request</option><option value="meeting_approved">Approved</option><option value="meeting_declined">Declined</option><option value="meeting_cancelled">Cancelled</option><option value="admin_bulk">Bulk</option></select>
       <select id="email-status"><option value="">All</option><option value="sent">Sent</option><option value="failed">Failed</option></select>
+      <input id="email-date" type="date" style="color-scheme:dark" title="Filter by date">
     </div>
-    <div class="scroll-x"><table><thead><tr><th>Sent</th><th>To</th><th>Subject</th><th>Template</th><th>Status</th></tr></thead><tbody id="email-rows"></tbody></table></div>
+    <div class="scroll-x"><table><thead><tr><th>Sent</th><th>To</th><th>Subject</th><th>Template</th><th>Status</th><th></th></tr></thead><tbody id="email-rows"></tbody></table></div>
   `;
-  async function load() {
+  let allEmails = [];
+  async function fetchEmails() {
     const q = document.getElementById('email-search').value;
     const tpl = document.getElementById('email-tpl').value;
     const st = document.getElementById('email-status').value;
-    let url = '/admin/emails?limit=100';
+    let url = '/admin/emails?limit=200';
     if (q) url += '&q=' + encodeURIComponent(q);
     if (tpl) url += '&template=' + tpl;
     if (st) url += '&status=' + st;
     const d = await apiGet(url);
     if (!d) return;
-    document.getElementById('email-rows').innerHTML = d.emails.map(e => `<tr>
+    allEmails = d.emails;
+    filterAndRender();
+  }
+  function filterAndRender() {
+    const dateVal = document.getElementById('email-date').value;
+    const filtered = dateVal ? allEmails.filter(e => e.sent_at && e.sent_at.startsWith(dateVal)) : allEmails;
+    document.getElementById('email-rows').innerHTML = filtered.map(e => `<tr>
       <td style="font-size:12px;color:#6a6a75;white-space:nowrap">${fmtDt(e.sent_at)}</td>
       <td style="font-size:12px">${esc(e.to_email)}</td>
       <td>${esc(e.subject||'')}</td>
       <td>${e.template ? badge(e.template,'#6a6a75') : '-'}</td>
       <td>${e.status==='sent' ? badge('sent','#22c55e') : badge(e.status||'?','#ef4444')}</td>
-    </tr>`).join('');
+      <td><button class="btn-sm" onclick="resendEmail(${e.id})" title="Resend magic link to this recipient">Resend</button></td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#6a6a75">No emails match</td></tr>';
   }
-  load();
-  document.getElementById('email-search').addEventListener('input', load);
-  document.getElementById('email-tpl').addEventListener('change', load);
-  document.getElementById('email-status').addEventListener('change', load);
+  fetchEmails();
+  document.getElementById('email-search').addEventListener('input', fetchEmails);
+  document.getElementById('email-tpl').addEventListener('change', fetchEmails);
+  document.getElementById('email-status').addEventListener('change', fetchEmails);
+  document.getElementById('email-date').addEventListener('change', filterAndRender);
 }
+
+window.resendEmail = async function(id) {
+  if (!confirm('Resend a magic link to this email recipient?')) return;
+  try {
+    const r = await apiPost('/admin/emails/' + id + '/resend');
+    showToast(r.message || 'Resent');
+  } catch (err) { showToast(err.message, false); }
+};
 
 // ========== BULK ==========
 async function renderBulk(el) {

@@ -186,6 +186,20 @@ router.post('/meetings/:id/force-approve', async (req, res) => {
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+// === RESEND EMAIL (sends magic link to the email's original recipient) ===
+router.post('/emails/:id/resend', async (req, res) => {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM email_log WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Email not found' });
+  const user = db.prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?) AND active = 1').get(row.to_email);
+  if (!user) return res.status(400).json({ error: 'User not found or inactive for ' + row.to_email });
+  try {
+    await sendMagicLinkFor(user.id);
+    auditLog(req.admin.id, 'resend_email', 'email_log', parseInt(req.params.id), { to: row.to_email });
+    res.json({ ok: true, message: 'Magic link resent to ' + row.to_email });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // === EMAILS ===
 router.get('/emails', (req, res) => {
   const db = getDb();
