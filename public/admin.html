@@ -200,18 +200,17 @@ async function renderOverview(el) {
     html += '<div class="bar-chart">';
     sortedDays.forEach(day => {
       const total = Object.values(days[day]).reduce((a,b)=>a+b,0);
-      const pct = Math.max(2, (total / maxDay) * 100);
+      const barWidth = Math.max(3, (total / maxDay) * 100);
       const label = new Date(day+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
       let segments = '';
-      let segOffset = 0;
       [...templates].forEach(t => {
         const v = days[day][t] || 0;
         if (v > 0) {
           const segPct = (v / total) * 100;
-          segments += `<div style="width:${segPct}%;background:${tplColors[t]||'#6a6a75'};height:100%;display:inline-block" title="${t}: ${v}"></div>`;
+          segments += `<div style="width:${segPct}%;background:${tplColors[t]||'#6a6a75'};height:100%;display:inline-block" title="${t.replace(/_/g,' ')}: ${v}"></div>`;
         }
       });
-      html += `<div class="bar-row"><div class="bar-label">${label}</div><div class="bar-track" style="display:flex;overflow:hidden">${segments}</div><div class="bar-value">${total}</div></div>`;
+      html += `<div class="bar-row"><div class="bar-label">${label}</div><div class="bar-track"><div style="display:flex;width:${barWidth}%;height:100%;overflow:hidden;border-radius:4px">${segments}</div></div><div class="bar-value">${total}</div></div>`;
     });
     html += '</div>';
     // Legend
