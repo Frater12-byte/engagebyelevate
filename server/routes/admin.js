@@ -44,11 +44,25 @@ router.get('/stats', (req, res) => {
   const slotByStatus = {};
   db.prepare("SELECT status, COUNT(*) as n FROM slots GROUP BY status").all().forEach(r => slotByStatus[r.status] = r.n);
 
+  // Emails by day (last 7 days) split by template
+  const emailsByDay = db.prepare(`
+    SELECT date(sent_at) as day, template, COUNT(*) as n
+    FROM email_log WHERE sent_at > datetime('now','-7 days')
+    GROUP BY day, template ORDER BY day
+  `).all();
+
+  // System health
+  const dbSize = db.prepare("SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()").get();
+  const tokenCount = db.prepare('SELECT COUNT(*) as n FROM action_tokens').get().n;
+  const expiredTokens = db.prepare("SELECT COUNT(*) as n FROM action_tokens WHERE expires_at < datetime('now')").get().n;
+  const uptime = process.uptime();
+
   res.json({
     users: { total: userTotal, by_type: byType, by_region: byRegion, verified, unverified, inactive },
     meetings: { total: meetingTotal, by_status: meetingByStatus },
-    emails: { last_7d: { sent: emailSent7d, errored: emailErr7d }, last_24h: { sent: emailSent24h, errored: emailErr24h }, by_template_7d: byTemplate7d, magic_link_click_rate_7d: magicTotal7d > 0 ? magicUsed7d / magicTotal7d : 0 },
-    slots: { total: slotTotal, by_status: slotByStatus }
+    emails: { last_7d: { sent: emailSent7d, errored: emailErr7d }, last_24h: { sent: emailSent24h, errored: emailErr24h }, by_template_7d: byTemplate7d, by_day: emailsByDay, magic_link_click_rate_7d: magicTotal7d > 0 ? magicUsed7d / magicTotal7d : 0 },
+    slots: { total: slotTotal, by_status: slotByStatus },
+    system: { db_size_bytes: dbSize?.size || 0, action_tokens: tokenCount, expired_tokens: expiredTokens, uptime_seconds: Math.floor(uptime), node_version: process.version, memory_mb: Math.round(process.memoryUsage().rss / 1048576) }
   });
 });
 

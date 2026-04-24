@@ -144,7 +144,6 @@ async function renderOverview(el) {
   const s = await apiGet('/admin/stats');
   if (!s) return;
 
-  // Helper to build a horizontal bar chart
   function barChart(title, items, colors) {
     const max = Math.max(...items.map(i => i.value), 1);
     return `<div class="chart-card"><h3>${title}</h3><div class="bar-chart">${items.map((item, i) => {
@@ -154,23 +153,60 @@ async function renderOverview(el) {
     }).join('')}</div></div>`;
   }
 
-  // Helper to build a simple donut chart via SVG
   function donutChart(title, items, colors) {
     const total = items.reduce((s, i) => s + i.value, 0) || 1;
     let offset = 0;
-    const segments = items.map((item, i) => {
+    const segments = items.filter(i => i.value > 0).map((item, i) => {
       const pct = (item.value / total) * 100;
       const seg = `<circle cx="50" cy="50" r="40" fill="none" stroke="${colors[i % colors.length]}" stroke-width="18" stroke-dasharray="${pct * 2.51} ${251 - pct * 2.51}" stroke-dashoffset="${-offset * 2.51}" />`;
       offset += pct;
       return seg;
     });
-    const legend = items.map((item, i) => `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${colors[i % colors.length]}"></div>${esc(item.label)}: <strong style="color:#fff">${item.value}</strong></div>`).join('');
-    return `<div class="chart-card"><h3>${title}</h3><div class="donut-wrap"><svg width="120" height="120" viewBox="0 0 100 100">${segments.join('')}<text x="50" y="54" text-anchor="middle" fill="#fff" font-family="Barlow Condensed" font-size="22" font-weight="800">${total}</text></svg><div class="donut-legend">${legend}</div></div></div>`;
+    const legend = items.filter(i => i.value > 0).map((item, i) => `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${colors[i % colors.length]}"></div>${esc(item.label)}: <strong style="color:#fff">${item.value}</strong></div>`).join('');
+    return `<div class="chart-card"><h3>${title}</h3><div class="donut-wrap"><svg width="120" height="120" viewBox="0 0 100 100">${segments.join('')}<text x="50" y="54" text-anchor="middle" fill="#fff" font-family="Archivo" font-size="22" font-weight="800">${total}</text></svg><div class="donut-legend">${legend}</div></div></div>`;
+  }
+
+  // Emails by day chart
+  function emailsByDayChart(byDay) {
+    if (!byDay || !byDay.length) return '<div class="chart-card"><h3>Emails by Day (7 days)</h3><p style="color:#6a6a75;font-size:13px">No data yet</p></div>';
+    const days = {};
+    const templates = new Set();
+    byDay.forEach(r => { if (!days[r.day]) days[r.day] = {}; days[r.day][r.template] = r.n; templates.add(r.template); });
+    const tplColors = { magic_link:'#4EA8DE', meeting_request:'#A78BFA', meeting_approved:'#22c55e', meeting_declined:'#ef4444', meeting_cancelled:'#F59E0B', admin_bulk:'#EC672C', admin_notification:'#6a6a75', exhibitor_contact:'#b0b0b8' };
+    const sortedDays = Object.keys(days).sort();
+    const maxDay = Math.max(...sortedDays.map(d => Object.values(days[d]).reduce((a,b)=>a+b,0)), 1);
+    let html = '<div class="chart-card"><h3>Emails by Day (7 days)</h3>';
+    html += '<div class="bar-chart">';
+    sortedDays.forEach(day => {
+      const total = Object.values(days[day]).reduce((a,b)=>a+b,0);
+      const pct = Math.max(2, (total / maxDay) * 100);
+      const label = new Date(day+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+      let segments = '';
+      let segOffset = 0;
+      [...templates].forEach(t => {
+        const v = days[day][t] || 0;
+        if (v > 0) {
+          const segPct = (v / total) * 100;
+          segments += `<div style="width:${segPct}%;background:${tplColors[t]||'#6a6a75'};height:100%;display:inline-block" title="${t}: ${v}"></div>`;
+        }
+      });
+      html += `<div class="bar-row"><div class="bar-label">${label}</div><div class="bar-track" style="display:flex;overflow:hidden">${segments}</div><div class="bar-value">${total}</div></div>`;
+    });
+    html += '</div>';
+    // Legend
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">';
+    [...templates].forEach(t => { html += `<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#b0b0b8"><div style="width:8px;height:8px;border-radius:2px;background:${tplColors[t]||'#6a6a75'}"></div>${t.replace(/_/g,' ')}</div>`; });
+    html += '</div></div>';
+    return html;
   }
 
   const typeColors = ['#4EA8DE', '#A78BFA', '#F59E0B', '#EC672C'];
   const statusColors = ['#22c55e', '#EC672C', '#ef4444', '#ef4444', '#6a6a75'];
-  const slotColors = ['#22c55e', '#EC672C', '#A78BFA', '#6a6a75'];
+  const tplPieColors = ['#4EA8DE', '#A78BFA', '#22c55e', '#ef4444', '#F59E0B', '#EC672C', '#6a6a75', '#b0b0b8'];
+
+  const upHrs = Math.floor((s.system?.uptime_seconds || 0) / 3600);
+  const upMin = Math.floor(((s.system?.uptime_seconds || 0) % 3600) / 60);
+  const dbMB = ((s.system?.db_size_bytes || 0) / 1048576).toFixed(1);
 
   el.innerHTML = `
     <h2>Overview</h2>
@@ -208,11 +244,14 @@ async function renderOverview(el) {
         { label: 'Booked', value: s.slots.by_status.booked || 0 },
         { label: 'Held', value: s.slots.by_status.held || 0 },
         { label: 'Blocked', value: s.slots.by_status.blocked || 0 }
-      ], slotColors)}
+      ], ['#22c55e', '#EC672C', '#A78BFA', '#6a6a75'])}
     </div>
 
     <div class="chart-row">
-      ${barChart('Emails by Template (7 days)', Object.entries(s.emails.by_template_7d || {}).map(([k,v]) => ({ label: k.replace(/_/g,' '), value: v })), ['#4EA8DE', '#A78BFA', '#22c55e', '#EC672C', '#F59E0B', '#ef4444'])}
+      ${donutChart('Emails by Template (7 days)',
+        Object.entries(s.emails.by_template_7d || {}).map(([k,v]) => ({ label: k.replace(/_/g,' '), value: v })),
+        tplPieColors
+      )}
       <div class="chart-card">
         <h3>Email Health (7 days)</h3>
         <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0">
@@ -220,6 +259,18 @@ async function renderOverview(el) {
           <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#ef4444">${s.emails.last_7d.errored}</div><div class="stat-label">Errored</div></div>
         </div>
       </div>
+    </div>
+
+    ${emailsByDayChart(s.emails.by_day)}
+
+    <h2 style="margin-top:32px">System Health</h2>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${upHrs}h ${upMin}m</div><div class="stat-label">Uptime</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.memory_mb || 0} MB</div><div class="stat-label">Memory (RSS)</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${dbMB} MB</div><div class="stat-label">Database Size</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.node_version || '-'}</div><div class="stat-label">Node Version</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.action_tokens || 0}</div><div class="stat-label">Action Tokens</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.expired_tokens || 0}</div><div class="stat-label">Expired Tokens</div></div>
     </div>
   `;
 }
@@ -243,13 +294,13 @@ async function renderUsers(el) {
       <td>${u.email_verified_at ? badge('Yes','#22c55e') : badge('No','#ef4444')}</td>
       <td>${u.active ? badge('Active','#22c55e') : badge('Inactive','#ef4444')}</td>
       <td style="font-size:12px;color:#6a6a75">${fmtDt(u.created_at)}</td>
-      <td style="white-space:nowrap">
+      <td style="min-width:240px">
         <button class="btn-sm" onclick="adminUserAction('edit',${u.id})" title="Edit this user's profile">Edit</button>
         ${!u.email_verified_at ? `<button class="btn-sm primary" onclick="adminUserAction('verify',${u.id})" title="Mark email as verified">Verify</button>` : ''}
         <button class="btn-sm" onclick="adminUserAction('${u.active?'deactivate':'activate'}',${u.id})" title="${u.active?'Deactivate this user (block login)':'Reactivate this user'}">${u.active?'Deactivate':'Activate'}</button>
         <button class="btn-sm" onclick="adminUserAction('resend-magic',${u.id})" title="Send a fresh magic login link to this user's email">Resend Link</button>
         <button class="btn-sm" onclick="adminUserAction('regenerate-slots',${u.id})" title="Delete free/blocked slots and recreate based on user type and region">Regen Slots</button>
-        <button class="btn-sm danger" onclick="adminUserAction('delete',${u.id})" title="Permanently delete this user and all their data">Delete</button>
+        <div style="margin-top:4px"></div><button class="btn-sm danger" onclick="adminUserAction('delete',${u.id})" title="Permanently delete this user and all their data">Delete</button>
       </td>
     </tr>`).join('');
   }
