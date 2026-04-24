@@ -333,12 +333,27 @@ async function renderOverview(el) {
     const W = 400, H = 180, PAD_L = 40, PAD_R = 10, PAD_T = 10, PAD_B = 36;
     const chartW = W - PAD_L - PAD_R, chartH = H - PAD_T - PAD_B;
     const stepX = days.length > 1 ? chartW / (days.length - 1) : chartW / 2;
-    function toPoints(vals) {
-      return vals.map((v, i) => {
-        const x = PAD_L + (days.length > 1 ? i * stepX : chartW / 2);
-        const y = PAD_T + chartH - (v / maxVal) * chartH;
-        return `${x},${y}`;
-      }).join(' ');
+    function getCoords(vals) {
+      return vals.map((v, i) => ({
+        x: PAD_L + (days.length > 1 ? i * stepX : chartW / 2),
+        y: PAD_T + chartH - (v / maxVal) * chartH
+      }));
+    }
+    function smoothPath(coords) {
+      if (coords.length < 2) return coords.length === 1 ? `M${coords[0].x},${coords[0].y}` : '';
+      let d = `M${coords[0].x},${coords[0].y}`;
+      for (let i = 0; i < coords.length - 1; i++) {
+        const p0 = coords[Math.max(0, i - 1)];
+        const p1 = coords[i];
+        const p2 = coords[i + 1];
+        const p3 = coords[Math.min(coords.length - 1, i + 2)];
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+      }
+      return d;
     }
     const labels = days.map((d, i) => {
       const x = PAD_L + (days.length > 1 ? i * stepX : chartW / 2);
@@ -352,22 +367,15 @@ async function renderOverview(el) {
       return `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#1a1a1d" stroke-width="1"/>
               <text x="${PAD_L - 6}" y="${y + 4}" text-anchor="end" fill="#6a6a75" font-size="10" font-family="Manrope,sans-serif">${val}</text>`;
     }).join('');
-    // Dots
-    const sentDots = sentVals.map((v, i) => {
-      const x = PAD_L + (days.length > 1 ? i * stepX : chartW / 2);
-      const y = PAD_T + chartH - (v / maxVal) * chartH;
-      return `<circle cx="${x}" cy="${y}" r="4" fill="#EC672C"/>`;
-    }).join('');
-    const clickDots = clickVals.map((v, i) => {
-      const x = PAD_L + (days.length > 1 ? i * stepX : chartW / 2);
-      const y = PAD_T + chartH - (v / maxVal) * chartH;
-      return `<circle cx="${x}" cy="${y}" r="4" fill="#4EA8DE"/>`;
-    }).join('');
-    return `<div class="chart-card"><h3>Email Engagement (7 days)</h3>
+    const sentCoords = getCoords(sentVals);
+    const clickCoords = getCoords(clickVals);
+    const sentDots = sentCoords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="#EC672C"/>`).join('');
+    const clickDots = clickCoords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="#4EA8DE"/>`).join('');
+    return `<div class="chart-card"><h3>Engagement</h3>
       <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
         ${gridLines}
-        <polyline points="${toPoints(sentVals)}" fill="none" stroke="#EC672C" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-        <polyline points="${toPoints(clickVals)}" fill="none" stroke="#4EA8DE" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="${smoothPath(sentCoords)}" fill="none" stroke="#EC672C" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="${smoothPath(clickCoords)}" fill="none" stroke="#4EA8DE" stroke-width="2.5" stroke-linecap="round"/>
         ${sentDots}${clickDots}
         ${labels}
       </svg>
@@ -451,16 +459,8 @@ async function renderOverview(el) {
         Object.entries(s.emails.by_template_7d || {}).map(([k,v]) => ({ label: k.replace(/_/g,' '), value: v })),
         Object.entries(s.emails.by_template_7d || {}).map(([k]) => TPL_COLORS[k] || '#6a6a75')
       )}
-      <div class="chart-card"><h3>Engagement</h3>
-        <div class="bar-chart">
-          <div class="bar-row"><div class="bar-label">Delivery</div><div class="bar-track"><div class="bar-fill" style="width:${emailSuccessRate}%;background:#22c55e">${emailSuccessRate.toFixed(1)}%</div></div></div>
-          <div class="bar-row"><div class="bar-label">Click Rate</div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(clickRate*2,100)}%;background:#4EA8DE">${clickRate.toFixed(0)}%</div></div></div>
-        </div>
-        <p style="font-size:11px;color:#6a6a75;margin-top:12px">Clicked = magic links opened + email CTAs used.</p>
-      </div>
+      ${emailEngagementChart(s.emails.sent_by_day, s.emails.clicked_by_day)}
     </div>
-
-    ${emailEngagementChart(s.emails.sent_by_day, s.emails.clicked_by_day)}
 
     <h2 style="margin-top:32px">System Health</h2>
     <div class="stat-grid">
