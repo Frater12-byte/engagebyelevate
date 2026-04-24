@@ -61,10 +61,18 @@
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 4px; font-weight: 600; }
   .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  /* Burger toggle for clocks on mobile */
+  .topbar-burger { display: none; background: none; border: 1px solid #27272a; color: #b0b0b8; width: 36px; height: 36px; border-radius: 4px; cursor: pointer; font-size: 16px; line-height: 1; }
+  .topbar-burger:hover { border-color: #EC672C; color: #EC672C; }
+  .clocks-dropdown { display: none; position: absolute; top: 100%; right: 12px; background: #0e0e10; border: 1px solid #27272a; border-radius: 6px; padding: 12px; z-index: 101; flex-direction: column; gap: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .clocks-dropdown.open { display: flex; }
+
   @media (max-width: 768px) {
     .chart-row { grid-template-columns: 1fr; }
-    .topbar { padding: 8px 12px; gap: 8px; }
+    .topbar { padding: 8px 12px; gap: 8px; position: relative; }
     .topbar-email { display: none; }
+    .topbar-clocks { display: none; }
+    .topbar-burger { display: flex; align-items: center; justify-content: center; }
     .content { padding: 16px 12px; }
     .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .stat-card { padding: 12px; }
@@ -77,6 +85,8 @@
     .btn-sm { padding: 6px 8px; font-size: 10px; }
     table { font-size: 12px; }
     th, td { padding: 8px 6px; }
+    .tabs { padding: 0 8px; position: sticky; top: 56px; z-index: 99; }
+    .tab { padding: 12px 14px; font-size: 11px; letter-spacing: 0.5px; }
     .modal-box { padding: 16px; margin: 8px; max-height: 95vh; }
     .modal-box h2 { font-size: 16px; }
     .modal-box div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
@@ -112,7 +122,9 @@
   <span class="topbar-clocks" id="city-clocks"></span>
   <span class="topbar-spacer"></span>
   <span class="topbar-email" id="admin-email"></span>
+  <button class="topbar-burger" id="clock-burger" title="World clocks">&#9776;</button>
   <button class="topbar-out" id="sign-out">Sign Out</button>
+  <div class="clocks-dropdown" id="clocks-dropdown"></div>
 </div>
 
 <div class="tabs">
@@ -143,7 +155,7 @@ document.getElementById('sign-out').addEventListener('click', async () => {
   location.href = '/admin-login';
 });
 
-// City clocks
+// City clocks (topbar + dropdown for mobile)
 (function() {
   const cities = [
     { label: 'DUBAI', tz: 'Asia/Dubai', primary: true },
@@ -153,16 +165,32 @@ document.getElementById('sign-out').addEventListener('click', async () => {
     { label: 'PARIS', tz: 'Europe/Paris' }
   ];
   const wrap = document.getElementById('city-clocks');
-  const fmts = cities.map(c => {
+  const dropdown = document.getElementById('clocks-dropdown');
+  const allEls = [];
+  cities.forEach(c => {
+    // Desktop clock
     const el = document.createElement('span');
     el.className = 'topbar-clock' + (c.primary ? ' primary' : '');
     el.innerHTML = `<span class="topbar-clock-label">${c.label}</span><span class="topbar-clock-time">--:--</span>`;
     wrap.appendChild(el);
-    return { el: el.querySelector('.topbar-clock-time'), fmt: new Intl.DateTimeFormat('en-GB', { timeZone: c.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) };
+    // Mobile dropdown clone
+    const el2 = document.createElement('span');
+    el2.className = 'topbar-clock' + (c.primary ? ' primary' : '');
+    el2.innerHTML = `<span class="topbar-clock-label">${c.label}</span><span class="topbar-clock-time">--:--</span>`;
+    dropdown.appendChild(el2);
+    const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: c.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    allEls.push({ els: [el.querySelector('.topbar-clock-time'), el2.querySelector('.topbar-clock-time')], fmt });
   });
-  const tick = () => { const now = new Date(); fmts.forEach(f => f.el.textContent = f.fmt.format(now)); };
+  const tick = () => { const now = new Date(); allEls.forEach(f => f.els.forEach(e => e.textContent = f.fmt.format(now))); };
   tick();
   setInterval(tick, 1000);
+  // Burger toggle
+  document.getElementById('clock-burger').addEventListener('click', () => {
+    dropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#clock-burger') && !e.target.closest('#clocks-dropdown')) dropdown.classList.remove('open');
+  });
 })();
 
 document.querySelectorAll('.tab').forEach(t => {
