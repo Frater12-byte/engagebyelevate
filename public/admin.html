@@ -301,7 +301,7 @@ async function renderOverview(el) {
       <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${emailSuccessRate>=95?'#22c55e':'#F59E0B'}">${emailSuccessRate.toFixed(1)}%</div><div class="stat-label">Email Delivery Rate</div></div>
       <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${verifyRate>=80?'#22c55e':'#F59E0B'}">${verifyRate.toFixed(0)}%</div><div class="stat-label">Verified Users</div></div>
       <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${activeRate>=90?'#22c55e':'#F59E0B'}">${activeRate.toFixed(0)}%</div><div class="stat-label">Active Users</div></div>
-      <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${Math.min(100,(s.system?.uptime_seconds||0)/604800*100)>=90?'#22c55e':'#F59E0B'}">${Math.min(100,(s.system?.uptime_seconds||0)/604800*100).toFixed(1)}%</div><div class="stat-label">Uptime (7d)</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px;color:#22c55e">${upHrs}h ${upMin}m</div><div class="stat-label">Since Last Restart</div></div>
       <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.memory_mb || 0} MB</div><div class="stat-label">Memory</div></div>
       <div class="stat-card"><div class="stat-num" style="font-size:24px">${dbMB} MB</div><div class="stat-label">Database</div></div>
       <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.node_version || '-'}</div><div class="stat-label">Node.js</div></div>
