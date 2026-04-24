@@ -16,9 +16,12 @@
   .topbar-email { font-size: 12px; color: #6a6a75; }
   .topbar-out { background: none; border: 1px solid #27272a; color: #b0b0b8; padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
   .topbar-out:hover { border-color: #EC672C; color: #EC672C; }
-  .topbar-clock { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 4px; background: rgba(255,255,255,0.04); border: 1px solid rgba(236,103,44,0.25); line-height: 1; }
-  .topbar-clock-label { font-size: 9px; letter-spacing: 1.5px; color: rgba(255,255,255,0.4); font-weight: 600; }
-  .topbar-clock-time { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; color: #EC672C; font-variant-numeric: tabular-nums; }
+  .topbar-clocks { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .topbar-clock { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); line-height: 1; }
+  .topbar-clock.primary { border-color: rgba(236,103,44,0.25); }
+  .topbar-clock-label { font-size: 8px; letter-spacing: 1px; color: rgba(255,255,255,0.35); font-weight: 600; }
+  .topbar-clock-time { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #b0b0b8; font-variant-numeric: tabular-nums; }
+  .topbar-clock.primary .topbar-clock-time { color: #EC672C; }
   .tabs { display: flex; gap: 0; border-bottom: 1px solid #27272a; padding: 0 16px; background: #0e0e10; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
   .tab { padding: 14px 16px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; white-space: nowrap; }
@@ -106,7 +109,7 @@
 <div class="topbar">
   <img src="/img/logo.png" alt="Elevate">
   <span class="topbar-title">Admin Panel</span>
-  <span class="topbar-clock"><span class="topbar-clock-label">DUBAI</span><span class="topbar-clock-time" id="dubai-clock">--:--:--</span></span>
+  <span class="topbar-clocks" id="city-clocks"></span>
   <span class="topbar-spacer"></span>
   <span class="topbar-email" id="admin-email"></span>
   <button class="topbar-out" id="sign-out">Sign Out</button>
@@ -140,11 +143,24 @@ document.getElementById('sign-out').addEventListener('click', async () => {
   location.href = '/admin-login';
 });
 
-// Dubai clock
+// City clocks
 (function() {
-  const el = document.getElementById('dubai-clock');
-  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dubai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  const tick = () => { el.textContent = fmt.format(new Date()); };
+  const cities = [
+    { label: 'DUBAI', tz: 'Asia/Dubai', primary: true },
+    { label: 'BANGKOK', tz: 'Asia/Bangkok' },
+    { label: 'MALDIVES', tz: 'Indian/Maldives' },
+    { label: 'LONDON', tz: 'Europe/London' },
+    { label: 'PARIS', tz: 'Europe/Paris' }
+  ];
+  const wrap = document.getElementById('city-clocks');
+  const fmts = cities.map(c => {
+    const el = document.createElement('span');
+    el.className = 'topbar-clock' + (c.primary ? ' primary' : '');
+    el.innerHTML = `<span class="topbar-clock-label">${c.label}</span><span class="topbar-clock-time">--:--</span>`;
+    wrap.appendChild(el);
+    return { el: el.querySelector('.topbar-clock-time'), fmt: new Intl.DateTimeFormat('en-GB', { timeZone: c.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) };
+  });
+  const tick = () => { const now = new Date(); fmts.forEach(f => f.el.textContent = f.fmt.format(now)); };
   tick();
   setInterval(tick, 1000);
 })();
@@ -257,25 +273,18 @@ async function renderOverview(el) {
   const dbMB = ((s.system?.db_size_bytes || 0) / 1048576).toFixed(1);
 
   el.innerHTML = `
-    <h2>Overview <span style="font-size:12px;color:#6a6a75;font-weight:400;margin-left:8px">Last 7 days</span></h2>
+    <!-- SECTION: Last 7 Days Activity -->
+    <h2>Last 7 Days Activity</h2>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num" style="color:${healthColor}">${healthScore}%</div><div class="stat-label">Health Score</div></div>
-      <div class="stat-card"><div class="stat-num">${s.users.new_7d || 0}</div><div class="stat-label">New Users (7d)</div></div>
-      <div class="stat-card"><div class="stat-num">${s.meetings.new_7d || 0}</div><div class="stat-label">New Meetings (7d)</div></div>
-      <div class="stat-card"><div class="stat-num">${s.emails.last_7d.sent}</div><div class="stat-label">Emails Sent (7d)</div></div>
+      <div class="stat-card"><div class="stat-num">${s.users.new_7d || 0}</div><div class="stat-label">New Registrations</div></div>
+      <div class="stat-card"><div class="stat-num">${s.meetings.new_7d || 0}</div><div class="stat-label">New Meetings</div></div>
+      <div class="stat-card"><div class="stat-num">${s.emails.last_7d.sent}</div><div class="stat-label">Emails Sent</div></div>
       <div class="stat-card"><div class="stat-num">${clickRate.toFixed(0)}%</div><div class="stat-label">Link Click Rate</div></div>
       <div class="stat-card"><div class="stat-num">${emailSuccessRate.toFixed(0)}%</div><div class="stat-label">Email Delivery</div></div>
     </div>
 
     <div class="chart-row">
-      ${donutChart('Accounts by Type & Status', [
-        { label: 'Hotels', value: s.users.by_type.hotel || 0 },
-        { label: 'Agencies', value: s.users.by_type.agent || 0 },
-        { label: 'Exhibitors', value: s.users.by_type.exhibitor || 0 },
-        { label: 'Verified', value: s.users.verified },
-        { label: 'Unverified', value: s.users.unverified },
-        { label: 'Inactive', value: s.users.inactive }
-      ], ['#4EA8DE', '#A78BFA', '#F59E0B', '#22c55e', '#EC672C', '#6a6a75'])}
       ${donutChart('Meetings by Status', [
         { label: 'Approved', value: s.meetings.by_status.approved || 0 },
         { label: 'Pending', value: s.meetings.by_status.pending || 0 },
@@ -283,32 +292,49 @@ async function renderOverview(el) {
         { label: 'Cancelled', value: s.meetings.by_status.cancelled || 0 },
         { label: 'Expired', value: s.meetings.by_status.expired || 0 }
       ], statusColors)}
-    </div>
-
-    <div class="chart-row">
       ${donutChart('Slot Distribution', [
         { label: 'Free', value: s.slots.by_status.free || 0 },
         { label: 'Booked', value: s.slots.by_status.booked || 0 },
         { label: 'Held', value: s.slots.by_status.held || 0 },
         { label: 'Blocked', value: s.slots.by_status.blocked || 0 }
       ], ['#22c55e', '#EC672C', '#A78BFA', '#6a6a75'])}
-      ${donutChart('Emails by Template (7 days)',
+    </div>
+
+    <!-- SECTION: Users -->
+    <h2 style="margin-top:32px">Users <span style="font-size:14px;color:#6a6a75;font-weight:400">(${s.users.total} total)</span></h2>
+    <div class="chart-row">
+      ${donutChart('By Type', [
+        { label: 'Hotels', value: s.users.by_type.hotel || 0 },
+        { label: 'Agencies', value: s.users.by_type.agent || 0 },
+        { label: 'Exhibitors', value: s.users.by_type.exhibitor || 0 },
+        { label: 'Admins', value: s.users.by_type.admin || 0 }
+      ], typeColors)}
+      ${donutChart('By Account Status', [
+        { label: 'Verified', value: s.users.verified },
+        { label: 'Unverified', value: s.users.unverified },
+        { label: 'Inactive', value: s.users.inactive }
+      ], ['#22c55e', '#EC672C', '#6a6a75'])}
+    </div>
+
+    <!-- SECTION: Emails -->
+    <h2 style="margin-top:32px">Emails <span style="font-size:14px;color:#6a6a75;font-weight:400">(last 7 days)</span></h2>
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+      <div class="stat-card"><div class="stat-num" style="color:#22c55e">${s.emails.last_7d.sent}</div><div class="stat-label">Delivered</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#4EA8DE">${s.emails.last_7d.clicked || 0}</div><div class="stat-label">Clicked</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#ef4444">${s.emails.last_7d.errored}</div><div class="stat-label">Errored</div></div>
+    </div>
+    <div class="chart-row">
+      ${donutChart('By Template',
         Object.entries(s.emails.by_template_7d || {}).map(([k,v]) => ({ label: k.replace(/_/g,' '), value: v })),
         Object.entries(s.emails.by_template_7d || {}).map(([k]) => TPL_COLORS[k] || '#6a6a75')
       )}
-    </div>
-
-    <div class="chart-row">
-      <div class="chart-card">
-        <h3>Email Health (7 days)</h3>
-        <div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0">
-          <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#22c55e">${s.emails.last_7d.sent}</div><div class="stat-label">Delivered</div></div>
-          <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#4EA8DE">${s.emails.last_7d.clicked || 0}</div><div class="stat-label">Clicked</div></div>
-          <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#ef4444">${s.emails.last_7d.errored}</div><div class="stat-label">Errored</div></div>
+      <div class="chart-card"><h3>Engagement</h3>
+        <div class="bar-chart">
+          <div class="bar-row"><div class="bar-label">Delivery</div><div class="bar-track"><div class="bar-fill" style="width:${emailSuccessRate}%;background:#22c55e">${emailSuccessRate.toFixed(1)}%</div></div></div>
+          <div class="bar-row"><div class="bar-label">Click Rate</div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(clickRate*2,100)}%;background:#4EA8DE">${clickRate.toFixed(0)}%</div></div></div>
         </div>
-        <p style="font-size:11px;color:#6a6a75;margin-top:12px">Clicked = magic links opened + email CTAs used. Most reliable engagement signal.</p>
+        <p style="font-size:11px;color:#6a6a75;margin-top:12px">Clicked = magic links opened + email CTAs used.</p>
       </div>
-      <div class="chart-card"><h3>&nbsp;</h3></div>
     </div>
 
     ${emailsByDayChart(s.emails.by_day)}
