@@ -51,6 +51,20 @@
   textarea { width: 100%; padding: 10px; background: #141416; border: 1px solid #27272a; border-radius: 4px; color: #fff; font-family: inherit; font-size: 13px; resize: vertical; min-height: 80px; }
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 4px; font-weight: 600; }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
+  .chart-card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 20px; }
+  .chart-card h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 16px; }
+  .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { font-size: 12px; color: #b0b0b8; min-width: 80px; text-align: right; }
+  .bar-track { flex: 1; height: 24px; background: #1a1a1d; border-radius: 4px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 600; color: #fff; min-width: 28px; }
+  .bar-value { font-size: 12px; color: #6a6a75; min-width: 36px; text-align: right; }
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .donut-legend { display: flex; flex-direction: column; gap: 6px; }
+  .donut-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #b0b0b8; }
+  .donut-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -124,28 +138,83 @@ async function renderTab(tab) {
 async function renderOverview(el) {
   const s = await apiGet('/admin/stats');
   if (!s) return;
+
+  // Helper to build a horizontal bar chart
+  function barChart(title, items, colors) {
+    const max = Math.max(...items.map(i => i.value), 1);
+    return `<div class="chart-card"><h3>${title}</h3><div class="bar-chart">${items.map((item, i) => {
+      const pct = Math.max(2, (item.value / max) * 100);
+      const color = colors[i % colors.length];
+      return `<div class="bar-row"><div class="bar-label">${esc(item.label)}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}">${item.value}</div></div></div>`;
+    }).join('')}</div></div>`;
+  }
+
+  // Helper to build a simple donut chart via SVG
+  function donutChart(title, items, colors) {
+    const total = items.reduce((s, i) => s + i.value, 0) || 1;
+    let offset = 0;
+    const segments = items.map((item, i) => {
+      const pct = (item.value / total) * 100;
+      const seg = `<circle cx="50" cy="50" r="40" fill="none" stroke="${colors[i % colors.length]}" stroke-width="18" stroke-dasharray="${pct * 2.51} ${251 - pct * 2.51}" stroke-dashoffset="${-offset * 2.51}" />`;
+      offset += pct;
+      return seg;
+    });
+    const legend = items.map((item, i) => `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${colors[i % colors.length]}"></div>${esc(item.label)}: <strong style="color:#fff">${item.value}</strong></div>`).join('');
+    return `<div class="chart-card"><h3>${title}</h3><div class="donut-wrap"><svg width="120" height="120" viewBox="0 0 100 100">${segments.join('')}<text x="50" y="54" text-anchor="middle" fill="#fff" font-family="Barlow Condensed" font-size="22" font-weight="800">${total}</text></svg><div class="donut-legend">${legend}</div></div></div>`;
+  }
+
+  const typeColors = ['#4EA8DE', '#A78BFA', '#F59E0B', '#EC672C'];
+  const statusColors = ['#22c55e', '#EC672C', '#ef4444', '#ef4444', '#6a6a75'];
+  const slotColors = ['#22c55e', '#EC672C', '#A78BFA', '#6a6a75'];
+
   el.innerHTML = `
     <h2>Overview</h2>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num">${s.users.total}</div><div class="stat-label">Total Users</div></div>
-      <div class="stat-card"><div class="stat-num">${s.users.by_type.hotel||0}</div><div class="stat-label">Hotels</div></div>
-      <div class="stat-card"><div class="stat-num">${s.users.by_type.agent||0}</div><div class="stat-label">Agencies</div></div>
-      <div class="stat-card"><div class="stat-num">${s.users.by_type.exhibitor||0}</div><div class="stat-label">Exhibitors</div></div>
-      <div class="stat-card"><div class="stat-num">${s.users.verified}</div><div class="stat-label">Verified</div></div>
-      <div class="stat-card"><div class="stat-num">${s.users.unverified}</div><div class="stat-label">Unverified</div></div>
       <div class="stat-card"><div class="stat-num">${s.meetings.total}</div><div class="stat-label">Total Meetings</div></div>
-      <div class="stat-card"><div class="stat-num">${s.meetings.by_status.approved||0}</div><div class="stat-label">Approved</div></div>
-      <div class="stat-card"><div class="stat-num">${s.meetings.by_status.pending||0}</div><div class="stat-label">Pending</div></div>
       <div class="stat-card"><div class="stat-num">${s.emails.last_24h.sent}</div><div class="stat-label">Emails (24h)</div></div>
-      <div class="stat-card"><div class="stat-num">${s.emails.last_7d.sent}</div><div class="stat-label">Emails (7d)</div></div>
-      <div class="stat-card"><div class="stat-num">${(s.emails.magic_link_click_rate_7d * 100).toFixed(0)}%</div><div class="stat-label">Magic Link Click Rate</div></div>
+      <div class="stat-card"><div class="stat-num">${(s.emails.magic_link_click_rate_7d * 100).toFixed(0)}%</div><div class="stat-label">Link Click Rate (7d)</div></div>
     </div>
-    <h3>Slots</h3>
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num">${s.slots.by_status.free||0}</div><div class="stat-label">Free</div></div>
-      <div class="stat-card"><div class="stat-num">${s.slots.by_status.booked||0}</div><div class="stat-label">Booked</div></div>
-      <div class="stat-card"><div class="stat-num">${s.slots.by_status.held||0}</div><div class="stat-label">Held</div></div>
-      <div class="stat-card"><div class="stat-num">${s.slots.by_status.blocked||0}</div><div class="stat-label">Blocked</div></div>
+
+    <div class="chart-row">
+      ${donutChart('Users by Type', [
+        { label: 'Hotels', value: s.users.by_type.hotel || 0 },
+        { label: 'Agencies', value: s.users.by_type.agent || 0 },
+        { label: 'Exhibitors', value: s.users.by_type.exhibitor || 0 },
+        { label: 'Admins', value: s.users.by_type.admin || 0 }
+      ], typeColors)}
+      ${donutChart('Meetings by Status', [
+        { label: 'Approved', value: s.meetings.by_status.approved || 0 },
+        { label: 'Pending', value: s.meetings.by_status.pending || 0 },
+        { label: 'Declined', value: s.meetings.by_status.declined || 0 },
+        { label: 'Cancelled', value: s.meetings.by_status.cancelled || 0 },
+        { label: 'Expired', value: s.meetings.by_status.expired || 0 }
+      ], statusColors)}
+    </div>
+
+    <div class="chart-row">
+      ${barChart('Verification Status', [
+        { label: 'Verified', value: s.users.verified },
+        { label: 'Unverified', value: s.users.unverified },
+        { label: 'Inactive', value: s.users.inactive }
+      ], ['#22c55e', '#EC672C', '#6a6a75'])}
+      ${barChart('Slot Distribution', [
+        { label: 'Free', value: s.slots.by_status.free || 0 },
+        { label: 'Booked', value: s.slots.by_status.booked || 0 },
+        { label: 'Held', value: s.slots.by_status.held || 0 },
+        { label: 'Blocked', value: s.slots.by_status.blocked || 0 }
+      ], slotColors)}
+    </div>
+
+    <div class="chart-row">
+      ${barChart('Emails by Template (7 days)', Object.entries(s.emails.by_template_7d || {}).map(([k,v]) => ({ label: k.replace(/_/g,' '), value: v })), ['#4EA8DE', '#A78BFA', '#22c55e', '#EC672C', '#F59E0B', '#ef4444'])}
+      <div class="chart-card">
+        <h3>Email Health (7 days)</h3>
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0">
+          <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#22c55e">${s.emails.last_7d.sent}</div><div class="stat-label">Sent</div></div>
+          <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#ef4444">${s.emails.last_7d.errored}</div><div class="stat-label">Errored</div></div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -170,11 +239,11 @@ async function renderUsers(el) {
       <td>${u.active ? badge('Active','#22c55e') : badge('Inactive','#ef4444')}</td>
       <td style="font-size:12px;color:#6a6a75">${fmtDt(u.created_at)}</td>
       <td style="white-space:nowrap">
-        <button class="btn-sm" onclick="adminUserAction('verify',${u.id})">Verify</button>
-        <button class="btn-sm" onclick="adminUserAction('${u.active?'deactivate':'activate'}',${u.id})">${u.active?'Deactivate':'Activate'}</button>
-        <button class="btn-sm" onclick="adminUserAction('resend-magic',${u.id})">Resend</button>
-        <button class="btn-sm" onclick="adminUserAction('regenerate-slots',${u.id})">Slots</button>
-        <button class="btn-sm danger" onclick="adminUserAction('delete',${u.id})">Delete</button>
+        ${!u.email_verified_at ? `<button class="btn-sm primary" onclick="adminUserAction('verify',${u.id})" title="Mark email as verified">Verify</button>` : ''}
+        <button class="btn-sm" onclick="adminUserAction('${u.active?'deactivate':'activate'}',${u.id})" title="${u.active?'Deactivate this user (block login)':'Reactivate this user'}">${u.active?'Deactivate':'Activate'}</button>
+        <button class="btn-sm" onclick="adminUserAction('resend-magic',${u.id})" title="Send a fresh magic login link to this user's email">Resend Link</button>
+        <button class="btn-sm" onclick="adminUserAction('regenerate-slots',${u.id})" title="Delete free/blocked slots and recreate based on user type and region">Regen Slots</button>
+        <button class="btn-sm danger" onclick="adminUserAction('delete',${u.id})" title="Permanently delete this user and all their data">Delete</button>
       </td>
     </tr>`).join('');
   }
@@ -277,17 +346,22 @@ async function renderBulk(el) {
     <h2>Bulk Operations</h2>
     <div class="card">
       <h3>Resend Magic Link to Unverified Users</h3>
-      <p style="color:#6a6a75;margin-bottom:12px;font-size:13px">Sends a fresh sign-in link to all active users who haven't verified their email.</p>
+      <p style="color:#6a6a75;margin-bottom:8px;font-size:13px">Sends a fresh sign-in link to every active user who hasn't clicked their verification link yet. Useful after initial invitations.</p>
+      <p style="color:#6a6a75;margin-bottom:12px;font-size:12px">Emails are sent at ~7/second with a 150ms delay between each. Large batches may take a few minutes.</p>
       <button class="btn-sm primary" id="bulk-resend">Resend to All Unverified</button>
       <div id="bulk-resend-result" style="margin-top:12px;font-size:13px"></div>
     </div>
     <div class="card" style="margin-top:24px">
       <h3>Send Custom Email</h3>
-      <div class="field"><label>Audience</label><select id="bulk-audience" style="width:100%;padding:8px;background:#141416;border:1px solid #27272a;border-radius:4px;color:#fff"><option value="all">All active users</option><option value="hotel">Hotels only</option><option value="agent">Agents only</option><option value="exhibitor">Exhibitors only</option><option value="unverified">Unverified only</option></select></div>
-      <div class="field"><label>Subject</label><input id="bulk-subject" style="width:100%"></div>
-      <div class="field"><label>HTML Body</label><textarea id="bulk-html" rows="6"></textarea></div>
-      <div class="field"><label>Plain Text (optional)</label><textarea id="bulk-text" rows="4"></textarea></div>
-      <button class="btn-sm primary" id="bulk-send">Send Email</button>
+      <p style="color:#6a6a75;margin-bottom:12px;font-size:13px">Send a branded email to a specific audience. The HTML you write will be wrapped in the standard Engage by Elevate email template (dark theme, logo header, footer links).</p>
+      <div class="field"><label>Audience</label><select id="bulk-audience" style="width:100%;padding:8px;background:#141416;border:1px solid #27272a;border-radius:4px;color:#fff"><option value="all">All active users (excluding admins)</option><option value="hotel">Hotels only</option><option value="agent">Agencies only</option><option value="exhibitor">Exhibitors only</option><option value="unverified">Unverified users only</option></select></div>
+      <div class="field"><label>Subject Line</label><input id="bulk-subject" style="width:100%" placeholder="e.g. Important update for Engage by Elevate attendees"></div>
+      <div class="field"><label>Email Body (HTML — will be wrapped in branded template)</label><textarea id="bulk-html" rows="8" placeholder="<h2>Hello!</h2><p>Your content here. Use standard HTML tags.</p><p>This will appear inside the branded email shell with logo, header, and footer.</p>"></textarea></div>
+      <div class="field"><label>Plain Text Version (optional — for email clients that don't support HTML)</label><textarea id="bulk-text" rows="4" placeholder="Plain text fallback. If empty, recipients will see the HTML version."></textarea></div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="btn-sm primary" id="bulk-send">Send Email</button>
+        <span id="bulk-count" style="font-size:12px;color:#6a6a75"></span>
+      </div>
       <div id="bulk-send-result" style="margin-top:12px;font-size:13px"></div>
     </div>
   `;

@@ -690,7 +690,8 @@ async function sendExhibitorContactAck(exhibitor, sub) {
 }
 
 async function sendRaw(to, subject, html, text, meta = {}) {
-  return send(to, subject, html, text, meta);
+  const branded = wrap(html, subject);
+  return send(to, subject, branded, text, meta);
 }
 
 module.exports = {
