@@ -193,7 +193,7 @@ async function renderOverview(el) {
     const days = {};
     const templates = new Set();
     byDay.forEach(r => { if (!days[r.day]) days[r.day] = {}; days[r.day][r.template] = r.n; templates.add(r.template); });
-    const tplColors = { magic_link:'#4EA8DE', meeting_request:'#A78BFA', meeting_approved:'#22c55e', meeting_declined:'#ef4444', meeting_cancelled:'#F59E0B', admin_bulk:'#EC672C', admin_notification:'#6a6a75', exhibitor_contact:'#b0b0b8' };
+    const tplColors = TPL_COLORS;
     const sortedDays = Object.keys(days).sort();
     const maxDay = Math.max(...sortedDays.map(d => Object.values(days[d]).reduce((a,b)=>a+b,0)), 1);
     let html = '<div class="chart-card"><h3>Emails by Day (7 days)</h3>';
@@ -221,21 +221,33 @@ async function renderOverview(el) {
     return html;
   }
 
+  // Shared template color map — used by both pie chart and by-day chart
+  const TPL_COLORS = { magic_link:'#4EA8DE', meeting_request:'#A78BFA', meeting_approved:'#22c55e', meeting_declined:'#ef4444', meeting_cancelled:'#F59E0B', admin_bulk:'#EC672C', admin_notification:'#6a6a75', exhibitor_contact:'#b0b0b8', exhibitor_contact_ack:'#4EA8DE' };
   const typeColors = ['#4EA8DE', '#A78BFA', '#F59E0B', '#EC672C'];
   const statusColors = ['#22c55e', '#EC672C', '#ef4444', '#ef4444', '#6a6a75'];
-  const tplPieColors = ['#4EA8DE', '#A78BFA', '#22c55e', '#ef4444', '#F59E0B', '#EC672C', '#6a6a75', '#b0b0b8'];
+
+  // Health score (0-100): weighted average of key metrics
+  const emailTotal7d = s.emails.last_7d.sent + s.emails.last_7d.errored;
+  const emailSuccessRate = emailTotal7d > 0 ? (s.emails.last_7d.sent / emailTotal7d) * 100 : 100;
+  const verifyRate = s.users.total > 0 ? (s.users.verified / s.users.total) * 100 : 100;
+  const activeRate = s.users.total > 0 ? ((s.users.total - s.users.inactive) / s.users.total) * 100 : 100;
+  const clickRate = s.emails.magic_link_click_rate_7d * 100;
+  const healthScore = Math.round((emailSuccessRate * 0.3 + verifyRate * 0.3 + activeRate * 0.2 + Math.min(clickRate * 2, 100) * 0.2));
+  const healthColor = healthScore >= 80 ? '#22c55e' : healthScore >= 50 ? '#F59E0B' : '#ef4444';
 
   const upHrs = Math.floor((s.system?.uptime_seconds || 0) / 3600);
   const upMin = Math.floor(((s.system?.uptime_seconds || 0) % 3600) / 60);
   const dbMB = ((s.system?.db_size_bytes || 0) / 1048576).toFixed(1);
 
   el.innerHTML = `
-    <h2>Overview</h2>
+    <h2>Overview <span style="font-size:12px;color:#6a6a75;font-weight:400;margin-left:8px">Last 7 days</span></h2>
     <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num">${s.users.total}</div><div class="stat-label">Total Users</div></div>
-      <div class="stat-card"><div class="stat-num">${s.meetings.total}</div><div class="stat-label">Total Meetings</div></div>
-      <div class="stat-card"><div class="stat-num">${s.emails.last_24h.sent}</div><div class="stat-label">Emails (24h)</div></div>
-      <div class="stat-card"><div class="stat-num">${(s.emails.magic_link_click_rate_7d * 100).toFixed(0)}%</div><div class="stat-label">Link Click Rate (7d)</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:${healthColor}">${healthScore}%</div><div class="stat-label">Health Score</div></div>
+      <div class="stat-card"><div class="stat-num">${s.users.new_7d || 0}</div><div class="stat-label">New Users (7d)</div></div>
+      <div class="stat-card"><div class="stat-num">${s.meetings.new_7d || 0}</div><div class="stat-label">New Meetings (7d)</div></div>
+      <div class="stat-card"><div class="stat-num">${s.emails.last_7d.sent}</div><div class="stat-label">Emails Sent (7d)</div></div>
+      <div class="stat-card"><div class="stat-num">${clickRate.toFixed(0)}%</div><div class="stat-label">Link Click Rate</div></div>
+      <div class="stat-card"><div class="stat-num">${emailSuccessRate.toFixed(0)}%</div><div class="stat-label">Email Delivery</div></div>
     </div>
 
     <div class="chart-row">
@@ -271,7 +283,7 @@ async function renderOverview(el) {
     <div class="chart-row">
       ${donutChart('Emails by Template (7 days)',
         Object.entries(s.emails.by_template_7d || {}).map(([k,v]) => ({ label: k.replace(/_/g,' '), value: v })),
-        tplPieColors
+        Object.entries(s.emails.by_template_7d || {}).map(([k]) => TPL_COLORS[k] || '#6a6a75')
       )}
       <div class="chart-card">
         <h3>Email Health (7 days)</h3>
@@ -286,12 +298,14 @@ async function renderOverview(el) {
 
     <h2 style="margin-top:32px">System Health</h2>
     <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num" style="font-size:24px">${upHrs}h ${upMin}m</div><div class="stat-label">Uptime</div></div>
-      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.memory_mb || 0} MB</div><div class="stat-label">Memory (RSS)</div></div>
-      <div class="stat-card"><div class="stat-num" style="font-size:24px">${dbMB} MB</div><div class="stat-label">Database Size</div></div>
-      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.node_version || '-'}</div><div class="stat-label">Node Version</div></div>
-      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.action_tokens || 0}</div><div class="stat-label">Action Tokens</div></div>
-      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.expired_tokens || 0}</div><div class="stat-label">Expired Tokens</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${healthColor}">${healthScore}%</div><div class="stat-label">Overall Score</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${emailSuccessRate>=95?'#22c55e':'#F59E0B'}">${emailSuccessRate.toFixed(1)}%</div><div class="stat-label">Email Delivery Rate</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${verifyRate>=80?'#22c55e':'#F59E0B'}">${verifyRate.toFixed(0)}%</div><div class="stat-label">Verified Users</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${activeRate>=90?'#22c55e':'#F59E0B'}">${activeRate.toFixed(0)}%</div><div class="stat-label">Active Users</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${upHrs}h ${upMin}m</div><div class="stat-label">Server Uptime</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.memory_mb || 0} MB</div><div class="stat-label">Memory</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${dbMB} MB</div><div class="stat-label">Database</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:24px">${s.system?.node_version || '-'}</div><div class="stat-label">Node.js</div></div>
     </div>
   `;
 }
