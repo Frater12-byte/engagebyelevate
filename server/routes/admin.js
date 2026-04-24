@@ -205,15 +205,19 @@ router.post('/bulk/email', async (req, res) => {
   if (!subject || !html) return res.status(400).json({ error: 'subject and html required' });
   const db = getDb();
   let users;
-  if (audience === 'custom' && user_ids) users = db.prepare(`SELECT id, email FROM users WHERE id IN (${user_ids.map(() => '?').join(',')}) AND active = 1`).all(...user_ids);
-  else if (audience === 'unverified') users = db.prepare("SELECT id, email FROM users WHERE email_verified_at IS NULL AND active = 1 AND type != 'admin'").all();
-  else if (['hotel','agent','exhibitor'].includes(audience)) users = db.prepare('SELECT id, email FROM users WHERE type = ? AND active = 1').all(audience);
-  else users = db.prepare("SELECT id, email FROM users WHERE active = 1 AND type != 'admin'").all();
+  const cols = 'id, email, contact_name, org_name, type, country, city';
+  if (audience === 'custom' && user_ids) users = db.prepare(`SELECT ${cols} FROM users WHERE id IN (${user_ids.map(() => '?').join(',')}) AND active = 1`).all(...user_ids);
+  else if (audience === 'unverified') users = db.prepare(`SELECT ${cols} FROM users WHERE email_verified_at IS NULL AND active = 1 AND type != 'admin'`).all();
+  else if (['hotel','agent','exhibitor'].includes(audience)) users = db.prepare(`SELECT ${cols} FROM users WHERE type = ? AND active = 1`).all(audience);
+  else users = db.prepare(`SELECT ${cols} FROM users WHERE active = 1 AND type != 'admin'`).all();
   let sent = 0; const errors = [];
   const emailService = require('../services/email');
+  function replaceVars(tpl, u) {
+    return tpl.replace(/\{\{name\}\}/gi, u.contact_name || '').replace(/\{\{org_name\}\}/gi, u.org_name || '').replace(/\{\{email\}\}/gi, u.email || '').replace(/\{\{type\}\}/gi, u.type || '').replace(/\{\{country\}\}/gi, u.country || '').replace(/\{\{city\}\}/gi, u.city || '');
+  }
   for (const u of users) {
     try {
-      await emailService.sendRaw(u.email, subject, html, text || '', { template: 'admin_bulk', user_id: u.id });
+      await emailService.sendRaw(u.email, replaceVars(subject, u), replaceVars(html, u), replaceVars(text || '', u), { template: 'admin_bulk', user_id: u.id });
       sent++;
     } catch (e) { errors.push({ id: u.id, error: e.message }); }
     await new Promise(r => setTimeout(r, 150));
