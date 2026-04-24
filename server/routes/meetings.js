@@ -49,7 +49,7 @@ router.get('/me/agenda', requireAuth, (req, res) => {
   }
 
   res.json({
-    user: { id: me.id, type: me.type, org_name: me.org_name, region: me.region, timezone: me.timezone, attendance_mode: me.attendance_mode },
+    user: { id: me.id, type: me.type, org_name: me.org_name, region: me.region, timezone: me.timezone, attendance_mode: me.attendance_mode, email_verified_at: me.email_verified_at, created_at: me.created_at },
     eligible_days: eligibleDaysFor(me),
     agenda: byDay
   });

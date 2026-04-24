@@ -727,6 +727,20 @@ textarea { resize: vertical; min-height: 100px; }
 .toast.success { border-color: rgba(0,210,106,0.3); }
 .toast.error { border-color: rgba(255,59,59,0.3); }
 
+.verify-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  background: #2a1f10;
+  border-bottom: 2px solid var(--orange);
+  color: #f5e5c0;
+  padding: 12px 20px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.verify-banner a { color: var(--orange); font-weight: 600; text-decoration: underline; }
+.verify-banner strong { color: var(--white, #fff); }
+
 @keyframes toastIn {
   from { opacity: 0; transform: translateX(-50%) translateY(10px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }

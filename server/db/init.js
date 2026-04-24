@@ -267,6 +267,9 @@ function initDatabase() {
   // Migration: add photo_url if missing (for existing DBs)
   try { db.exec('ALTER TABLE users ADD COLUMN photo_url TEXT'); } catch {}
 
+  // Migration: add email_verified_at for email verification with 48h grace period
+  try { db.exec('ALTER TABLE users ADD COLUMN email_verified_at TEXT'); } catch {}
+
   // Migration: allow 'exhibitor' type in existing DBs
   // SQLite can't alter CHECK constraints, so we test and recreate if needed
   try {

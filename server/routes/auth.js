@@ -136,6 +136,17 @@ router.post('/magic', async (req, res) => {
   res.json({ ok: true, message: 'If that email exists, a login link has been sent.' });
 });
 
+router.post('/resend-magic', async (req, res) => {
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const db = getDb();
+  const user = db.prepare('SELECT id FROM users WHERE email = ? AND active = 1').get(email);
+  if (user) {
+    try { await sendMagicLinkFor(user.id); } catch (e) { console.error('[resend-magic]', e.message); }
+  }
+  res.json({ ok: true });
+});
+
 async function sendMagicLinkFor(userId) {
   const db = getDb();
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
@@ -172,6 +183,9 @@ router.get('/verify', (req, res) => {
 
   // Mark token as used — single use only
   db.prepare("UPDATE magic_tokens SET used_at = ? WHERE id = ?").run(nowUtc(), row.id);
+
+  // Mark email as verified on first magic link click
+  db.prepare('UPDATE users SET email_verified_at = ? WHERE id = ? AND email_verified_at IS NULL').run(nowUtc(), row.user_id);
 
   // Invalidate any previous sessions by using a unique session ID
   const sessionId = crypto.randomBytes(16).toString('hex');
@@ -214,7 +228,7 @@ router.get('/me', (req, res) => {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const user = getDb().prepare(
-      'SELECT id, type, email, contact_name, org_name, country, region, logo_url, timezone, attendance_mode FROM users WHERE id = ?'
+      'SELECT id, type, email, contact_name, org_name, country, region, logo_url, timezone, attendance_mode, email_verified_at, created_at FROM users WHERE id = ?'
     ).get(payload.uid);
     res.json({ user });
   } catch {

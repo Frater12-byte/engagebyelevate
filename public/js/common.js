@@ -130,6 +130,7 @@ async function updateNavForUser(me) {
       location.href = '/';
     };
   }
+  maybeShowVerifyBanner(me);
 }
 
 function openModal(contentNode) {
@@ -191,3 +192,24 @@ function maybeShowSwitchToast() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', maybeShowSwitchToast);
 else maybeShowSwitchToast();
+
+/* Email verification banner */
+function maybeShowVerifyBanner(me) {
+  if (!me || me.email_verified_at) return;
+  if (!me.created_at) return;
+  var hoursLeft = 48 - ((Date.now() - new Date(me.created_at).getTime()) / 3600000);
+  if (hoursLeft <= 0) return;
+  var banner = document.createElement('div');
+  banner.id = 'verify-banner';
+  banner.className = 'verify-banner';
+  banner.innerHTML = '<span class="verify-banner-text">Please confirm your email to keep full access. <strong>' + Math.max(1, Math.ceil(hoursLeft)) + 'h remaining.</strong> Check your inbox for the sign-in link, or <a href="#" id="verify-resend">resend it</a>.</span>';
+  document.body.insertBefore(banner, document.body.firstChild);
+  document.getElementById('verify-resend').addEventListener('click', function(e) {
+    e.preventDefault();
+    api.post('/auth/resend-magic', { email: me.email }).then(function() {
+      banner.innerHTML = '<span class="verify-banner-text">Sign-in link resent. Check your inbox.</span>';
+    }).catch(function() {
+      toast('Could not resend. Try again in a minute.', 'error');
+    });
+  });
+}
