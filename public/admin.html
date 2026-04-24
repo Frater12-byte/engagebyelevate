@@ -255,12 +255,14 @@ async function renderOverview(el) {
     </div>
 
     <div class="chart-row">
-      ${donutChart('Users by Type', [
+      ${donutChart('Accounts by Type & Status', [
         { label: 'Hotels', value: s.users.by_type.hotel || 0 },
         { label: 'Agencies', value: s.users.by_type.agent || 0 },
         { label: 'Exhibitors', value: s.users.by_type.exhibitor || 0 },
-        { label: 'Admins', value: s.users.by_type.admin || 0 }
-      ], typeColors)}
+        { label: 'Verified', value: s.users.verified },
+        { label: 'Unverified', value: s.users.unverified },
+        { label: 'Inactive', value: s.users.inactive }
+      ], ['#4EA8DE', '#A78BFA', '#F59E0B', '#22c55e', '#EC672C', '#6a6a75'])}
       ${donutChart('Meetings by Status', [
         { label: 'Approved', value: s.meetings.by_status.approved || 0 },
         { label: 'Pending', value: s.meetings.by_status.pending || 0 },
@@ -271,31 +273,29 @@ async function renderOverview(el) {
     </div>
 
     <div class="chart-row">
-      ${barChart('Verification Status', [
-        { label: 'Verified', value: s.users.verified },
-        { label: 'Unverified', value: s.users.unverified },
-        { label: 'Inactive', value: s.users.inactive }
-      ], ['#22c55e', '#EC672C', '#6a6a75'])}
-      ${barChart('Slot Distribution', [
+      ${donutChart('Slot Distribution', [
         { label: 'Free', value: s.slots.by_status.free || 0 },
         { label: 'Booked', value: s.slots.by_status.booked || 0 },
         { label: 'Held', value: s.slots.by_status.held || 0 },
         { label: 'Blocked', value: s.slots.by_status.blocked || 0 }
       ], ['#22c55e', '#EC672C', '#A78BFA', '#6a6a75'])}
-    </div>
-
-    <div class="chart-row">
       ${donutChart('Emails by Template (7 days)',
         Object.entries(s.emails.by_template_7d || {}).map(([k,v]) => ({ label: k.replace(/_/g,' '), value: v })),
         Object.entries(s.emails.by_template_7d || {}).map(([k]) => TPL_COLORS[k] || '#6a6a75')
       )}
+    </div>
+
+    <div class="chart-row">
       <div class="chart-card">
         <h3>Email Health (7 days)</h3>
-        <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0">
-          <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#22c55e">${s.emails.last_7d.sent}</div><div class="stat-label">Sent</div></div>
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0">
+          <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#22c55e">${s.emails.last_7d.sent}</div><div class="stat-label">Delivered</div></div>
+          <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#4EA8DE">${s.emails.last_7d.clicked || 0}</div><div class="stat-label">Clicked</div></div>
           <div class="stat-card" style="border:none;padding:8px"><div class="stat-num" style="color:#ef4444">${s.emails.last_7d.errored}</div><div class="stat-label">Errored</div></div>
         </div>
+        <p style="font-size:11px;color:#6a6a75;margin-top:12px">Clicked = magic links opened + email CTAs used. Most reliable engagement signal.</p>
       </div>
+      <div class="chart-card"><h3>&nbsp;</h3></div>
     </div>
 
     ${emailsByDayChart(s.emails.by_day)}
@@ -445,7 +445,7 @@ async function renderMeetings(el) {
       <td>${esc(m.requester_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.requester_name||'')}</span></td>
       <td>${esc(m.recipient_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.recipient_name||'')}</span></td>
       <td>${statusBadge(m.status)}</td>
-      <td>${m.teams_join_url ? '<a href="'+esc(m.teams_join_url)+'" target="_blank" style="color:#EC672C;font-size:11px">Link</a>' : '-'}</td>
+      <td style="white-space:nowrap">${m.teams_join_url ? `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')" title="Copy meeting link">Copy</button> <button class="btn-sm" onclick="location.href='mailto:?subject=Meeting+Link&body='+encodeURIComponent('${esc(m.teams_join_url)}')" title="Share via email">Share</button>` : '-'}</td>
       <td style="white-space:nowrap">
         ${m.status==='pending' ? `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>` : ''}
         ${!['cancelled','expired','declined'].includes(m.status) ? `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>` : ''}
