@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TFMQ2HPVL4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TFMQ2HPVL4');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel — Engage by Elevate</title>
@@ -13,7 +16,7 @@
   .topbar img { height: 28px; }
   .topbar-title { font-family: 'Manrope', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #EC672C; font-weight: 700; }
   .topbar-spacer { flex: 1; }
-  .topbar-email { font-size: 12px; color: #6a6a75; }
+  .topbar-email { display: none; }
   .topbar-out { background: none; border: 1px solid #27272a; color: #b0b0b8; padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
   .topbar-out:hover { border-color: #EC672C; color: #EC672C; }
   .topbar-clocks { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -61,18 +64,29 @@
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 4px; font-weight: 600; }
   .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  /* Burger toggle for clocks on mobile */
-  .topbar-burger { display: none; background: none; border: 1px solid #27272a; color: #b0b0b8; width: 36px; height: 36px; border-radius: 4px; cursor: pointer; font-size: 16px; line-height: 1; }
+  /* Mobile menu */
+  .topbar-burger { display: none; background: none; border: 1px solid #27272a; color: #b0b0b8; width: 36px; height: 36px; border-radius: 4px; cursor: pointer; font-size: 18px; line-height: 1; }
   .topbar-burger:hover { border-color: #EC672C; color: #EC672C; }
-  .clocks-dropdown { display: none; position: absolute; top: 100%; right: 12px; background: #0e0e10; border: 1px solid #27272a; border-radius: 6px; padding: 12px; z-index: 101; flex-direction: column; gap: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-  .clocks-dropdown.open { display: flex; }
+  .mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0e0e10; z-index: 200; flex-direction: column; padding: 20px; overflow-y: auto; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .mobile-menu-close { background: none; border: none; color: #b0b0b8; font-size: 24px; cursor: pointer; width: 36px; height: 36px; }
+  .mobile-menu-section { margin-bottom: 20px; }
+  .mobile-menu-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #6a6a75; font-weight: 600; margin-bottom: 8px; }
+  .mobile-menu-item { display: block; width: 100%; text-align: left; padding: 14px 16px; background: none; border: none; border-bottom: 1px solid #1a1a1d; color: #b0b0b8; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .mobile-menu-item:hover, .mobile-menu-item.active { color: #EC672C; }
+  .mobile-menu-item.active { border-left: 3px solid #EC672C; padding-left: 13px; }
+  .mobile-menu-clocks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .mobile-menu-signout { display: block; width: 100%; padding: 14px; background: none; border: 1px solid #27272a; border-radius: 4px; color: #b0b0b8; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: inherit; text-align: center; margin-top: 8px; }
+  .mobile-menu-signout:hover { border-color: #ef4444; color: #ef4444; }
 
   @media (max-width: 768px) {
     .chart-row { grid-template-columns: 1fr; }
-    .topbar { padding: 8px 12px; gap: 8px; position: relative; }
-    .topbar-email { display: none; }
+    .topbar { padding: 8px 12px; gap: 8px; }
     .topbar-clocks { display: none; }
+    .topbar-out { display: none; }
     .topbar-burger { display: flex; align-items: center; justify-content: center; }
+    .tabs { display: none; }
     .content { padding: 16px 12px; }
     .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .stat-card { padding: 12px; }
@@ -85,8 +99,6 @@
     .btn-sm { padding: 6px 8px; font-size: 10px; }
     table { font-size: 12px; }
     th, td { padding: 8px 6px; }
-    .tabs { padding: 0 8px; position: sticky; top: 56px; z-index: 99; }
-    .tab { padding: 12px 14px; font-size: 11px; letter-spacing: 0.5px; }
     .modal-box { padding: 16px; margin: 8px; max-height: 95vh; }
     .modal-box h2 { font-size: 16px; }
     .modal-box div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
@@ -121,10 +133,8 @@
   <span class="topbar-title">Admin Panel</span>
   <span class="topbar-clocks" id="city-clocks"></span>
   <span class="topbar-spacer"></span>
-  <span class="topbar-email" id="admin-email"></span>
-  <button class="topbar-burger" id="clock-burger" title="World clocks">&#9776;</button>
+  <button class="topbar-burger" id="mobile-burger" title="Menu">&#9776;</button>
   <button class="topbar-out" id="sign-out">Sign Out</button>
-  <div class="clocks-dropdown" id="clocks-dropdown"></div>
 </div>
 
 <div class="tabs">
@@ -133,6 +143,28 @@
   <button class="tab" data-tab="meetings">Meetings</button>
   <button class="tab" data-tab="emails">Emails</button>
   <button class="tab" data-tab="bulk">Bulk</button>
+</div>
+
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu-header">
+    <img src="/img/logo.png" alt="Elevate" style="height:28px">
+    <button class="mobile-menu-close" id="mobile-menu-close">&times;</button>
+  </div>
+  <div class="mobile-menu-section">
+    <div class="mobile-menu-label">Navigation</div>
+    <button class="mobile-menu-item active" data-tab="overview">Overview</button>
+    <button class="mobile-menu-item" data-tab="users">Users</button>
+    <button class="mobile-menu-item" data-tab="meetings">Meetings</button>
+    <button class="mobile-menu-item" data-tab="emails">Emails</button>
+    <button class="mobile-menu-item" data-tab="bulk">Bulk</button>
+  </div>
+  <div class="mobile-menu-section">
+    <div class="mobile-menu-label">World Clocks</div>
+    <div class="mobile-menu-clocks" id="mobile-clocks"></div>
+  </div>
+  <div class="mobile-menu-section">
+    <button class="mobile-menu-signout" id="mobile-sign-out">Sign Out</button>
+  </div>
 </div>
 
 <div class="content" id="content">
@@ -146,7 +178,7 @@ let currentTab = 'overview';
 (async () => {
   const me = await apiGet('/admin/me');
   if (!me) return;
-  document.getElementById('admin-email').textContent = me.admin?.email || '';
+
   renderTab('overview');
 })();
 
@@ -155,7 +187,7 @@ document.getElementById('sign-out').addEventListener('click', async () => {
   location.href = '/admin-login';
 });
 
-// City clocks (topbar + dropdown for mobile)
+// City clocks (topbar + mobile menu)
 (function() {
   const cities = [
     { label: 'DUBAI', tz: 'Asia/Dubai', primary: true },
@@ -165,7 +197,7 @@ document.getElementById('sign-out').addEventListener('click', async () => {
     { label: 'PARIS', tz: 'Europe/Paris' }
   ];
   const wrap = document.getElementById('city-clocks');
-  const dropdown = document.getElementById('clocks-dropdown');
+  const mobileClocks = document.getElementById('mobile-clocks');
   const allEls = [];
   cities.forEach(c => {
     // Desktop clock
@@ -173,23 +205,50 @@ document.getElementById('sign-out').addEventListener('click', async () => {
     el.className = 'topbar-clock' + (c.primary ? ' primary' : '');
     el.innerHTML = `<span class="topbar-clock-label">${c.label}</span><span class="topbar-clock-time">--:--</span>`;
     wrap.appendChild(el);
-    // Mobile dropdown clone
+    // Mobile menu clock
     const el2 = document.createElement('span');
     el2.className = 'topbar-clock' + (c.primary ? ' primary' : '');
     el2.innerHTML = `<span class="topbar-clock-label">${c.label}</span><span class="topbar-clock-time">--:--</span>`;
-    dropdown.appendChild(el2);
+    mobileClocks.appendChild(el2);
     const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: c.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     allEls.push({ els: [el.querySelector('.topbar-clock-time'), el2.querySelector('.topbar-clock-time')], fmt });
   });
   const tick = () => { const now = new Date(); allEls.forEach(f => f.els.forEach(e => e.textContent = f.fmt.format(now))); };
   tick();
   setInterval(tick, 1000);
-  // Burger toggle
-  document.getElementById('clock-burger').addEventListener('click', () => {
-    dropdown.classList.toggle('open');
+})();
+
+// Mobile menu
+(function() {
+  const menu = document.getElementById('mobile-menu');
+  const burger = document.getElementById('mobile-burger');
+  const closeBtn = document.getElementById('mobile-menu-close');
+
+  burger.addEventListener('click', () => menu.classList.add('open'));
+  closeBtn.addEventListener('click', () => menu.classList.remove('open'));
+
+  // Tab switching from mobile menu
+  document.querySelectorAll('.mobile-menu-item[data-tab]').forEach(item => {
+    item.addEventListener('click', () => {
+      const tab = item.dataset.tab;
+      // Update mobile menu active state
+      document.querySelectorAll('.mobile-menu-item').forEach(x => x.classList.remove('active'));
+      item.classList.add('active');
+      // Sync desktop tabs
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      const desktopTab = document.querySelector(`.tab[data-tab="${tab}"]`);
+      if (desktopTab) desktopTab.classList.add('active');
+      // Switch tab and close menu
+      currentTab = tab;
+      renderTab(tab);
+      menu.classList.remove('open');
+    });
   });
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#clock-burger') && !e.target.closest('#clocks-dropdown')) dropdown.classList.remove('open');
+
+  // Sign out from mobile menu
+  document.getElementById('mobile-sign-out').addEventListener('click', async () => {
+    await apiPost('/admin-logout');
+    location.href = '/admin-login';
   });
 })();
 
@@ -197,6 +256,10 @@ document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     t.classList.add('active');
+    // Sync mobile menu active state
+    document.querySelectorAll('.mobile-menu-item').forEach(x => x.classList.remove('active'));
+    const mobileItem = document.querySelector(`.mobile-menu-item[data-tab="${t.dataset.tab}"]`);
+    if (mobileItem) mobileItem.classList.add('active');
     currentTab = t.dataset.tab;
     renderTab(currentTab);
   });
@@ -304,7 +367,6 @@ async function renderOverview(el) {
     <!-- SECTION: Last 7 Days Activity -->
     <h2>Last 7 Days Activity</h2>
     <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num" style="color:${healthColor}">${healthScore}%</div><div class="stat-label">Health Score</div></div>
       <div class="stat-card"><div class="stat-num">${s.users.new_7d || 0}</div><div class="stat-label">New Registrations</div></div>
       <div class="stat-card"><div class="stat-num">${s.meetings.new_7d || 0}</div><div class="stat-label">New Meetings</div></div>
       <div class="stat-card"><div class="stat-num">${s.emails.last_7d.sent}</div><div class="stat-label">Emails Sent</div></div>
