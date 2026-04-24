@@ -56,6 +56,30 @@ router.get('/stats', (req, res) => {
     GROUP BY day, template ORDER BY day
   `).all();
 
+  // Emails sent + clicked per day (for line graph)
+  const emailsSentByDay = db.prepare(`
+    SELECT date(sent_at) as day, COUNT(*) as n
+    FROM email_log WHERE status='sent' AND sent_at > datetime('now','-7 days')
+    GROUP BY day ORDER BY day
+  `).all();
+  const emailsClickedByDay = [];
+  try {
+    const magicByDay = db.prepare(`
+      SELECT date(used_at) as day, COUNT(*) as n
+      FROM magic_tokens WHERE used_at IS NOT NULL AND used_at > datetime('now','-7 days')
+      GROUP BY day ORDER BY day
+    `).all();
+    const actionByDay = db.prepare(`
+      SELECT date(created_at) as day, COUNT(*) as n
+      FROM action_tokens WHERE uses_remaining < 5 AND created_at > datetime('now','-7 days')
+      GROUP BY day ORDER BY day
+    `).all();
+    const clickMap = {};
+    magicByDay.forEach(r => { clickMap[r.day] = (clickMap[r.day] || 0) + r.n; });
+    actionByDay.forEach(r => { clickMap[r.day] = (clickMap[r.day] || 0) + r.n; });
+    Object.entries(clickMap).sort().forEach(([day, n]) => emailsClickedByDay.push({ day, n }));
+  } catch {}
+
   // System health
   const dbSize = db.prepare("SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()").get();
   const tokenCount = db.prepare('SELECT COUNT(*) as n FROM action_tokens').get().n;
@@ -65,7 +89,7 @@ router.get('/stats', (req, res) => {
   res.json({
     users: { total: userTotal, new_7d: newUsers7d, by_type: byType, by_region: byRegion, verified, unverified, inactive },
     meetings: { total: meetingTotal, new_7d: meetings7d, by_status: meetingByStatus },
-    emails: { last_7d: { sent: emailSent7d, errored: emailErr7d, clicked: magicUsed7d + actionClicked7d }, last_24h: { sent: emailSent24h, errored: emailErr24h }, by_template_7d: byTemplate7d, by_day: emailsByDay, magic_link_click_rate_7d: magicTotal7d > 0 ? magicUsed7d / magicTotal7d : 0, action_click_rate_7d: actionTotal7d > 0 ? actionClicked7d / actionTotal7d : 0 },
+    emails: { last_7d: { sent: emailSent7d, errored: emailErr7d, clicked: magicUsed7d + actionClicked7d }, last_24h: { sent: emailSent24h, errored: emailErr24h }, by_template_7d: byTemplate7d, by_day: emailsByDay, sent_by_day: emailsSentByDay, clicked_by_day: emailsClickedByDay, magic_link_click_rate_7d: magicTotal7d > 0 ? magicUsed7d / magicTotal7d : 0, action_click_rate_7d: actionTotal7d > 0 ? actionClicked7d / actionTotal7d : 0 },
     slots: { total: slotTotal, by_status: slotByStatus },
     system: { db_size_bytes: dbSize?.size || 0, action_tokens: tokenCount, expired_tokens: expiredTokens, uptime_seconds: Math.floor(uptime), node_version: process.version, memory_mb: Math.round(process.memoryUsage().rss / 1048576) }
   });
