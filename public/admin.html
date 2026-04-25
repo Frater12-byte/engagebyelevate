@@ -132,7 +132,7 @@
 <div class="topbar">
   <div class="topbar-left">
     <img src="/img/logo.png" alt="Elevate">
-    <span class="topbar-title">Admin Panel</span>
+    <span class="topbar-title">Admin</span>
   </div>
   <span class="topbar-clocks" id="city-clocks"></span>
   <div class="topbar-right">
@@ -194,11 +194,11 @@ document.getElementById('sign-out').addEventListener('click', async () => {
 // City clocks (topbar + mobile menu)
 (function() {
   const cities = [
-    { label: 'DUBAI', tz: 'Asia/Dubai', primary: true },
-    { label: 'BANGKOK', tz: 'Asia/Bangkok' },
-    { label: 'MALDIVES', tz: 'Indian/Maldives' },
     { label: 'LONDON', tz: 'Europe/London' },
-    { label: 'PARIS', tz: 'Europe/Paris' }
+    { label: 'PARIS', tz: 'Europe/Paris' },
+    { label: 'DUBAI', tz: 'Asia/Dubai', primary: true },
+    { label: 'MALDIVES', tz: 'Indian/Maldives' },
+    { label: 'BANGKOK', tz: 'Asia/Bangkok' }
   ];
   const wrap = document.getElementById('city-clocks');
   const mobileClocks = document.getElementById('mobile-clocks');
