@@ -191,3 +191,20 @@ function maybeShowVerifyBanner(me) {
     });
   });
 }
+
+/* Live chat status chip */
+(function() {
+  var chip = document.createElement('a');
+  chip.href = 'https://tawk.to/chat/69eb5d1ef851631c32b88e82/1jmvm7fv8';
+  chip.target = '_blank';
+  chip.rel = 'noopener noreferrer';
+  chip.className = 'chat-status';
+  chip.id = 'chat-status';
+  chip.innerHTML = '<span class="chat-status-dot"></span><span class="chat-status-text">Live chat \u2014 agents online</span>';
+  document.body.appendChild(chip);
+  chip.addEventListener('click', function() {
+    if (typeof gtag === 'function') {
+      gtag('event', 'chat_link_clicked', { page: window.location.pathname });
+    }
+  });
+})();
