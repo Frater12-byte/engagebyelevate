@@ -948,7 +948,7 @@ html.is-guest .nav-links .guest-only { display: inline-block; }
 }
 /* Push chip above bottom-nav on mobile */
 @media (max-width: 768px) {
-  .chat-status { bottom: 72px; }
+  .chat-status { bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px); }
 }
 
 .nav-notif {
