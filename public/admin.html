@@ -397,8 +397,10 @@ async function renderOverview(el) {
   const emailSuccessRate = emailTotal7d > 0 ? (s.emails.last_7d.sent / emailTotal7d) * 100 : 100;
   const verifyRate = s.users.total > 0 ? (s.users.verified / s.users.total) * 100 : 100;
   const activeRate = s.users.total > 0 ? ((s.users.total - s.users.inactive) / s.users.total) * 100 : 100;
-  const clickRate = s.emails.magic_link_click_rate_7d * 100;
-  const healthScore = Math.round((emailSuccessRate * 0.3 + verifyRate * 0.3 + activeRate * 0.2 + Math.min(clickRate * 2, 100) * 0.2));
+  const openRate = s.emails.magic_link_click_rate_7d * 100;
+  const totalClicked7d = s.emails.last_7d.clicked || 0;
+  const clickRate = s.emails.last_7d.sent > 0 ? (totalClicked7d / s.emails.last_7d.sent) * 100 : 0;
+  const healthScore = Math.round((emailSuccessRate * 0.3 + verifyRate * 0.3 + activeRate * 0.2 + Math.min(openRate * 2, 100) * 0.2));
   const healthColor = healthScore >= 80 ? '#22c55e' : healthScore >= 50 ? '#F59E0B' : '#ef4444';
 
   const uptimeSec = s.system?.uptime_seconds || 0;
@@ -414,7 +416,8 @@ async function renderOverview(el) {
       <div class="stat-card"><div class="stat-num">${s.users.new_7d || 0}</div><div class="stat-label">New Registrations</div></div>
       <div class="stat-card"><div class="stat-num">${s.meetings.new_7d || 0}</div><div class="stat-label">New Meetings</div></div>
       <div class="stat-card"><div class="stat-num">${s.emails.last_7d.sent}</div><div class="stat-label">Emails Sent</div></div>
-      <div class="stat-card"><div class="stat-num">${clickRate.toFixed(0)}%</div><div class="stat-label">Open Rate</div></div>
+      <div class="stat-card"><div class="stat-num">${openRate.toFixed(0)}%</div><div class="stat-label">Open Rate</div></div>
+      <div class="stat-card"><div class="stat-num">${clickRate.toFixed(0)}%</div><div class="stat-label">Click Rate</div></div>
       <div class="stat-card"><div class="stat-num">${emailSuccessRate.toFixed(0)}%</div><div class="stat-label">Email Delivery</div></div>
     </div>
 
