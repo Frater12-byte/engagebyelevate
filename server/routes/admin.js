@@ -40,6 +40,8 @@ router.get('/stats', (req, res) => {
   const emailErr24h = db.prepare("SELECT COUNT(*) as n FROM email_log WHERE status='failed' AND sent_at > datetime('now','-1 day')").get().n;
   const byTemplate7d = {};
   db.prepare("SELECT template, COUNT(*) as n FROM email_log WHERE sent_at > datetime('now','-7 days') GROUP BY template").all().forEach(r => byTemplate7d[r.template] = r.n);
+  const errorsByTemplate7d = {};
+  db.prepare("SELECT template, COUNT(*) as n FROM email_log WHERE status='failed' AND sent_at > datetime('now','-7 days') GROUP BY template").all().forEach(r => errorsByTemplate7d[r.template] = r.n);
   const magicTotal7d = db.prepare("SELECT COUNT(*) as n FROM magic_tokens WHERE created_at > datetime('now','-7 days')").get().n;
   const magicUsed7d = db.prepare("SELECT COUNT(*) as n FROM magic_tokens WHERE created_at > datetime('now','-7 days') AND used_at IS NOT NULL").get().n;
   const actionClicked7d = db.prepare("SELECT COUNT(*) as n FROM action_tokens WHERE created_at > datetime('now','-7 days') AND uses_remaining < 5").get().n;
@@ -89,7 +91,7 @@ router.get('/stats', (req, res) => {
   res.json({
     users: { total: userTotal, new_7d: newUsers7d, by_type: byType, by_region: byRegion, verified, unverified, inactive },
     meetings: { total: meetingTotal, new_7d: meetings7d, by_status: meetingByStatus },
-    emails: { last_7d: { sent: emailSent7d, errored: emailErr7d, clicked: magicUsed7d + actionClicked7d }, last_24h: { sent: emailSent24h, errored: emailErr24h }, by_template_7d: byTemplate7d, by_day: emailsByDay, sent_by_day: emailsSentByDay, clicked_by_day: emailsClickedByDay, magic_link_click_rate_7d: magicTotal7d > 0 ? magicUsed7d / magicTotal7d : 0, action_click_rate_7d: actionTotal7d > 0 ? actionClicked7d / actionTotal7d : 0 },
+    emails: { last_7d: { sent: emailSent7d, errored: emailErr7d, clicked: magicUsed7d + actionClicked7d }, last_24h: { sent: emailSent24h, errored: emailErr24h }, by_template_7d: byTemplate7d, errors_by_template_7d: errorsByTemplate7d, by_day: emailsByDay, sent_by_day: emailsSentByDay, clicked_by_day: emailsClickedByDay, magic_link_click_rate_7d: magicTotal7d > 0 ? magicUsed7d / magicTotal7d : 0, action_click_rate_7d: actionTotal7d > 0 ? actionClicked7d / actionTotal7d : 0 },
     slots: { total: slotTotal, by_status: slotByStatus },
     system: { db_size_bytes: dbSize?.size || 0, action_tokens: tokenCount, expired_tokens: expiredTokens, uptime_seconds: Math.floor(uptime), node_version: process.version, memory_mb: Math.round(process.memoryUsage().rss / 1048576) }
   });

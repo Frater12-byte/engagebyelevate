@@ -467,6 +467,12 @@ async function renderOverview(el) {
       )}
       ${emailEngagementChart(s.emails.sent_by_day, s.emails.clicked_by_day)}
     </div>
+    ${(() => {
+      const errs = s.emails.errors_by_template_7d || {};
+      const entries = Object.entries(errs).filter(([,v]) => v > 0);
+      if (!entries.length) return '';
+      return barChart('Errors by Template', entries.map(([k,v]) => ({ label: k.replace(/_/g,' '), value: v })), ['#ef4444','#F59E0B','#EC672C','#A78BFA','#4EA8DE','#6a6a75']);
+    })()}
 
     <h2 style="margin-top:32px">System Health</h2>
     <div class="stat-grid">
