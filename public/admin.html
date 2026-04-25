@@ -81,6 +81,14 @@
   .mobile-menu-signout { display: block; width: 100%; padding: 14px; background: none; border: 1px solid #27272a; border-radius: 4px; color: #b0b0b8; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: inherit; text-align: center; margin-top: 8px; }
   .mobile-menu-signout:hover { border-color: #ef4444; color: #ef4444; }
 
+  /* Mobile card layout for tables */
+  .m-card-list { display: none; }
+  .m-card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+  .m-card-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; font-size: 13px; }
+  .m-card-row:last-child { margin-bottom: 0; }
+  .m-card-label { color: #6a6a75; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .m-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1a1a1d; }
+
   @media (max-width: 768px) {
     .chart-row { grid-template-columns: 1fr; }
     .topbar { padding: 8px 12px; gap: 8px; }
@@ -92,19 +100,20 @@
     .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .stat-card { padding: 12px; }
     .stat-num { font-size: 24px; }
-    .card { padding: 16px; }
+    .card { padding: 14px; }
     h2 { font-size: 18px; }
-    .filter-row input { min-width: 0; flex: 1; }
-    .filter-row select { min-width: 0; flex: 1; }
-    .filter-row { gap: 8px; }
-    .btn-sm { padding: 6px 8px; font-size: 10px; }
-    table { font-size: 12px; }
-    th, td { padding: 8px 6px; }
+    .filter-row { flex-direction: column; gap: 8px; }
+    .filter-row input, .filter-row select { width: 100%; min-width: 0; flex: none; }
+    .btn-sm { padding: 6px 10px; font-size: 11px; }
+    .scroll-x { display: none; }
+    .m-card-list { display: block; }
     .modal-box { padding: 16px; margin: 8px; max-height: 95vh; }
     .modal-box h2 { font-size: 16px; }
     .modal-box div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
     .donut-wrap { flex-direction: column; gap: 12px; }
     .toast { bottom: 12px; right: 12px; left: 12px; text-align: center; }
+    textarea { font-size: 14px; }
+    .field label { font-size: 12px; }
   }
   .chart-card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 20px; }
   .chart-card h3 { font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; margin-bottom: 16px; }
@@ -499,8 +508,18 @@ async function renderUsers(el) {
       <select id="user-type-filter"><option value="">All types</option><option value="hotel">Hotels</option><option value="agent">Agencies</option><option value="exhibitor">Exhibitors</option><option value="admin">Admins</option></select>
     </div>
     <div class="scroll-x"><table><thead><tr><th>Type</th><th>Organization</th><th>Email</th><th>Country</th><th>Verified</th><th>Active</th><th>Created</th><th>Actions</th></tr></thead><tbody id="user-rows"></tbody></table></div>
+    <div class="m-card-list" id="user-cards"></div>
   `;
   const tbody = document.getElementById('user-rows');
+  const cards = document.getElementById('user-cards');
+  function userActions(u) {
+    return `<button class="btn-sm" onclick="adminUserAction('edit',${u.id})">Edit</button>
+      ${!u.email_verified_at ? `<button class="btn-sm primary" onclick="adminUserAction('verify',${u.id})">Verify</button>` : ''}
+      <button class="btn-sm" onclick="adminUserAction('${u.active?'deactivate':'activate'}',${u.id})">${u.active?'Deactivate':'Activate'}</button>
+      <button class="btn-sm" onclick="adminUserAction('resend-magic',${u.id})">Resend Link</button>
+      <button class="btn-sm" onclick="adminUserAction('regenerate-slots',${u.id})">Regen Slots</button>
+      <button class="btn-sm danger" onclick="adminUserAction('delete',${u.id})">Delete</button>`;
+  }
   function render(users) {
     tbody.innerHTML = users.map(u => `<tr>
       <td>${typeBadge(u.type)}</td>
@@ -510,15 +529,15 @@ async function renderUsers(el) {
       <td>${u.email_verified_at ? badge('Yes','#22c55e') : badge('No','#ef4444')}</td>
       <td>${u.active ? badge('Active','#22c55e') : badge('Inactive','#ef4444')}</td>
       <td style="font-size:12px;color:#6a6a75">${fmtDt(u.created_at)}</td>
-      <td style="min-width:240px">
-        <button class="btn-sm" onclick="adminUserAction('edit',${u.id})" title="Edit this user's profile">Edit</button>
-        ${!u.email_verified_at ? `<button class="btn-sm primary" onclick="adminUserAction('verify',${u.id})" title="Mark email as verified">Verify</button>` : ''}
-        <button class="btn-sm" onclick="adminUserAction('${u.active?'deactivate':'activate'}',${u.id})" title="${u.active?'Deactivate this user (block login)':'Reactivate this user'}">${u.active?'Deactivate':'Activate'}</button>
-        <button class="btn-sm" onclick="adminUserAction('resend-magic',${u.id})" title="Send a fresh magic login link to this user's email">Resend Link</button>
-        <button class="btn-sm" onclick="adminUserAction('regenerate-slots',${u.id})" title="Delete free/blocked slots and recreate based on user type and region">Regen Slots</button>
-        <div style="margin-top:4px"></div><button class="btn-sm danger" onclick="adminUserAction('delete',${u.id})" title="Permanently delete this user and all their data">Delete</button>
-      </td>
+      <td style="min-width:240px">${userActions(u)}</td>
     </tr>`).join('');
+    cards.innerHTML = users.map(u => `<div class="m-card">
+      <div class="m-card-row"><span>${typeBadge(u.type)}</span><span>${u.email_verified_at ? badge('Verified','#22c55e') : badge('Unverified','#ef4444')} ${u.active ? badge('Active','#22c55e') : badge('Inactive','#ef4444')}</span></div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(u.org_name)}</div>
+      <div style="font-size:12px;color:#b0b0b8">${esc(u.contact_name||'')} · ${esc(u.email)}</div>
+      <div style="font-size:12px;color:#6a6a75;margin-top:2px">${esc(u.country||'')} · ${fmtDt(u.created_at)}</div>
+      <div class="m-card-actions">${userActions(u)}</div>
+    </div>`).join('');
   }
   function applyFilters() {
     const q = (document.getElementById('user-search').value || '').toLowerCase();
@@ -605,6 +624,7 @@ async function renderMeetings(el) {
       <input id="mtg-date" type="date" style="color-scheme:dark" title="Filter by date">
     </div>
     <div class="scroll-x"><table><thead><tr><th>ID</th><th>Day</th><th>Time</th><th>Requester</th><th>Recipient</th><th>Status</th><th>Teams</th><th>Actions</th></tr></thead><tbody id="mtg-rows"></tbody></table></div>
+    <div class="m-card-list" id="mtg-cards"></div>
   `;
   let allMeetings = [];
   async function fetchMeetings() {
@@ -613,6 +633,13 @@ async function renderMeetings(el) {
     if (!d) return;
     allMeetings = d.meetings;
     filterAndRender();
+  }
+  function mtgActions(m) {
+    let html = '';
+    if (m.teams_join_url) html += `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy Link</button>`;
+    if (m.status==='pending') html += `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>`;
+    if (!['cancelled','expired','declined'].includes(m.status)) html += `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>`;
+    return html;
   }
   function filterAndRender() {
     const q = (document.getElementById('mtg-search').value || '').toLowerCase();
@@ -629,12 +656,18 @@ async function renderMeetings(el) {
       <td>${esc(m.requester_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.requester_name||'')}</span></td>
       <td>${esc(m.recipient_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.recipient_name||'')}</span></td>
       <td>${statusBadge(m.status)}</td>
-      <td style="white-space:nowrap">${m.teams_join_url ? `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')" title="Copy meeting link">Copy</button> <button class="btn-sm" onclick="location.href='mailto:?subject=Meeting+Link&body='+encodeURIComponent('${esc(m.teams_join_url)}')" title="Share via email">Share</button>` : '-'}</td>
+      <td style="white-space:nowrap">${m.teams_join_url ? `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy</button> <button class="btn-sm" onclick="location.href='mailto:?subject=Meeting+Link&body='+encodeURIComponent('${esc(m.teams_join_url)}')">Share</button>` : '-'}</td>
       <td style="white-space:nowrap">
         ${m.status==='pending' ? `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>` : ''}
         ${!['cancelled','expired','declined'].includes(m.status) ? `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>` : ''}
       </td>
     </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:#6a6a75">No meetings match</td></tr>';
+    document.getElementById('mtg-cards').innerHTML = filtered.map(m => `<div class="m-card">
+      <div class="m-card-row"><span>#${m.id} · ${statusBadge(m.status)}</span><span style="font-size:12px;color:#6a6a75">${fmtDt(m.start_time)}</span></div>
+      <div style="font-size:13px;margin-bottom:2px"><span class="m-card-label">From:</span> ${esc(m.requester_org||'')} <span style="color:#6a6a75">${esc(m.requester_name||'')}</span></div>
+      <div style="font-size:13px"><span class="m-card-label">To:</span> ${esc(m.recipient_org||'')} <span style="color:#6a6a75">${esc(m.recipient_name||'')}</span></div>
+      <div class="m-card-actions">${mtgActions(m) || '<span style="color:#6a6a75;font-size:12px">No actions</span>'}</div>
+    </div>`).join('') || '<div style="text-align:center;color:#6a6a75;padding:24px">No meetings match</div>';
   }
   fetchMeetings();
   document.getElementById('mtg-status').addEventListener('change', fetchMeetings);
@@ -662,6 +695,7 @@ async function renderEmails(el) {
       <input id="email-date" type="date" style="color-scheme:dark" title="Filter by date">
     </div>
     <div class="scroll-x"><table><thead><tr><th>Sent</th><th>To</th><th>Subject</th><th>Template</th><th>Status</th><th></th></tr></thead><tbody id="email-rows"></tbody></table></div>
+    <div class="m-card-list" id="email-cards"></div>
   `;
   let allEmails = [];
   async function fetchEmails() {
@@ -686,8 +720,14 @@ async function renderEmails(el) {
       <td>${esc(e.subject||'')}</td>
       <td>${e.template ? badge(e.template,'#6a6a75') : '-'}</td>
       <td>${e.status==='sent' ? badge('sent','#22c55e') : badge(e.status||'?','#ef4444')}</td>
-      <td><button class="btn-sm" onclick="resendEmail(${e.id})" title="Resend magic link to this recipient">Resend</button></td>
+      <td><button class="btn-sm" onclick="resendEmail(${e.id})">Resend</button></td>
     </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#6a6a75">No emails match</td></tr>';
+    document.getElementById('email-cards').innerHTML = filtered.map(e => `<div class="m-card">
+      <div class="m-card-row"><span>${e.status==='sent' ? badge('sent','#22c55e') : badge(e.status||'?','#ef4444')} ${e.template ? badge(e.template.replace(/_/g,' '),'#6a6a75') : ''}</span><span style="font-size:11px;color:#6a6a75">${fmtDt(e.sent_at)}</span></div>
+      <div style="font-size:13px;margin-bottom:2px">${esc(e.to_email)}</div>
+      <div style="font-size:12px;color:#b0b0b8">${esc(e.subject||'')}</div>
+      <div class="m-card-actions"><button class="btn-sm" onclick="resendEmail(${e.id})">Resend</button></div>
+    </div>`).join('') || '<div style="text-align:center;color:#6a6a75;padding:24px">No emails match</div>';
   }
   fetchEmails();
   document.getElementById('email-search').addEventListener('input', fetchEmails);
