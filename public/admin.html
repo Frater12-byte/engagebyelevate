@@ -141,7 +141,7 @@
 
 <div class="topbar">
   <div class="topbar-left">
-    <img src="/img/logo.png" alt="Elevate">
+    <img src="/img/engage-online-logo.png" alt="Engage Online">
     <span class="topbar-title">Admin</span>
   </div>
   <span class="topbar-clocks" id="city-clocks"></span>
@@ -161,7 +161,7 @@
 
 <div class="mobile-menu" id="mobile-menu">
   <div class="mobile-menu-header">
-    <img src="/img/logo.png" alt="Elevate" style="height:28px">
+    <img src="/img/engage-online-logo.png" alt="Engage Online" style="height:28px">
     <button class="mobile-menu-close" id="mobile-menu-close">&times;</button>
   </div>
   <div class="mobile-menu-section">
@@ -197,7 +197,8 @@ let currentTab = 'overview';
 })();
 
 document.getElementById('sign-out').addEventListener('click', async () => {
-  await apiPost('/admin-logout');
+  try { await fetch('/admin-logout', { method: 'POST', credentials: 'include' }); } catch {}
+  document.cookie = 'admin_session=; path=/; max-age=0';
   location.href = '/admin-login';
 });
 
@@ -261,7 +262,8 @@ document.getElementById('sign-out').addEventListener('click', async () => {
 
   // Sign out from mobile menu
   document.getElementById('mobile-sign-out').addEventListener('click', async () => {
-    await apiPost('/admin-logout');
+    try { await fetch('/admin-logout', { method: 'POST', credentials: 'include' }); } catch {}
+    document.cookie = 'admin_session=; path=/; max-age=0';
     location.href = '/admin-login';
   });
 })();
