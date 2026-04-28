@@ -241,7 +241,8 @@ function renderAgenda() {
             if (s.item_type === 'session') {
               const _t = fmtTimeDual(s.start_time, MY_TZ);
               const isBreak = s.type === 'break';
-              return `<div class="slot session-slot${isBreak ? ' break-slot' : ''}">
+              const onclick = !isBreak ? `onclick="showSessionDetail('${s.id}')"` : '';
+              return `<div class="slot session-slot${isBreak ? ' break-slot' : ''}" ${onclick} ${!isBreak ? 'style="cursor:pointer"' : ''}>
                 <div class="slot-time">${_t.primary}</div>${_t.secondary ? `<div class="slot-time-sub">${_t.secondary}</div>` : ''}
                 <div class="slot-status">${escapeHtml(s.title)}</div>
               </div>`;
@@ -283,10 +284,6 @@ function isPastSlot(startIso) {
 
 function renderMeetings() {
   const el = document.getElementById('tab-meetings');
-  if (!meetings.length) {
-    el.innerHTML = `<div class="empty-state"><h3>No meetings yet</h3><p>Browse the directory and request meetings with hotels or agencies.</p><a href="/directory" class="btn" style="margin-top:20px">Open Directory</a></div>`;
-    return;
-  }
 
   const grouped = { pending_incoming: [], pending_outgoing: [], approved: [], past: [], other: [] };
   const now = new Date();
@@ -299,13 +296,39 @@ function renderMeetings() {
     else grouped.other.push(m);
   }
 
-  el.innerHTML = `
+  // Collect public sessions from agenda
+  const sessionCards = [];
+  if (agenda && agenda.agenda) {
+    for (const day of Object.keys(agenda.agenda).sort()) {
+      for (const s of agenda.agenda[day]) {
+        if (s.item_type === 'session' && s.type !== 'break') {
+          sessionCards.push(s);
+        }
+      }
+    }
+  }
+
+  const sessionsHtml = sessionCards.length ? `
+    <div style="margin-bottom:32px">
+      <h3 style="margin-bottom:12px">Programme Sessions <span class="text-muted" style="font-family:var(--font-body);font-size:14px">(${sessionCards.length})</span></h3>
+      ${sessionCards.map(s => sessionMeetingCard(s)).join('')}
+    </div>
+  ` : '';
+
+  const meetingsHtml = `
     ${section('Awaiting your response', grouped.pending_incoming, 'incoming')}
     ${section('Waiting on them', grouped.pending_outgoing, 'outgoing')}
     ${section('Confirmed meetings', grouped.approved, 'approved')}
     ${section('Past meetings', grouped.past, 'past')}
     ${section('Declined / cancelled / expired', grouped.other, 'other')}
   `;
+
+  if (!meetings.length && !sessionCards.length) {
+    el.innerHTML = `<div class="empty-state"><h3>No meetings yet</h3><p>Browse the directory and request meetings with hotels or agencies.</p><a href="/directory" class="btn" style="margin-top:20px">Open Directory</a></div>`;
+    return;
+  }
+
+  el.innerHTML = sessionsHtml + meetingsHtml;
 
   el.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -401,6 +424,44 @@ function meetingCard(m, kind) {
         </div>
         ${calendarHtml}
         <div class="meeting-card-btns">${btnsHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+function sessionMeetingCard(s) {
+  const duration = Math.round((new Date(s.end_time) - new Date(s.start_time)) / 60000);
+  const gcalStart = new Date(s.start_time).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const gcalEnd = new Date(s.end_time).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const gcalSubject = encodeURIComponent(s.title + ' — Engage by Elevate');
+  const gcalDetails = encodeURIComponent(s.description || s.title);
+  const gcalLocation = encodeURIComponent(s.location || 'Engage by Elevate');
+  const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalSubject}&dates=${gcalStart}/${gcalEnd}&details=${gcalDetails}&location=${gcalLocation}`;
+  const outlookUrl = `https://outlook.office.com/calendar/0/action/compose?subject=${gcalSubject}&startdt=${encodeURIComponent(s.start_time)}&enddt=${encodeURIComponent(s.end_time)}&body=${gcalDetails}&location=${gcalLocation}`;
+
+  const calendarHtml = `
+    <div class="meeting-card-calendar">
+      <div class="cal-label">Save invite</div>
+      <div class="cal-icons">
+        <a href="${outlookUrl}" target="_blank" title="Outlook"><img src="/img/icon-outlook.png" width="32" height="32" alt="Outlook" style="border-radius:4px"></a>
+        <a href="${gcalUrl}" target="_blank" title="Google Calendar"><img src="/img/icon-gcal.svg" width="32" height="32" alt="Google Calendar"></a>
+      </div>
+    </div>`;
+
+  const joinBtn = s.teams_link ? `<a class="btn btn-small" href="${escapeHtml(s.teams_link)}" target="_blank">Join Meeting</a>` : '';
+
+  return `
+    <div class="meeting-card card-approved" id="session-card-${s.id}" style="border-left:3px solid rgba(99,140,255,0.5)">
+      <div class="meeting-card-body">
+        <div class="meeting-card-info">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(99,140,255,0.8);font-weight:700">${fmtDate(s.start_time, MY_TZ)}</div>
+          ${(() => { const _r = fmtTimeRange(s.start_time, s.end_time, MY_TZ); return `<div style="font-size:14px;color:var(--ink);margin-top:3px;font-weight:600">${_r.primary}</div>${_r.secondary ? `<div style="font-size:12px;color:var(--ink-muted);margin-top:2px">${_r.secondary}</div>` : ''}`; })()}
+          <h4 style="margin-top:8px">${escapeHtml(s.title)}</h4>
+          <div class="meeting-meta">${[s.organization, s.location].filter(Boolean).map(escapeHtml).join(' · ')}${duration ? ` · ${duration} min` : ''}</div>
+          ${s.description ? `<div style="margin-top:6px;font-size:13px;color:var(--ink-soft)">${escapeHtml(s.description)}</div>` : ''}
+        </div>
+        ${calendarHtml}
+        <div class="meeting-card-btns">${joinBtn}</div>
       </div>
     </div>
   `;
@@ -651,6 +712,14 @@ window.showMeetingDetail = function(meetingId) {
   const m = meetings.find(x => x.id === meetingId);
   if (!m) return;
   document.querySelector('[data-tab="meetings"]').click();
+};
+
+window.showSessionDetail = function(sessionId) {
+  document.querySelector('[data-tab="meetings"]').click();
+  setTimeout(() => {
+    const card = document.getElementById('session-card-' + sessionId);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 };
 
 async function renderProfile() {
