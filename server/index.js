@@ -109,6 +109,26 @@ app.use('/api', require('./routes/meetings'));
 
 // Admin panel routes
 app.use('/', require('./routes/adminAuth'));
+
+// Admin frontend (only on admin host) — must be before API router
+const { isAdminHost } = require('./middleware/hostGuard');
+app.get('/admin-login', (req, res, next) => {
+  if (!isAdminHost(req)) return next();
+  res.sendFile(path.join(__dirname, '..', 'public', 'admin-login.html'));
+});
+app.get(['/', '/admin'], (req, res, next) => {
+  if (!isAdminHost(req)) return next();
+  const token = req.cookies?.admin_session;
+  if (!token) return res.redirect('/admin-login');
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (!payload.admin) return res.redirect('/admin-login');
+  } catch {
+    return res.redirect('/admin-login');
+  }
+  res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
+});
+
 app.use('/admin', require('./routes/admin'));
 
 // Admin: create/update exhibitor
@@ -125,26 +145,6 @@ app.post('/admin/exhibitors', (req, res) => {
   ).run(slug, name, category||null, description||null, logo_url||null, website||null, contact_name||null, contact_email, booth_number||null, nowUtc(),
         name, category||null, description||null, logo_url||null, website||null, contact_name||null, contact_email, booth_number||null);
   res.json({ ok: true });
-});
-
-// Admin frontend (only on admin host)
-const { isAdminHost } = require('./middleware/hostGuard');
-app.get('/admin-login', (req, res, next) => {
-  if (!isAdminHost(req)) return next();
-  res.sendFile(path.join(__dirname, '..', 'public', 'admin-login.html'));
-});
-app.get(['/', '/admin'], (req, res, next) => {
-  if (!isAdminHost(req)) return next();
-  // Require valid admin session — redirect to login if missing/invalid
-  const token = req.cookies?.admin_session;
-  if (!token) return res.redirect('/admin-login');
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (!payload.admin) return res.redirect('/admin-login');
-  } catch {
-    return res.redirect('/admin-login');
-  }
-  res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
 });
 
 // Static files
