@@ -820,14 +820,18 @@ async function renderBulk(el) {
 window.emailMeetingLink = function(meetingId) {
   const m = (window._adminMeetings || []).find(x => x.id === meetingId);
   if (!m || !m.teams_join_url) return;
-  const subject = 'Engage by Elevate \u2014 Meeting Link: ' + (m.requester_org || '') + ' \u00d7 ' + (m.recipient_org || '');
+  const subject = 'Engage by Elevate - Meeting Link: ' + (m.requester_org || '') + ' x ' + (m.recipient_org || '');
   const body = 'Hi,\n\nHere is your meeting link for Engage by Elevate:\n\n'
-    + (m.requester_org || '') + ' \u00d7 ' + (m.recipient_org || '') + '\n'
+    + (m.requester_org || '') + ' x ' + (m.recipient_org || '') + '\n'
     + 'Date: ' + (m.day || '') + '\n'
     + 'Time: ' + fmtDt(m.start_time) + '\n\n'
     + 'Join Meeting:\n' + m.teams_join_url + '\n\n'
     + 'Best regards,\nEngage by Elevate Team';
-  location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  const url = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.click();
 };
 </script>
 </body>
