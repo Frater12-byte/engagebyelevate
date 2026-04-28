@@ -17,21 +17,8 @@ dayjs.extend(utc);
 
 const { getDb } = require('../db/connection');
 
-// Meeting day schedule (UTC times - Dubai is UTC+4, Thailand UTC+7)
-// Event in Dubai, so we treat times as local (UAE = UTC+4)
-// Working window: 09:00 - 17:00 local = 05:00 - 13:00 UTC
-const DAY_CONFIG = {
-  default: {
-    // Meeting windows during which free slots are auto-generated.
-    // Blocked windows (sessions) are inserted by getBlockedRanges() based on agenda.
-    workStart: '09:00',
-    workEnd:   '17:00',
-    // Lunch break - blocked for everyone
-    breaks: [
-      { start: '13:00', end: '14:00', label: 'Lunch' }
-    ]
-  }
-};
+// Slots are ONLY generated during "Meetings" blocks in the agenda
+// (sessions with type='networking'). No fixed work window.
 
 /** Returns ISO strings for every 20-min slot in a [start,end] window, in the event timezone */
 function enumerateSlots(day, startHHMM, endHHMM, tz = '+04:00') {
@@ -49,28 +36,14 @@ function enumerateSlots(day, startHHMM, endHHMM, tz = '+04:00') {
   return slots;
 }
 
-/** Returns blocked time ranges for a given day based on agenda sessions */
-function getBlockedRanges(day) {
+/** Returns meeting windows (type='networking') for a given day */
+function getMeetingWindows(day) {
   const db = getDb();
-  const rows = db.prepare(`
-    SELECT start_time, end_time, title, type FROM sessions
-    WHERE day = ? AND visible = 1
+  return db.prepare(`
+    SELECT start_time, end_time FROM sessions
+    WHERE day = ? AND visible = 1 AND type = 'networking'
+    ORDER BY start_time
   `).all(day);
-  return rows.map(r => ({
-    start: dayjs(r.start_time),
-    end: dayjs(r.end_time),
-    title: r.title,
-    type: r.type
-  }));
-}
-
-/** Does this slot overlap any blocked range? */
-function isBlocked(slotStart, slotEnd, blockedRanges) {
-  const s = dayjs(slotStart);
-  const e = dayjs(slotEnd);
-  return blockedRanges.some(b =>
-    s.isBefore(b.end) && e.isAfter(b.start)
-  );
 }
 
 /** Days this user is eligible for */
@@ -99,7 +72,6 @@ function generateSlotsForUser(userId) {
   const days = eligibleDaysFor(user);
   if (days.length === 0) return { created: 0, skipped: 0 };
 
-  const cfg = DAY_CONFIG.default;
   let created = 0, skipped = 0;
 
   const insert = db.prepare(`
@@ -115,27 +87,24 @@ function generateSlotsForUser(userId) {
   });
 
   for (const day of days) {
-    const blocked = getBlockedRanges(day);
-    // Add lunch as blocked
-    for (const br of cfg.breaks) {
-      blocked.push({
-        start: dayjs(`${day}T${br.start}:00+04:00`),
-        end:   dayjs(`${day}T${br.end}:00+04:00`),
-        title: br.label,
-        type:  'break'
-      });
+    const windows = getMeetingWindows(day);
+    const rows = [];
+    for (const win of windows) {
+      // Generate 20-min slots within each meeting window
+      let cursor = dayjs(win.start_time);
+      const end = dayjs(win.end_time);
+      while (cursor.add(20, 'minute').isBefore(end) || cursor.add(20, 'minute').isSame(end)) {
+        const slotEnd = cursor.add(20, 'minute');
+        rows.push({
+          user_id: user.id,
+          day,
+          start: cursor.toISOString(),
+          end: slotEnd.toISOString(),
+          status: 'free'
+        });
+        cursor = slotEnd;
+      }
     }
-
-    const rawSlots = enumerateSlots(day, cfg.workStart, cfg.workEnd);
-    // All slots are free — sessions run alongside meetings, not blocking them
-    const rows = rawSlots.map(s => ({
-      user_id: user.id,
-      day,
-      start: s.start,
-      end: s.end,
-      status: 'free'
-    }));
-
     tx(rows);
   }
 

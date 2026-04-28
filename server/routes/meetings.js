@@ -41,11 +41,27 @@ router.get('/me/agenda', requireAuth, (req, res) => {
     ORDER BY s.start_time
   `).all(me.id);
 
-  // Group by day
+  // Get public sessions for eligible days
+  const eDays = eligibleDaysFor(me);
+  const publicSessions = eDays.length > 0 ? db.prepare(`
+    SELECT id, title, organization, description, day, start_time, end_time, location, type, is_hybrid
+    FROM sessions WHERE visible = 1 AND type != 'networking' AND day IN (${eDays.map(() => '?').join(',')})
+    ORDER BY start_time
+  `).all(...eDays) : [];
+
+  // Group by day — merge slots and public sessions
   const byDay = {};
   for (const s of slots) {
     if (!byDay[s.day]) byDay[s.day] = [];
-    byDay[s.day].push(s);
+    byDay[s.day].push({ ...s, item_type: 'slot' });
+  }
+  for (const s of publicSessions) {
+    if (!byDay[s.day]) byDay[s.day] = [];
+    byDay[s.day].push({ ...s, item_type: 'session', start_time: s.start_time, end_time: s.end_time });
+  }
+  // Sort each day by start_time
+  for (const day of Object.keys(byDay)) {
+    byDay[day].sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
   }
 
   res.json({
