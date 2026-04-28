@@ -23,7 +23,7 @@ router.post('/admin-login', async (req, res) => {
 });
 
 router.post('/admin-logout', (req, res) => {
-  res.clearCookie('admin_session', { path: '/' });
+  res.clearCookie('admin_session', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
   res.json({ ok: true });
 });
 
