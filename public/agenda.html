@@ -202,14 +202,15 @@
             <div class="day-theme">${DAY_THEMES[idx+1] || ''}</div>
           </div>
           ${sessions.map(s => `
-            <div class="agenda-item">
-              <div class="time">${fmtTimeInTz(s.start_time, selectedTz)}<small>--- ${fmtTimeInTz(s.end_time, selectedTz)}</small></div>
-              <div>
+            <div class="agenda-item${s.type === 'break' ? ' agenda-break' : ''}">
+              <div class="time">${fmtTimeInTz(s.start_time, selectedTz)} <span class="time-end">${fmtTimeInTz(s.end_time, selectedTz)}</span></div>
+              <div class="agenda-body">
                 <h4>${escapeHtml(s.title)}</h4>
-                <div class="session-meta">${[s.speaker, s.organization].filter(Boolean).map(escapeHtml).join(' · ')}${s.location ? ' · <span class="badge badge-gold">' + escapeHtml(s.location) + '</span>' : ''}${s.is_hybrid ? ' · <span class="badge badge-gold">Hybrid</span>' : ''}${s.is_online ? ' · <span class="badge badge-ink">Online</span>' : ''}</div>
-                ${s.description ? `<p style="color:var(--ink-soft);font-size:14px;margin-top:6px">${escapeHtml(s.description)}</p>` : ''}
+                ${s.organization ? `<div class="session-org">${escapeHtml(s.organization)}</div>` : ''}
+                ${s.location ? `<div class="session-loc">${escapeHtml(s.location)}</div>` : ''}
+                ${s.description ? `<p class="session-desc">${escapeHtml(s.description)}</p>` : ''}
               </div>
-              <div><span class="badge ${({'opening':'badge-gold','keynote':'badge-ink','tourism_board':'badge','networking':'badge-gold'})[s.type] || ''}">${({'opening':'Opening','keynote':'Keynote','tourism_board':'Open session','break':'Break','networking':'Networking'})[s.type] || s.type}</span></div>
+              <div><span class="badge ${({'opening':'badge-gold','keynote':'badge-ink','tourism_board':'badge','networking':'badge-gold','break':''})[s.type] || ''}">${({'opening':'Opening','keynote':'Session','tourism_board':'Presentation','break':'Break','networking':'Meetings'})[s.type] || s.type}</span></div>
             </div>
           `).join('')}
         </div>`;
