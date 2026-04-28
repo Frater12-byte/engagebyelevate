@@ -905,6 +905,7 @@ html.is-guest .nav-links .guest-only { display: inline-block; }
   width: max-content;
 }
 .brand-logo { height: 32px; opacity: 0.6; filter: grayscale(0.3); transition: opacity 0.2s; flex-shrink: 0; }
+.brand-logo-lg { height: 44px; }
 .brand-logo:hover { opacity: 1; filter: none; }
 @keyframes brand-scroll {
   0% { transform: translateX(0); }
