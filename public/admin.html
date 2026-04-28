@@ -639,7 +639,10 @@ async function renderMeetings(el) {
   }
   function mtgActions(m) {
     let html = '';
-    if (m.teams_join_url) html += `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy Link</button>`;
+    if (m.teams_join_url) {
+      html += `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy Link</button>`;
+      html += `<button class="btn-sm" onclick="location.href='mailto:?subject='+encodeURIComponent('Engage by Elevate — Meeting Link: ${esc(m.requester_org)} × ${esc(m.recipient_org)}')+'&body='+encodeURIComponent('Hi,\\n\\nHere is your meeting link for Engage by Elevate:\\n\\n${esc(m.requester_org)} × ${esc(m.recipient_org)}\\nDate: ${m.day || ''}\\n\\nJoin Meeting:\\n${esc(m.teams_join_url)}\\n\\nBest regards,\\nEngage by Elevate Team')">Email</button>`;
+    }
     if (m.status==='pending') html += `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>`;
     if (!['cancelled','expired','declined'].includes(m.status)) html += `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>`;
     return html;
@@ -659,7 +662,7 @@ async function renderMeetings(el) {
       <td>${esc(m.requester_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.requester_name||'')}</span></td>
       <td>${esc(m.recipient_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.recipient_name||'')}</span></td>
       <td>${statusBadge(m.status)}</td>
-      <td style="white-space:nowrap">${m.teams_join_url ? `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy</button> <button class="btn-sm" onclick="location.href='mailto:?subject=Meeting+Link&body='+encodeURIComponent('${esc(m.teams_join_url)}')">Share</button>` : '-'}</td>
+      <td style="white-space:nowrap">${m.teams_join_url ? `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy</button> <button class="btn-sm" onclick="location.href='mailto:?subject='+encodeURIComponent('Engage by Elevate — Meeting Link: ${esc(m.requester_org)} × ${esc(m.recipient_org)}')+'&body='+encodeURIComponent('Hi,\\n\\nHere is your meeting link for Engage by Elevate:\\n\\n${esc(m.requester_org)} × ${esc(m.recipient_org)}\\nDate: ${m.day || ''}\\n\\nJoin Meeting:\\n${esc(m.teams_join_url)}\\n\\nBest regards,\\nEngage by Elevate Team')">Email</button>` : '-'}</td>
       <td style="white-space:nowrap">
         ${m.status==='pending' ? `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>` : ''}
         ${!['cancelled','expired','declined'].includes(m.status) ? `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>` : ''}
