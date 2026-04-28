@@ -629,19 +629,21 @@ async function renderMeetings(el) {
     <div class="scroll-x"><table><thead><tr><th>ID</th><th>Day</th><th>Time</th><th>Requester</th><th>Recipient</th><th>Status</th><th>Teams</th><th>Actions</th></tr></thead><tbody id="mtg-rows"></tbody></table></div>
     <div class="m-card-list" id="mtg-cards"></div>
   `;
+  window._adminMeetings = [];
   let allMeetings = [];
   async function fetchMeetings() {
     const status = document.getElementById('mtg-status').value;
     const d = await apiGet('/admin/meetings' + (status ? '?status=' + status : ''));
     if (!d) return;
     allMeetings = d.meetings;
+    window._adminMeetings = allMeetings;
     filterAndRender();
   }
   function mtgActions(m) {
     let html = '';
     if (m.teams_join_url) {
       html += `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy Link</button>`;
-      html += `<button class="btn-sm" onclick="location.href='mailto:?subject='+encodeURIComponent('Engage by Elevate — Meeting Link: ${esc(m.requester_org)} × ${esc(m.recipient_org)}')+'&body='+encodeURIComponent('Hi,\\n\\nHere is your meeting link for Engage by Elevate:\\n\\n${esc(m.requester_org)} × ${esc(m.recipient_org)}\\nDate: ${m.day || ''}\\n\\nJoin Meeting:\\n${esc(m.teams_join_url)}\\n\\nBest regards,\\nEngage by Elevate Team')">Email</button>`;
+      html += `<button class="btn-sm" onclick="emailMeetingLink(${m.id})">Email</button>`;
     }
     if (m.status==='pending') html += `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>`;
     if (!['cancelled','expired','declined'].includes(m.status)) html += `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>`;
@@ -662,7 +664,7 @@ async function renderMeetings(el) {
       <td>${esc(m.requester_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.requester_name||'')}</span></td>
       <td>${esc(m.recipient_org||'')} <span style="color:#6a6a75;font-size:11px">${esc(m.recipient_name||'')}</span></td>
       <td>${statusBadge(m.status)}</td>
-      <td style="white-space:nowrap">${m.teams_join_url ? `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy</button> <button class="btn-sm" onclick="location.href='mailto:?subject='+encodeURIComponent('Engage by Elevate — Meeting Link: ${esc(m.requester_org)} × ${esc(m.recipient_org)}')+'&body='+encodeURIComponent('Hi,\\n\\nHere is your meeting link for Engage by Elevate:\\n\\n${esc(m.requester_org)} × ${esc(m.recipient_org)}\\nDate: ${m.day || ''}\\n\\nJoin Meeting:\\n${esc(m.teams_join_url)}\\n\\nBest regards,\\nEngage by Elevate Team')">Email</button>` : '-'}</td>
+      <td style="white-space:nowrap">${m.teams_join_url ? `<button class="btn-sm" onclick="navigator.clipboard.writeText('${esc(m.teams_join_url)}');showToast('Link copied')">Copy</button> <button class="btn-sm" onclick="emailMeetingLink(${m.id})">Email</button>` : '-'}</td>
       <td style="white-space:nowrap">
         ${m.status==='pending' ? `<button class="btn-sm primary" onclick="adminMtgAction('force-approve',${m.id})">Approve</button>` : ''}
         ${!['cancelled','expired','declined'].includes(m.status) ? `<button class="btn-sm danger" onclick="adminMtgAction('force-cancel',${m.id})">Cancel</button>` : ''}
@@ -814,6 +816,19 @@ async function renderBulk(el) {
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
   });
 }
+
+window.emailMeetingLink = function(meetingId) {
+  const m = (window._adminMeetings || []).find(x => x.id === meetingId);
+  if (!m || !m.teams_join_url) return;
+  const subject = 'Engage by Elevate \u2014 Meeting Link: ' + (m.requester_org || '') + ' \u00d7 ' + (m.recipient_org || '');
+  const body = 'Hi,\n\nHere is your meeting link for Engage by Elevate:\n\n'
+    + (m.requester_org || '') + ' \u00d7 ' + (m.recipient_org || '') + '\n'
+    + 'Date: ' + (m.day || '') + '\n'
+    + 'Time: ' + fmtDt(m.start_time) + '\n\n'
+    + 'Join Meeting:\n' + m.teams_join_url + '\n\n'
+    + 'Best regards,\nEngage by Elevate Team';
+  location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+};
 </script>
 </body>
 </html>
