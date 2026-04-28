@@ -827,11 +827,12 @@ window.emailMeetingLink = function(meetingId) {
     + 'Time: ' + fmtDt(m.start_time) + '\n\n'
     + 'Join Meeting:\n' + m.teams_join_url + '\n\n'
     + 'Best regards,\nEngage by Elevate Team';
-  const url = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.click();
+  // Copy to clipboard as fallback, then try mailto
+  const text = subject + '\n\n' + body;
+  navigator.clipboard.writeText(text).then(() => {}).catch(() => {});
+  // Open Outlook web compose (works for most business users)
+  const outlookUrl = 'https://outlook.office.com/mail/deeplink/compose?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.open(outlookUrl, '_blank');
 };
 </script>
 </body>
