@@ -200,7 +200,7 @@ function maybeShowVerifyBanner(me) {
   chip.rel = 'noopener noreferrer';
   chip.className = 'chat-status';
   chip.id = 'chat-status';
-  chip.innerHTML = '<span class="chat-status-dot"></span><span class="chat-status-text">Live chat \u2014 agents online</span>';
+  chip.innerHTML = '<span class="chat-status-dot"></span><span class="chat-status-text">Live Chat \u2013 Agents Online</span>';
   document.body.appendChild(chip);
   chip.addEventListener('click', function() {
     if (typeof gtag === 'function') {
