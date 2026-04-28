@@ -16,7 +16,7 @@ const { getDb } = require('../db/connection');
 const actionTokens = require('./actionTokens');
 
 const EVENT_TZ = 'Asia/Dubai';
-const REPLY_TO = process.env.REPLY_TO_EMAIL || 'engage.meetings@elevatedmc.com';
+const REPLY_TO = process.env.REPLY_TO_EMAIL || 'events@engagebyelevate.com';
 
 const SITE = 'https://engagebyelevate.com';
 const EVENT_DATES = 'June 2\u20134, 2026';
@@ -105,9 +105,9 @@ function fmtShortDual(iso, userTz) {
 }
 
 // Font stacks matching the website
-const F_DISPLAY = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
-const F_CONDENSED = "'Barlow Condensed', 'Oswald', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif";
-const F_BODY = "'Manrope', -apple-system, 'Segoe UI', Arial, sans-serif";
+const F_DISPLAY = "'Noto Sans', 'Helvetica Neue', Arial, sans-serif";
+const F_CONDENSED = "'Noto Sans', 'Helvetica Neue', Arial, sans-serif";
+const F_BODY = "'Noto Sans', -apple-system, 'Segoe UI', Arial, sans-serif";
 const C_BG = '#080808';
 const C_ELEV = '#141416';
 const C_SUBTLE = '#1a1a1d';
@@ -213,7 +213,7 @@ function meetingCard(data) {
 </table>`;
 }
 
-const LOGO_URL = `${SITE}/img/logo.png`;
+const LOGO_URL = `${SITE}/img/engage-online-logo.png`;
 
 /** Full email wrapper — dark branded layout with logo, color sparks, rich footer */
 function wrap(content, preheader = '') {
@@ -225,7 +225,7 @@ function wrap(content, preheader = '') {
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
   <title>Engage by Elevate</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     @media only screen and (max-width: 480px) {
       .full-width-button-cell { width: 100% !important; }
@@ -358,7 +358,7 @@ function buildIcs(meeting) {
     `UID:engage-${meeting.id}@engagebyelevate.com`, `DTSTAMP:${dtStamp}`,
     `DTSTART:${dtStart}`, `DTEND:${dtEnd}`, `SUMMARY:${summary}`,
     `DESCRIPTION:${description.replace(/\n/g, '\\n')}`, `LOCATION:${location}`,
-    `ORGANIZER;CN=Engage by Elevate:mailto:engage.meetings@elevatedmc.com`,
+    `ORGANIZER;CN=Engage by Elevate:mailto:events@engagebyelevate.com`,
     'STATUS:CONFIRMED',
     ...(meeting.teams_join_url ? [`URL:${meeting.teams_join_url}`] : []),
     'END:VEVENT', 'END:VCALENDAR'
