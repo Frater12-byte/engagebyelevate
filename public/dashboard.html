@@ -289,12 +289,17 @@ function renderMeetings() {
   // Collect all items: 1:1 meetings + public sessions
   const allItems = [];
 
-  // Add 1:1 meetings
+  // Split meetings into actionable (pending) and day-based
+  const actionItems = [];
   for (const m of meetings) {
     const kind = m.status === 'pending' && m.recipient_id === me.id ? 'incoming' :
                  m.status === 'pending' && m.requester_id === me.id ? 'outgoing' :
                  m.status === 'approved' ? 'approved' : 'other';
-    allItems.push({ ...m, _kind: kind, _type: 'meeting', _day: m.day || m.start_time.slice(0,10) });
+    const item = { ...m, _kind: kind, _type: 'meeting', _day: m.day || m.start_time.slice(0,10) };
+    if (kind === 'incoming' || kind === 'outgoing') {
+      actionItems.push(item);
+    }
+    allItems.push(item);
   }
 
   // Add public sessions from agenda
@@ -324,19 +329,45 @@ function renderMeetings() {
     byDay[day].sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
   }
 
-  el.innerHTML = days.map(day => {
+  // Action required section at the top
+  const actionIncoming = actionItems.filter(i => i._kind === 'incoming');
+  const actionOutgoing = actionItems.filter(i => i._kind === 'outgoing');
+  let actionHtml = '';
+  if (actionIncoming.length) {
+    actionHtml += `<div style="margin-bottom:32px">
+      <h3 style="margin-bottom:12px;color:var(--orange)">Awaiting Your Response <span class="text-muted" style="font-family:var(--font-body);font-size:14px">(${actionIncoming.length})</span></h3>
+      ${actionIncoming.map(item => meetingCard(item, item._kind)).join('')}
+    </div>`;
+  }
+  if (actionOutgoing.length) {
+    actionHtml += `<div style="margin-bottom:32px">
+      <h3 style="margin-bottom:12px">Waiting on Them <span class="text-muted" style="font-family:var(--font-body);font-size:14px">(${actionOutgoing.length})</span></h3>
+      ${actionOutgoing.map(item => meetingCard(item, item._kind)).join('')}
+    </div>`;
+  }
+  if (actionHtml) actionHtml += '<hr style="border:none;border-top:1px solid var(--line);margin-bottom:32px">';
+
+  // Day-by-day timeline
+  const daysHtml = days.map(day => {
     const items = byDay[day];
-    const mtgCount = items.filter(i => i._type === 'meeting').length;
+    const mtgCount = items.filter(i => i._type === 'meeting' && i._kind !== 'incoming' && i._kind !== 'outgoing').length;
     return `
       <div style="margin-bottom:40px">
         <div class="agenda-day-head">
           <div class="day-date">${fmtDate(day, MY_TZ)}</div>
           <div class="day-theme">${DAY_THEMES[day] || ''}${mtgCount ? ' · ' + mtgCount + ' meeting' + (mtgCount > 1 ? 's' : '') : ''}</div>
         </div>
-        ${items.map(item => item._type === 'session' ? sessionMeetingCard(item) : meetingCard(item, item._kind)).join('')}
+        ${items.map(item => {
+          if (item._type === 'session') return sessionMeetingCard(item);
+          // Skip pending meetings in timeline (they're in the action section above)
+          if (item._kind === 'incoming' || item._kind === 'outgoing') return '';
+          return meetingCard(item, item._kind);
+        }).join('')}
       </div>
     `;
   }).join('');
+
+  el.innerHTML = actionHtml + daysHtml;
 
   el.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', async () => {
