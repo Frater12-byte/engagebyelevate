@@ -240,14 +240,10 @@ function renderAgenda() {
           ${items.map(s => {
             if (s.item_type === 'session') {
               const _t = fmtTimeDual(s.start_time, MY_TZ);
-              const typeLabel = ({'opening':'Opening','keynote':'Session','tourism_board':'Presentation','break':'Break'})[s.type] || s.type;
               const isBreak = s.type === 'break';
               return `<div class="slot session-slot${isBreak ? ' break-slot' : ''}">
                 <div class="slot-time">${_t.primary}</div>${_t.secondary ? `<div class="slot-time-sub">${_t.secondary}</div>` : ''}
-                <div class="slot-status" style="font-weight:700;color:var(--white)">${escapeHtml(s.title)}</div>
-                ${s.organization ? `<div style="font-size:12px;color:var(--orange);margin-top:2px">${escapeHtml(s.organization)}</div>` : ''}
-                ${s.location ? `<div style="font-size:11px;color:var(--ink-muted);margin-top:2px">${escapeHtml(s.location)}</div>` : ''}
-                ${s.teams_join_url ? `<div style="margin-top:6px"><a href="${escapeHtml(s.teams_join_url)}" target="_blank" class="btn btn-small btn-inline" style="font-size:11px;padding:4px 12px">Join Meeting</a></div>` : ''}
+                <div class="slot-status">${escapeHtml(s.title)}</div>
               </div>`;
             }
             const past = isPastSlot(s.start_time);

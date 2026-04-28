@@ -38,7 +38,7 @@ const sessions = [
   ['Tourism Board Presentation', null, null, 'Sponsorship session: Tourism Board presentation to tour operators', '2026-06-03', '2026-06-03T11:20:00Z', '2026-06-03T11:40:00Z', null, 'tourism_board', 0, 1],
   ['Break', null, null, null, '2026-06-03', '2026-06-03T11:40:00Z', '2026-06-03T12:00:00Z', null, 'break', 0, 0],
   ['Meetings', null, null, '1:1 meeting block', '2026-06-03', '2026-06-03T12:00:00Z', '2026-06-03T15:00:00Z', null, 'networking', 0, 1],
-  ['Closing Session + Networking Event', null, 'Engage by Elevate', 'Closing session followed by networking event at Elevate Tourism Hub', '2026-06-03', '2026-06-03T15:00:00Z', '2026-06-03T16:00:00Z', 'Elevate Tourism Hub', 'networking', 0, 1],
+  ['Closing Session + Networking Event', null, 'Engage by Elevate', 'Closing session followed by networking event at Elevate Tourism Hub', '2026-06-03', '2026-06-03T15:00:00Z', '2026-06-03T16:00:00Z', 'Elevate Tourism Hub', 'opening', 0, 1],
 
   // ===== Day 3 — Qatar, Maldives & Thailand (June 4) =====
   ['Opening Session', null, 'Engage by Elevate', 'Opening session for international day', '2026-06-04', '2026-06-04T07:00:00Z', '2026-06-04T07:40:00Z', null, 'opening', 0, 1],
