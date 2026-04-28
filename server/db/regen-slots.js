@@ -17,11 +17,16 @@ const { generateSlotsForUser } = require('../services/slots');
 
 const db = getDb();
 
+// Temporarily disable FK checks to avoid constraint issues
+db.pragma('foreign_keys = OFF');
+
 // Delete free/blocked slots (not tied to meetings)
 const deleted = db.prepare(`
   DELETE FROM slots WHERE meeting_id IS NULL
 `).run();
 console.log(`Deleted ${deleted.changes} unbooked slots`);
+
+db.pragma('foreign_keys = ON');
 
 // Regenerate for all active users
 const users = db.prepare(
