@@ -135,6 +135,15 @@ app.get('/admin-login', (req, res, next) => {
 });
 app.get(['/', '/admin'], (req, res, next) => {
   if (!isAdminHost(req)) return next();
+  // Require valid admin session — redirect to login if missing/invalid
+  const token = req.cookies?.admin_session;
+  if (!token) return res.redirect('/admin-login');
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (!payload.admin) return res.redirect('/admin-login');
+  } catch {
+    return res.redirect('/admin-login');
+  }
   res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
 });
 
