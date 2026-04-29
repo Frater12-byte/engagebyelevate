@@ -137,10 +137,10 @@ router.delete('/users/:id', (req, res) => {
   const db = getDb();
   const id = parseInt(req.params.id);
   if (id === req.admin.id) return res.status(400).json({ error: 'Cannot delete yourself' });
-  const approved = db.prepare("SELECT id FROM meetings WHERE (requester_id=? OR recipient_id=?) AND status='approved'").all(id, id);
-  if (approved.length) return res.status(409).json({ error: 'User has approved meetings — cancel them first', meeting_ids: approved.map(m => m.id) });
-  db.prepare('DELETE FROM slots WHERE user_id = ?').run(id);
+  // Release slots held by meetings with this user, then delete everything
+  db.prepare("UPDATE slots SET status = 'free', meeting_id = NULL WHERE meeting_id IN (SELECT id FROM meetings WHERE requester_id = ? OR recipient_id = ?)").run(id, id);
   db.prepare('DELETE FROM meetings WHERE requester_id = ? OR recipient_id = ?').run(id, id);
+  db.prepare('DELETE FROM slots WHERE user_id = ?').run(id);
   db.prepare('DELETE FROM magic_tokens WHERE user_id = ?').run(id);
   db.prepare('DELETE FROM action_tokens WHERE user_id = ?').run(id);
   db.prepare('DELETE FROM users WHERE id = ?').run(id);
