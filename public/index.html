@@ -306,6 +306,8 @@
       ]);
       const all = [...(h.hotels || []), ...(a.agents || [])];
       if (!all.length) return;
+      // Shuffle
+      for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
       const track = document.getElementById('participant-marquee');
       const items = all.map(o => {
         if (o.logo_url) return `<img src="${escapeHtml(o.logo_url)}" alt="${escapeHtml(o.org_name)}">`;
