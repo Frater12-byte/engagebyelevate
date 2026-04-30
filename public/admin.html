@@ -728,13 +728,13 @@ async function renderEmails(el) {
       <td>${esc(e.subject||'')}</td>
       <td>${e.template ? badge(e.template,'#6a6a75') : '-'}</td>
       <td>${e.status==='sent' ? badge('sent','#22c55e') : badge(e.status||'?','#ef4444')}</td>
-      <td><button class="btn-sm" onclick="resendEmail(${e.id})">Resend</button></td>
+      <td style="white-space:nowrap"><button class="btn-sm" onclick="resendEmail(${e.id})">Resend</button>${e.template==='magic_link' ? ` <button class="btn-sm" onclick="copyMagicLink('${esc(e.to_email)}')">Copy Link</button>` : ''}</td>
     </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#6a6a75">No emails match</td></tr>';
     document.getElementById('email-cards').innerHTML = filtered.map(e => `<div class="m-card">
       <div class="m-card-row"><span>${e.status==='sent' ? badge('sent','#22c55e') : badge(e.status||'?','#ef4444')} ${e.template ? badge(e.template.replace(/_/g,' '),'#6a6a75') : ''}</span><span style="font-size:11px;color:#6a6a75">${fmtDt(e.sent_at)}</span></div>
       <div style="font-size:13px;margin-bottom:2px">${esc(e.to_email)}</div>
       <div style="font-size:12px;color:#b0b0b8">${esc(e.subject||'')}</div>
-      <div class="m-card-actions"><button class="btn-sm" onclick="resendEmail(${e.id})">Resend</button></div>
+      <div class="m-card-actions"><button class="btn-sm" onclick="resendEmail(${e.id})">Resend</button>${e.template==='magic_link' ? ` <button class="btn-sm" onclick="copyMagicLink('${esc(e.to_email)}')">Copy Link</button>` : ''}</div>
     </div>`).join('') || '<div style="text-align:center;color:#6a6a75;padding:24px">No emails match</div>';
   }
   fetchEmails();
@@ -743,6 +743,15 @@ async function renderEmails(el) {
   document.getElementById('email-status').addEventListener('change', fetchEmails);
   document.getElementById('email-date').addEventListener('change', filterAndRender);
 }
+
+window.copyMagicLink = async function(email) {
+  try {
+    const d = await apiGet('/admin/magic-link?email=' + encodeURIComponent(email));
+    if (!d || !d.url) { showToast('No magic link found for this user', false); return; }
+    await navigator.clipboard.writeText(d.url);
+    showToast('Magic link copied');
+  } catch (err) { showToast(err.message, false); }
+};
 
 window.resendEmail = async function(id) {
   if (!confirm('Resend a magic link to this email recipient?')) return;

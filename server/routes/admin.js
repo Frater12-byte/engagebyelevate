@@ -214,6 +214,19 @@ router.post('/meetings/:id/force-approve', async (req, res) => {
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+// === GET MAGIC LINK for a user by email ===
+router.get('/magic-link', (req, res) => {
+  const db = getDb();
+  const email = req.query.email;
+  if (!email) return res.status(400).json({ error: 'email required' });
+  const user = db.prepare("SELECT id FROM users WHERE LOWER(email) = LOWER(?) AND active = 1").get(email);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const token = db.prepare("SELECT token, expires_at FROM magic_tokens WHERE user_id = ? ORDER BY created_at DESC LIMIT 1").get(user.id);
+  if (!token) return res.json({ url: null });
+  const baseUrl = process.env.BASE_URL || 'https://engagebyelevate.com';
+  res.json({ url: baseUrl + '/auth/verify?token=' + token.token, expires_at: token.expires_at });
+});
+
 // === RESEND EMAIL (sends magic link to the email's original recipient) ===
 router.post('/emails/:id/resend', async (req, res) => {
   const db = getDb();
