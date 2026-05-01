@@ -89,6 +89,10 @@
   .m-card-label { color: #6a6a75; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
   .m-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1a1a1d; }
 
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .stat-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  }
+
   @media (max-width: 768px) {
     .chart-row { grid-template-columns: 1fr; }
     .topbar { padding: 8px 12px; gap: 8px; }
@@ -97,7 +101,7 @@
     .topbar-burger { display: flex; align-items: center; justify-content: center; }
     .tabs { display: none; }
     .content { padding: 16px 12px; }
-    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
     .stat-card { padding: 12px; }
     .stat-num { font-size: 24px; }
     .card { padding: 14px; }
