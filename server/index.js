@@ -166,6 +166,14 @@ app.get('/health', (req, res) => {
   catch (e) { res.status(500).json({ status: 'error', error: e.message }); }
 });
 
+// 404 handler — serve custom page for non-API routes
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/auth/') || req.path.startsWith('/admin/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.status(404).sendFile(path.join(__dirname, '..', 'public', '404.html'));
+});
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err);

@@ -157,7 +157,7 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
             ${ex.website ? `
               <div style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:20px">
                 <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Website</div>
-                <a href="${escapeHtml(ex.website)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600">
+                <a href="${escapeHtml(ex.website.match(/^https?:\/\//) ? ex.website : 'https://' + ex.website)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600">
                   <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                   ${escapeHtml(ex.website.replace(/^https?:\/\//, ''))}
                 </a>

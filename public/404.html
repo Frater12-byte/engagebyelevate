@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-HS8W2SFVZJ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-HS8W2SFVZJ');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lost in Transit — Engage by Elevate</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/main.css">
+<style>
+  .lost-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; position: relative; overflow: hidden; }
+  .lost-bg { position: absolute; inset: 0; }
+  .lost-bg .glow-orange { top: -120px; right: -80px; }
+  .lost-bg .glow-blue { bottom: -60px; left: -100px; }
+  .lost-bg .glow-purple { top: 40%; left: 30%; }
+  .lost-content { position: relative; z-index: 1; max-width: 520px; }
+  .lost-code { font-family: var(--font-display); font-size: clamp(6rem, 20vw, 10rem); font-weight: 900; color: var(--orange); line-height: 1; letter-spacing: -0.04em; opacity: 0.15; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -70%); z-index: 0; }
+  .lost-icon { width: 64px; height: 64px; margin: 0 auto 24px; border-radius: 50%; background: var(--orange-dim); border: 1px solid rgba(232,97,42,0.2); display: flex; align-items: center; justify-content: center; }
+  .lost-icon svg { width: 28px; height: 28px; stroke: var(--orange); }
+  .lost-title { font-family: var(--font-display); font-size: clamp(1.6rem, 5vw, 2.4rem); font-weight: 800; margin-bottom: 12px; }
+  .lost-sub { color: var(--ink-soft); font-size: 1rem; line-height: 1.7; margin-bottom: 32px; max-width: 380px; margin-left: auto; margin-right: auto; }
+  .lost-links { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .lost-link { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: var(--radius); border: 1px solid var(--line); color: var(--ink-soft); font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+  .lost-link:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-dim); }
+  .lost-link.primary { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .lost-link.primary:hover { background: var(--orange-hover); }
+  .lost-footer { margin-top: 48px; font-size: 12px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="lost-wrap">
+  <div class="lost-bg">
+    <div class="glow-orange"></div>
+    <div class="glow-blue"></div>
+    <div class="glow-purple"></div>
+  </div>
+  <div class="lost-code">404</div>
+  <div class="lost-content">
+    <div class="lost-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+      </svg>
+    </div>
+    <h1 class="lost-title">Lost in Transit</h1>
+    <p class="lost-sub">This page doesn't exist or has been moved. Don't worry — your next great connection is just a click away.</p>
+    <div class="lost-links">
+      <a href="/" class="lost-link primary">Back to Home</a>
+      <a href="/agenda" class="lost-link">Agenda</a>
+      <a href="/directory" class="lost-link">Directory</a>
+      <a href="/dashboard" class="lost-link">Dashboard</a>
+    </div>
+    <div class="lost-footer">Engage by Elevate 2026 — June 2–4, Dubai</div>
+  </div>
+</div>
+</body>
+</html>
