@@ -424,7 +424,7 @@ async function renderOverview(el) {
   el.innerHTML = `
     <!-- SECTION: Last 7 Days Activity -->
     <h2>Last 7 Days Activity</h2>
-    <div class="stat-grid">
+    <div class="stat-grid" style="grid-template-columns:repeat(6,1fr)">
       <div class="stat-card"><div class="stat-num">${s.users.new_7d || 0}</div><div class="stat-label">New Registrations</div></div>
       <div class="stat-card"><div class="stat-num">${s.meetings.new_7d || 0}</div><div class="stat-label">New Meetings</div></div>
       <div class="stat-card"><div class="stat-num">${s.emails.last_7d.sent}</div><div class="stat-label">Emails Sent</div></div>
@@ -487,7 +487,7 @@ async function renderOverview(el) {
     })()}
 
     <h2 style="margin-top:32px">System Health</h2>
-    <div class="stat-grid">
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
       <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${healthColor}">${healthScore}%</div><div class="stat-label">Overall Score</div></div>
       <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${emailSuccessRate>=95?'#22c55e':'#F59E0B'}">${emailSuccessRate.toFixed(1)}%</div><div class="stat-label">Email Delivery Rate</div></div>
       <div class="stat-card"><div class="stat-num" style="font-size:24px;color:${verifyRate>=80?'#22c55e':'#F59E0B'}">${verifyRate.toFixed(0)}%</div><div class="stat-label">Verified Users</div></div>
