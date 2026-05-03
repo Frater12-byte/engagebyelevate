@@ -115,22 +115,31 @@ router.get('/users/:id', (req, res) => {
 });
 
 router.patch('/users/:id', (req, res) => {
-  const db = getDb();
-  const user = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
-  if (!user) return res.status(404).json({ error: 'Not found' });
-  const allowed = ['type','email','contact_name','phone','org_name','country','city','website','description','specialties','target_markets','room_count','star_rating','region','timezone','attendance_mode','active','email_verified_at'];
-  const updates = []; const values = [];
-  for (const f of allowed) {
-    if (req.body[f] !== undefined) {
-      updates.push(`${f} = ?`);
-      values.push(['specialties','target_markets'].includes(f) && Array.isArray(req.body[f]) ? JSON.stringify(req.body[f]) : req.body[f]);
+  try {
+    const db = getDb();
+    const user = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
+    if (!user) return res.status(404).json({ error: 'Not found' });
+    const allowed = ['type','email','contact_name','phone','org_name','country','city','website','description','specialties','target_markets','room_count','star_rating','region','timezone','attendance_mode','active','email_verified_at'];
+    const nullIfEmpty = ['region','timezone','attendance_mode','phone','website','description','country','city'];
+    const updates = []; const values = [];
+    for (const f of allowed) {
+      if (req.body[f] !== undefined) {
+        updates.push(`${f} = ?`);
+        let val = req.body[f];
+        if (nullIfEmpty.includes(f) && val === '') val = null;
+        if (['specialties','target_markets'].includes(f) && Array.isArray(val)) val = JSON.stringify(val);
+        values.push(val);
+      }
     }
+    if (!updates.length) return res.json({ ok: true });
+    values.push(nowUtc(), req.params.id);
+    db.prepare(`UPDATE users SET ${updates.join(',')}, updated_at = ? WHERE id = ?`).run(...values);
+    auditLog(req.admin.id, 'update_user', 'user', parseInt(req.params.id), req.body);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[ADMIN UPDATE USER FAIL]', err.message);
+    res.status(500).json({ error: err.message });
   }
-  if (!updates.length) return res.json({ ok: true });
-  values.push(nowUtc(), req.params.id);
-  db.prepare(`UPDATE users SET ${updates.join(',')}, updated_at = ? WHERE id = ?`).run(...values);
-  auditLog(req.admin.id, 'update_user', 'user', parseInt(req.params.id), req.body);
-  res.json({ ok: true });
 });
 
 router.delete('/users/:id', (req, res) => {
