@@ -64,10 +64,7 @@ router.get('/exhibitors', (req, res) => {
 router.get('/tourism-boards', (req, res) => {
   const db = getDb();
   const rows = db.prepare(`
-    SELECT tb.*, s.title AS session_title, s.start_time, s.end_time, s.day, s.location
-    FROM tourism_boards tb
-    LEFT JOIN sessions s ON tb.session_id = s.id
-    ORDER BY tb.name
+    SELECT * FROM exhibitors WHERE active = 1 ORDER BY name
   `).all();
   res.json({ boards: rows });
 });
@@ -102,7 +99,7 @@ router.get('/stats', (req, res) => {
   const hotels = db.prepare("SELECT COUNT(*) AS n FROM users WHERE type='hotel' AND active=1").get().n;
   const agents = db.prepare("SELECT COUNT(*) AS n FROM users WHERE type='agent' AND active=1").get().n;
   const meetings = db.prepare("SELECT COUNT(*) AS n FROM meetings WHERE status='approved'").get().n;
-  const boards = db.prepare("SELECT COUNT(*) AS n FROM tourism_boards").get().n;
+  const boards = db.prepare("SELECT COUNT(*) AS n FROM exhibitors WHERE active = 1").get().n;
   res.json({ hotels, agents, meetings, boards });
 });
 
