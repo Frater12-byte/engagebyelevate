@@ -1442,7 +1442,7 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   display: flex;
   gap: 48px;
   align-items: center;
-  animation: marqueeScroll 30s linear infinite;
+  animation: marqueeScroll 60s linear infinite;
   width: max-content;
 }
 .marquee-track img {
@@ -1465,6 +1465,8 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   from { transform: translateX(0); }
   to { transform: translateX(-25%); }
 }
+.marquee-slow { animation-duration: 80s; }
+.marquee-reverse { animation-direction: reverse; }
 
 /* ========== Agenda day-head mobile fix ========== */
 @media (max-width: 768px) {
