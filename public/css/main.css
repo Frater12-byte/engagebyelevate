@@ -1356,6 +1356,20 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   justify-content: center;
   margin-top: 40px;
 }
+.sponsor-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px 36px;
+  align-items: center;
+  justify-items: center;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.sponsor-grid img { height: 65px; object-fit: contain; }
+@media (max-width: 768px) {
+  .sponsor-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .sponsor-grid img { height: 50px; }
+}
 .sponsor-slot {
   width: 160px;
   height: 80px;
