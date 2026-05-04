@@ -16,6 +16,7 @@ db.prepare(`UPDATE exhibitors SET
   name = 'Elevate World',
   category = 'Destination Management',
   description = 'Elevate World is a UAE-based global travel and tourism group, redefining destination services across the UAE and the GCC countries, with operations extending into the Indian Ocean, Southeast Asia, and other key global destinations. Through a portfolio of specialized brands including Elevate DMC, GoElevate, ONELUX, Elevate Cruises, CONNECT Business Events, and Yalator, the group delivers seamless end-to-end travel solutions.',
+  logo_url = '/img/elevate-world-logo.svg',
   website = 'https://www.elevateworld.com',
   contact_name = 'Zeina El Sayegh',
   contact_email = 'events@engagebyelevate.com',
