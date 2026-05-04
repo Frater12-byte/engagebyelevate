@@ -187,7 +187,7 @@
     </a>`;
   }
   function renderBoardCard(b) {
-    return `<div class="org-card card-exhibitor"><div class="type-icon type-exhibitor"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Exhibitor</div><h3>${escapeHtml(b.name)}</h3><div class="org-meta">${escapeHtml(b.country || '')}</div><div class="org-desc">${escapeHtml(b.description || '')}</div></div>`;
+    return `<a class="org-card card-exhibitor" href="/exhibitor/${encodeURIComponent(b.slug)}" style="text-decoration:none;color:inherit">${b.logo_url ? `<img src="${escapeHtml(b.logo_url)}" alt="" style="width:40px;height:40px;border-radius:4px;object-fit:contain;margin-bottom:8px">` : ''}<div class="type-icon type-exhibitor"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Exhibitor</div><h3>${escapeHtml(b.name)}</h3><div class="org-meta">${escapeHtml(b.country || '')}</div><div class="org-desc">${escapeHtml(b.description || '')}</div></a>`;
   }
   function renderExhibitorCard(ex) {
     return `<a class="org-card card-exhibitor" href="/exhibitor/${encodeURIComponent(ex.slug)}">
@@ -235,12 +235,13 @@
 
     if (currentView === 'boards') {
       const boardCards = items.map(b => `
-        <div class="org-card card-exhibitor">
+        <a class="org-card card-exhibitor" href="/exhibitor/${encodeURIComponent(b.slug)}" style="text-decoration:none;color:inherit">
+          ${b.logo_url ? `<img src="${escapeHtml(b.logo_url)}" alt="" style="width:40px;height:40px;border-radius:4px;object-fit:contain;margin-bottom:8px">` : ''}
           <div class="type-icon type-exhibitor"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Exhibitor</div>
           <h3>${escapeHtml(b.name)}</h3>
           <div class="org-meta">${escapeHtml(b.country || '')}</div>
           <div class="org-desc">${escapeHtml(b.description || '')}</div>
-        </div>
+        </a>
       `).join('');
       container.innerHTML = `<div class="directory-grid">${boardCards}</div>`;
       return;
