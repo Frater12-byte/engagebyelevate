@@ -48,7 +48,7 @@ const sessions = [
   ['Meetings', null, null, '1:1 meeting block', '2026-06-04', '2026-06-04T10:00:00Z', '2026-06-04T11:20:00Z', null, 'networking', 0, 1],
   ['Session: Maldives (Hotels)', null, null, 'Maldives session for hotels', '2026-06-04', '2026-06-04T11:20:00Z', '2026-06-04T12:20:00Z', null, 'keynote', 0, 1],
   ['Break (Thailand & Maldives Hotels + Tour Operators)', null, null, null, '2026-06-04', '2026-06-04T12:20:00Z', '2026-06-04T12:40:00Z', null, 'break', 0, 0],
-  ['Session: Qatar (Hotels)', null, null, 'Qatar session for hotels', '2026-06-04', '2026-06-04T12:40:00Z', '2026-06-04T13:00:00Z', null, 'keynote', 0, 1],
+  ['Tourism Board Presentation \u2013 Visit Qatar (Tour Operators)', null, 'Visit Qatar', 'Tourism Board presentation for tour operators', '2026-06-04', '2026-06-04T12:40:00Z', '2026-06-04T13:00:00Z', null, 'tourism_board', 0, 1],
   ['Meetings', null, null, '1:1 meeting block', '2026-06-04', '2026-06-04T13:10:00Z', '2026-06-04T15:00:00Z', null, 'networking', 0, 1],
   ['Closing Session', null, 'Engage by Elevate', 'Final closing session', '2026-06-04', '2026-06-04T15:00:00Z', '2026-06-04T15:30:00Z', null, 'opening', 0, 1],
 ];
