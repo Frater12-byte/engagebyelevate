@@ -218,10 +218,11 @@
       }).join('') + '</div>';
       return;
     }
-    if (currentView === 'hotels') { items = data.hotels.filter(h => matches(h, q)); empty = 'No hotels yet.'; }
-    else if (currentView === 'agents') { items = data.agents.filter(a => matches(a, q)); empty = 'No agencies yet.'; }
+    const sortAlpha = (arr) => arr.sort((a, b) => (a.org_name || a.name || '').toLowerCase().localeCompare((b.org_name || b.name || '').toLowerCase()));
+    if (currentView === 'hotels') { items = sortAlpha(data.hotels.filter(h => matches(h, q))); empty = 'No hotels yet.'; }
+    else if (currentView === 'agents') { items = sortAlpha(data.agents.filter(a => matches(a, q))); empty = 'No agencies yet.'; }
     else {
-      items = data.boards.filter(b => matches(b, q));
+      items = sortAlpha(data.boards.filter(b => matches(b, q)));
       empty = 'Exhibitors coming soon.';
     }
 
