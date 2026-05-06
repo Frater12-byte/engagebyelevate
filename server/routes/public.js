@@ -38,7 +38,7 @@ router.get('/hotels', (req, res) => {
   const db = getDb();
   const rows = db.prepare(`
     SELECT * FROM users WHERE type = 'hotel' AND active = 1
-    ORDER BY region, org_name
+    ORDER BY org_name COLLATE NOCASE
   `).all();
   res.json({ hotels: publicUserFields(rows) });
 });
@@ -47,7 +47,7 @@ router.get('/agents', (req, res) => {
   const db = getDb();
   const rows = db.prepare(`
     SELECT * FROM users WHERE type = 'agent' AND active = 1
-    ORDER BY org_name
+    ORDER BY org_name COLLATE NOCASE
   `).all();
   res.json({ agents: publicUserFields(rows) });
 });
