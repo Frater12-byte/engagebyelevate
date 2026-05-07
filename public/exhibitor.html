@@ -149,7 +149,7 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
         <div class="container" style="max-width:800px">
           ${ex.description ? `
             <div class="eyebrow" style="margin-bottom:12px">About</div>
-            <p style="font-size:1.05rem;line-height:1.8;color:var(--ink-soft);max-width:60ch">${escapeHtml(ex.description)}</p>
+            <div style="font-size:1.05rem;line-height:1.8;color:var(--ink-soft);max-width:60ch">${ex.description.split(/\n+/).filter(p => p.trim()).map(p => `<p style="margin-bottom:1em">${escapeHtml(p.trim())}</p>`).join('')}</div>
           ` : ''}
 
           <!-- Details grid -->
