@@ -174,7 +174,18 @@ function seed() {
     'Elevate World is a global travel and tourism group delivering exceptional destination services across the Middle East, Indian Ocean, Southeast Asia, and beyond.',
     'https://www.elevatedmc.com', 'Fra', 'francesco.terragni+exhibit1@elevatedmc.com', '01'
   );
-  console.log('Exhibitor seeded.');
+
+  db.prepare(`INSERT OR IGNORE INTO exhibitors (slug, name, category, description, logo_url, website, contact_name, contact_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    'RAKTDA',
+    'Ras Al Khaimah Tourism Development Authority',
+    'DMO',
+    "Ras Al Khaimah is ideally situated at the modern crossroads between Europe and Asia. One-third of the world's population is within four hours of flight duration, making it an ideal location for businesses to expand into the UAE, the Middle East, Africa, and beyond.\n\nThe Emirate is home to the highest peak in the United Arab Emirates, Jebel Jais, soaring at an impressive 1,934 metres above sea level and recording temperatures that are 10 degrees Celsius cooler on average than across the other Emirates.\n\nThe mountain is also home to the Jais Adventure Park, a gateway to attractions such as the Jais Viewing Deck Park, the Jais Flight, the World's Longest Zipline, Jais Sky Tour, a series of seven exhilarating ziplines stretching 5km, and Jais Sledder, the region's longest toboggan ride.",
+    '/img/RAKTDA.png',
+    'https://visitrasalkhaimah.com',
+    'Carlo Kazan',
+    'carlo@raktda.com'
+  );
+  console.log('Exhibitors seeded.');
 
   console.log('✓ Seed complete');
 }
