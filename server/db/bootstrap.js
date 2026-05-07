@@ -14,7 +14,7 @@ const RAKTDA_DESCRIPTION =
 
 const EXHIBITORS = [
   {
-    slug: 'RAKTDA',
+    slug: 'raktda',
     name: 'Ras Al Khaimah Tourism Development Authority',
     category: 'DMO',
     description: RAKTDA_DESCRIPTION,
