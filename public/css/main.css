@@ -1480,6 +1480,7 @@ a, .btn, .dash-tab, .slot, .nav-links a {
 }
 .marquee-slow { animation-duration: 80s; }
 .marquee-reverse { animation-direction: reverse; }
+#hotel-marquee { animation-duration: 140s; }
 
 /* ========== Agenda day-head mobile fix ========== */
 @media (max-width: 768px) {
