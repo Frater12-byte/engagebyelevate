@@ -201,9 +201,10 @@ router.get('/meetings', (req, res) => {
   let sql = `SELECT m.*, ru.org_name AS requester_org, ru.contact_name AS requester_name, eu.org_name AS recipient_org, eu.contact_name AS recipient_name FROM meetings m JOIN users ru ON m.requester_id=ru.id JOIN users eu ON m.recipient_id=eu.id`;
   const where = []; const params = [];
   if (req.query.status) { where.push('m.status = ?'); params.push(req.query.status); }
+  if (req.query.day) { where.push('m.day = ?'); params.push(req.query.day); }
   if (req.query.user_id) { where.push('(m.requester_id = ? OR m.recipient_id = ?)'); params.push(req.query.user_id, req.query.user_id); }
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
-  sql += ' ORDER BY m.start_time DESC LIMIT 200';
+  sql += ' ORDER BY m.start_time ASC LIMIT 1000';
   res.json({ meetings: db.prepare(sql).all(...params) });
 });
 

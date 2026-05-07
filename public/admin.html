@@ -637,7 +637,11 @@ async function renderMeetings(el) {
   let allMeetings = [];
   async function fetchMeetings() {
     const status = document.getElementById('mtg-status').value;
-    const d = await apiGet('/admin/meetings' + (status ? '?status=' + status : ''));
+    const dateVal = document.getElementById('mtg-date').value;
+    const params = [];
+    if (status) params.push('status=' + status);
+    if (dateVal) params.push('day=' + dateVal);
+    const d = await apiGet('/admin/meetings' + (params.length ? '?' + params.join('&') : ''));
     if (!d) return;
     allMeetings = d.meetings;
     window._adminMeetings = allMeetings;
@@ -684,7 +688,7 @@ async function renderMeetings(el) {
   fetchMeetings();
   document.getElementById('mtg-status').addEventListener('change', fetchMeetings);
   document.getElementById('mtg-search').addEventListener('input', filterAndRender);
-  document.getElementById('mtg-date').addEventListener('change', filterAndRender);
+  document.getElementById('mtg-date').addEventListener('change', fetchMeetings);
 }
 
 window.adminMtgAction = async function(action, id) {
