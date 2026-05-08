@@ -64,7 +64,11 @@ router.get('/exhibitors', (req, res) => {
 router.get('/tourism-boards', (req, res) => {
   const db = getDb();
   const rows = db.prepare(`
-    SELECT * FROM exhibitors WHERE active = 1 ORDER BY name
+    SELECT e.*, u.email AS rep_email, u.contact_name AS rep_contact_name
+    FROM exhibitors e
+    LEFT JOIN users u ON u.id = e.user_id AND u.active = 1
+    WHERE e.active = 1
+    ORDER BY e.name
   `).all();
   res.json({ boards: rows });
 });

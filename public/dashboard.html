@@ -517,12 +517,16 @@ async function renderBookTab() {
     safe(api.get('/api/public/agents')),
     safe(api.get('/api/public/tourism-boards'))
   ]);
-  // Exhibitors from the exhibitors table only
+  // Exhibitors from the exhibitors table. If linked to a rep user
+  // (b.user_id), treat as bookable like any other user — id is the
+  // rep's user.id, _isExhibitorProfile=false. Otherwise it stays a
+  // profile-only card with a "Send Message" action.
   const boardsAsExhibitors = (bRes.boards || []).map(b => ({
-    id: 'board-' + b.id, type: 'exhibitor', org_name: b.name,
+    id: b.user_id || ('board-' + b.id),
+    type: 'exhibitor', org_name: b.name,
     country: b.country, description: b.description, logo_url: b.logo_url,
     contact_email: b.contact_email, contact_name: b.contact_name,
-    _isExhibitorProfile: true, _slug: b.slug
+    _isExhibitorProfile: !b.user_id, _slug: b.slug
   }));
   const allOthers = [
     ...(hRes.hotels || []),
@@ -568,11 +572,13 @@ async function renderBookTab() {
       const typeIcon = o.type === 'agent'
         ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>'
         : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>';
-      const isExhibitor = o._isBoard || o.type === 'exhibitor';
-      const clickAction = isExhibitor
+      // Profile-only exhibitors (no linked rep user) get a Send Message
+      // action. Linked exhibitors are bookable like any hotel/agent.
+      const isProfileOnlyExhibitor = o._isBoard || o._isExhibitorProfile;
+      const clickAction = isProfileOnlyExhibitor
         ? `onclick="openMessageModal(this)" data-name="${escapeHtml(o.org_name)}" data-email="${escapeHtml(o.contact_email || o.email || '')}"`
         : `onclick="openAvailabilityModal(${o.id})"`;
-      const btnLabel = isExhibitor ? 'Send Message' : 'View Availability';
+      const btnLabel = isProfileOnlyExhibitor ? 'Send Message' : 'View Availability';
       const initials = (o.org_name || '').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
       const initialsColor = o.type === 'hotel' ? '#4EA8DE' : o.type === 'exhibitor' ? '#F59E0B' : '#A78BFA';
       return `
