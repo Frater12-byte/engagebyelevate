@@ -59,13 +59,14 @@ function requestMeeting(requesterId, recipientId, startTime, message) {
   if (requesterId === recipientId) {
     throw new Error('You cannot book a meeting with yourself');
   }
-  // Cross-type only: hotel <-> agent, hotel <-> exhibitor, agent <-> exhibitor.
-  // Reject same-type pairings (hotel<->hotel, agent<->agent, exhibitor<->exhibitor).
+  // Allowed pairings: any combination of hotel / agent / exhibitor,
+  // including exhibitor <-> exhibitor (tourism boards collaborating).
+  // Hotel<->hotel and agent<->agent are still blocked.
   const allowed = ['hotel', 'agent', 'exhibitor'];
   if (!allowed.includes(requester.type) || !allowed.includes(recipient.type)) {
     throw new Error('Meetings are only between hotels, agencies, and exhibitors');
   }
-  if (requester.type === recipient.type) {
+  if (requester.type === recipient.type && requester.type !== 'exhibitor') {
     throw new Error('Meetings must be between different participant types');
   }
 

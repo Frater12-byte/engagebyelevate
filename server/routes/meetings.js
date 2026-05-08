@@ -91,9 +91,6 @@ router.get('/users/:id/availability', requireAuth, (req, res) => {
   const db = getDb();
   const other = db.prepare('SELECT * FROM users WHERE id = ? AND active = 1').get(req.params.id);
   if (!other) return res.status(404).json({ error: 'Not found' });
-  if (other.type === 'exhibitor') {
-    return res.status(400).json({ error: 'Exhibitors do not have bookable meeting slots. Use the messaging feature instead.' });
-  }
 
   // Show all of the other user's slots, mark bookable where viewer also has a matching free slot
   const mySlots = db.prepare(`SELECT * FROM slots WHERE user_id = ? ORDER BY start_time`).all(req.user.id);

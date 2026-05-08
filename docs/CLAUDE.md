@@ -29,7 +29,7 @@ Matchmaking web app for a 3-day hotel × agency speed-dating event in Dubai (Jun
 ## Invariants that must not break
 
 - **One slot per user per start-time** (enforced by the UNIQUE index on `slots(user_id, start_time)`).
-- **Meetings must be cross-type** — hotel ↔ agent, hotel ↔ exhibitor, or agent ↔ exhibitor. Same-type pairings (hotel↔hotel, agent↔agent, exhibitor↔exhibitor) are rejected in `meetings.requestMeeting`.
+- **Meeting pairings**: any combination of hotel / agent / exhibitor is allowed *except* hotel↔hotel and agent↔agent. Exhibitor↔exhibitor is permitted (tourism boards collaborating). Enforced in `meetings.requestMeeting`.
 - **Slot status transitions** are centralized in `server/services/meetings.js`. Don't mutate slot status from anywhere else.
 - **48h lock** is enforced in `isSlotLocked()`. Don't add new code paths that bypass it.
 - **Magic tokens are single-use-ish** — currently reusable for the full event duration so organizers can re-click. If you change this, update the `sendMagicLink` flow to resend after each use.
