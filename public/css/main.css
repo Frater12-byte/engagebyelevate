@@ -1455,14 +1455,15 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   display: flex;
   gap: 48px;
   align-items: center;
-  animation: marqueeScroll 60s linear infinite;
+  animation: marqueeScroll 200s linear infinite;
   width: max-content;
 }
 .marquee-track img {
   height: 36px;
   width: auto;
+  min-width: 60px;
   object-fit: contain;
-  filter: brightness(0.6) grayscale(1);
+  filter: brightness(0.85) grayscale(1);
   transition: filter 0.3s;
   flex-shrink: 0;
 }
@@ -1478,9 +1479,23 @@ a, .btn, .dash-tab, .slot, .nav-links a {
   from { transform: translateX(0); }
   to { transform: translateX(-25%); }
 }
-.marquee-slow { animation-duration: 80s; }
+.marquee-slow { animation-duration: 200s; }
 .marquee-reverse { animation-direction: reverse; }
-#hotel-marquee { animation-duration: 140s; }
+
+@media (max-width: 768px) {
+  .marquee-wrap::before,
+  .marquee-wrap::after { width: 28px; }
+  .marquee-track { gap: 32px; }
+  .marquee-track img {
+    height: 32px;
+    min-width: 56px;
+    filter: brightness(1) grayscale(1);
+  }
+  .marquee-track .marquee-name {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+}
 
 /* ========== Agenda day-head mobile fix ========== */
 @media (max-width: 768px) {
