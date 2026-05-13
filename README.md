@@ -1,6 +1,6 @@
 # Engage by Elevate
 
-Matchmaking platform for **Engage by Elevate 2026** — three days of curated 1:1 meetings between hotels and travel agencies, Dubai, June 1–3, 2026.
+Matchmaking platform for **Engage by Elevate 2026** — three days of curated 1:1 meetings between hotels and travel agencies, Dubai, June 2–4, 2026.
 
 ## What it does
 
