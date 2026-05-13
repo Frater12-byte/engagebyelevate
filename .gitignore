@@ -47,3 +47,6 @@ public/uploads/
 *.backup
 *.bak
 backups/
+
+# Load test artifacts
+scripts/load-test-meetings.json
