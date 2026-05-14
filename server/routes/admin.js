@@ -203,6 +203,11 @@ router.get('/meetings', (req, res) => {
   if (req.query.status) { where.push('m.status = ?'); params.push(req.query.status); }
   if (req.query.day) { where.push('m.day = ?'); params.push(req.query.day); }
   if (req.query.user_id) { where.push('(m.requester_id = ? OR m.recipient_id = ?)'); params.push(req.query.user_id, req.query.user_id); }
+  if (req.query.q) {
+    const like = `%${String(req.query.q).toLowerCase()}%`;
+    where.push('(LOWER(ru.org_name) LIKE ? OR LOWER(eu.org_name) LIKE ? OR LOWER(ru.contact_name) LIKE ? OR LOWER(eu.contact_name) LIKE ?)');
+    params.push(like, like, like, like);
+  }
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   sql += ' ORDER BY m.start_time ASC LIMIT 1000';
   res.json({ meetings: db.prepare(sql).all(...params) });

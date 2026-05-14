@@ -638,9 +638,11 @@ async function renderMeetings(el) {
   async function fetchMeetings() {
     const status = document.getElementById('mtg-status').value;
     const dateVal = document.getElementById('mtg-date').value;
+    const q = document.getElementById('mtg-search').value.trim();
     const params = [];
-    if (status) params.push('status=' + status);
-    if (dateVal) params.push('day=' + dateVal);
+    if (status) params.push('status=' + encodeURIComponent(status));
+    if (dateVal) params.push('day=' + encodeURIComponent(dateVal));
+    if (q) params.push('q=' + encodeURIComponent(q));
     const d = await apiGet('/admin/meetings' + (params.length ? '?' + params.join('&') : ''));
     if (!d) return;
     allMeetings = d.meetings;
@@ -658,13 +660,7 @@ async function renderMeetings(el) {
     return html;
   }
   function filterAndRender() {
-    const q = (document.getElementById('mtg-search').value || '').toLowerCase();
-    const dateVal = document.getElementById('mtg-date').value;
-    const filtered = allMeetings.filter(m => {
-      if (q && !(m.requester_org||'').toLowerCase().includes(q) && !(m.recipient_org||'').toLowerCase().includes(q) && !(m.requester_name||'').toLowerCase().includes(q) && !(m.recipient_name||'').toLowerCase().includes(q)) return false;
-      if (dateVal && m.day !== dateVal) return false;
-      return true;
-    });
+    const filtered = allMeetings;
     document.getElementById('mtg-rows').innerHTML = filtered.map(m => `<tr>
       <td>${m.id}</td>
       <td>${m.day||''}</td>
@@ -687,7 +683,11 @@ async function renderMeetings(el) {
   }
   fetchMeetings();
   document.getElementById('mtg-status').addEventListener('change', fetchMeetings);
-  document.getElementById('mtg-search').addEventListener('input', filterAndRender);
+  let searchTimer;
+  document.getElementById('mtg-search').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(fetchMeetings, 250);
+  });
   document.getElementById('mtg-date').addEventListener('change', fetchMeetings);
 }
 
