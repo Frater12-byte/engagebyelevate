@@ -457,7 +457,7 @@ async function renderOverview(el) {
     <h2 style="margin-top:32px">Users <span style="font-size:14px;color:#6a6a75;font-weight:400">(${s.users.total} total)</span></h2>
     <div class="chart-row">
       ${donutChart('By Type', [
-        { label: 'Hotels', value: s.users.by_type.hotel || 0 },
+        { label: 'Hotels & Experiences', value: s.users.by_type.hotel || 0 },
         { label: 'Agencies', value: s.users.by_type.agent || 0 },
         { label: 'Exhibitors', value: s.users.by_type.exhibitor || 0 },
         { label: 'Admins', value: s.users.by_type.admin || 0 }
@@ -512,7 +512,7 @@ async function renderUsers(el) {
     <h2>Users (${d.users.length})</h2>
     <div class="filter-row">
       <input id="user-search" placeholder="Search by name, email, country...">
-      <select id="user-type-filter"><option value="">All types</option><option value="hotel">Hotels</option><option value="agent">Agencies</option><option value="exhibitor">Exhibitors</option><option value="admin">Admins</option></select>
+      <select id="user-type-filter"><option value="">All types</option><option value="hotel">Hotels & Experiences</option><option value="agent">Agencies</option><option value="exhibitor">Exhibitors</option><option value="admin">Admins</option></select>
     </div>
     <div class="scroll-x"><table><thead><tr><th>Type</th><th>Organization</th><th>Email</th><th>Country</th><th>Verified</th><th>Active</th><th>Created</th><th>Actions</th></tr></thead><tbody id="user-rows"></tbody></table></div>
     <div class="m-card-list" id="user-cards"></div>
@@ -783,7 +783,7 @@ async function renderBulk(el) {
     <div class="card" style="margin-top:24px">
       <h3>Send Custom Email</h3>
       <p style="color:#6a6a75;margin-bottom:12px;font-size:13px">Send a branded email to a specific audience. The HTML you write will be wrapped in the standard Engage by Elevate email template (dark theme, logo header, footer links).</p>
-      <div class="field"><label>Audience</label><select id="bulk-audience" style="width:100%"><option value="all">All active users (excluding admins)</option><option value="hotel">Hotels only</option><option value="agent">Agencies only</option><option value="exhibitor">Exhibitors only</option><option value="unverified">Unverified users only</option></select></div>
+      <div class="field"><label>Audience</label><select id="bulk-audience" style="width:100%"><option value="all">All active users (excluding admins)</option><option value="hotel">Hotels & Experiences only</option><option value="agent">Agencies only</option><option value="exhibitor">Exhibitors only</option><option value="unverified">Unverified users only</option></select></div>
       <div class="field"><label>Subject Line</label><input id="bulk-subject" style="width:100%" placeholder="e.g. Important update for Engage by Elevate attendees"></div>
       <div class="field"><label>Email Body (HTML — will be wrapped in branded template)</label><textarea id="bulk-html" rows="8" placeholder="<h2>Hello!</h2><p>Your content here. Use standard HTML tags.</p><p>This will appear inside the branded email shell with logo, header, and footer.</p>"></textarea></div>
       <div style="margin-bottom:12px;padding:12px;background:#1a1a1d;border-radius:4px;font-size:12px;color:#6a6a75">
