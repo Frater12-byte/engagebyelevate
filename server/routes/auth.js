@@ -1,8 +1,9 @@
 /**
  * Auth routes:
- *   POST /auth/signup        - register hotel or agent (self-serve)
- *   POST /auth/magic         - request magic link to email
- *   GET  /auth/verify        - click from email -> sets session cookie -> redirect to /dashboard
+ *   POST /auth/signup         - register hotel or agent (self-serve)
+ *   POST /auth/magic          - request magic link to email
+ *   GET  /auth/verify         - landing page from email; validates token, renders auto-POST form (no consume)
+ *   POST /auth/verify/consume - atomically consumes token, sets session cookie, redirects to /dashboard
  *   POST /auth/logout
  */
 
@@ -148,31 +149,66 @@ router.post('/resend-magic', async (req, res) => {
   res.json({ ok: true });
 });
 
-// ---------- Verify magic link ----------
+// ---------- Verify magic link (GET landing — does NOT consume) ----------
+//
+// Corporate email scanners (Microsoft Defender Safe Links, Mimecast, Proofpoint)
+// pre-fetch URLs via GET to scan them, which previously burned the token before
+// the real user could click. We now validate-only on GET and render an
+// intermediate page that auto-POSTs to /auth/verify/consume. Scanners don't run
+// JS and don't submit forms, so the token survives the prefetch.
 router.get('/verify', (req, res) => {
   const { token } = req.query;
-  if (!token) return res.status(400).send('Missing token');
+  if (!token || typeof token !== 'string') {
+    return res.status(400).type('html').send(renderErrorPage('Missing token.'));
+  }
 
   const db = getDb();
   const row = db.prepare(`
-    SELECT mt.*, u.id AS user_id, u.active
+    SELECT mt.id, mt.expires_at, mt.used_at, u.active
     FROM magic_tokens mt
     JOIN users u ON u.id = mt.user_id
     WHERE mt.token = ?
   `).get(token);
 
-  if (!row) return res.status(400).send('Invalid or expired link');
-  if (dayjs().isAfter(dayjs(row.expires_at))) return res.status(400).send('This link has expired');
-  if (!row.active) return res.status(400).send('Account is inactive');
-  if (row.used_at) return res.status(400).send('This link has already been used. Request a new one from the sign-in page.');
+  if (!row)                                       return res.status(400).type('html').send(renderErrorPage('This link is invalid. Request a new one from the sign-in page.'));
+  if (dayjs().isAfter(dayjs(row.expires_at)))     return res.status(400).type('html').send(renderErrorPage('This link has expired. Request a new one from the sign-in page.'));
+  if (!row.active)                                return res.status(400).type('html').send(renderErrorPage('This account is inactive. Contact engage.meetings@elevatedmc.com.'));
+  if (row.used_at)                                return res.status(400).type('html').send(renderErrorPage('This link has already been used. Request a new one from the sign-in page.'));
 
-  // Mark token as used — single use only
-  db.prepare("UPDATE magic_tokens SET used_at = ? WHERE id = ?").run(nowUtc(), row.id);
+  res.type('html').send(renderConsumePage(token));
+});
 
-  // Mark email as verified on first magic link click
+// ---------- Verify magic link (POST consume — atomic, single-use) ----------
+router.post('/verify/consume', (req, res) => {
+  const token = (req.body && typeof req.body.token === 'string') ? req.body.token : null;
+  if (!token) return res.status(400).type('html').send(renderErrorPage('Missing token.'));
+
+  const db = getDb();
+  const row = db.prepare(`
+    SELECT mt.id, mt.user_id, mt.expires_at, u.active
+    FROM magic_tokens mt
+    JOIN users u ON u.id = mt.user_id
+    WHERE mt.token = ?
+  `).get(token);
+
+  if (!row)                                       return res.status(400).type('html').send(renderErrorPage('This link is invalid. Request a new one from the sign-in page.'));
+  if (dayjs().isAfter(dayjs(row.expires_at)))     return res.status(400).type('html').send(renderErrorPage('This link has expired. Request a new one from the sign-in page.'));
+  if (!row.active)                                return res.status(400).type('html').send(renderErrorPage('This account is inactive. Contact engage.meetings@elevatedmc.com.'));
+
+  // Atomic consume: WHERE used_at IS NULL guard means a concurrent or double
+  // POST that loses the race affects 0 rows and is rejected.
+  const ip = (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim() || null;
+  const ua = (req.headers['user-agent'] || '').toString().slice(0, 500) || null;
+  const result = db.prepare(
+    'UPDATE magic_tokens SET used_at = ?, used_ip = ?, used_user_agent = ? WHERE id = ? AND used_at IS NULL'
+  ).run(nowUtc(), ip, ua, row.id);
+
+  if (result.changes === 0) {
+    return res.status(400).type('html').send(renderErrorPage('This link has already been used. Request a new one from the sign-in page.'));
+  }
+
   db.prepare('UPDATE users SET email_verified_at = ? WHERE id = ? AND email_verified_at IS NULL').run(nowUtc(), row.user_id);
 
-  // Invalidate any previous sessions by using a unique session ID
   const sessionId = crypto.randomBytes(16).toString('hex');
   const sessionToken = jwt.sign({ uid: row.user_id, sid: sessionId }, process.env.JWT_SECRET, { expiresIn: '7d' });
   const cookieOpts = { secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 };
@@ -180,6 +216,88 @@ router.get('/verify', (req, res) => {
   res.cookie('logged_in', '1', { ...cookieOpts, httpOnly: false });
   res.redirect('/dashboard');
 });
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+function renderConsumePage(token) {
+  const safeToken = escapeHtml(token);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Signing you in… · Engage by Elevate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;700&family=Manrope:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #080808; color: #f5f5f5; font-family: 'Manrope', system-ui, sans-serif; }
+  .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .card { max-width: 440px; text-align: center; }
+  h1 { font-family: 'Barlow', system-ui, sans-serif; font-weight: 700; font-size: 28px; margin: 0 0 12px; letter-spacing: 0.5px; }
+  p  { font-size: 15px; line-height: 1.5; color: #b8b8b8; margin: 0 0 24px; }
+  .spinner { width: 36px; height: 36px; border: 3px solid #1f1f1f; border-top-color: #EC672C; border-radius: 50%; margin: 0 auto 24px; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn { display: inline-block; background: #EC672C; color: #080808; font-family: 'Barlow', sans-serif; font-weight: 700; text-decoration: none; padding: 12px 24px; border: 0; border-radius: 4px; cursor: pointer; font-size: 15px; letter-spacing: 0.5px; }
+  .btn:hover { background: #ff7838; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="spinner" aria-hidden="true"></div>
+      <h1>Signing you in…</h1>
+      <p>Hold on a moment while we complete your sign-in.</p>
+      <form id="f" method="POST" action="/auth/verify/consume">
+        <input type="hidden" name="token" value="${safeToken}">
+        <noscript>
+          <p>JavaScript is disabled. Click the button below to continue.</p>
+          <button type="submit" class="btn">Click to continue</button>
+        </noscript>
+      </form>
+      <script>document.getElementById('f').submit();</script>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function renderErrorPage(message) {
+  const safeMsg = escapeHtml(message);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Sign-in link · Engage by Elevate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;700&family=Manrope:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #080808; color: #f5f5f5; font-family: 'Manrope', system-ui, sans-serif; }
+  .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .card { max-width: 440px; text-align: center; }
+  h1 { font-family: 'Barlow', system-ui, sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 12px; letter-spacing: 0.5px; }
+  p  { font-size: 15px; line-height: 1.5; color: #b8b8b8; margin: 0 0 24px; }
+  .btn { display: inline-block; background: #EC672C; color: #080808; font-family: 'Barlow', sans-serif; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-size: 15px; letter-spacing: 0.5px; }
+  .btn:hover { background: #ff7838; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>This sign-in link can't be used</h1>
+      <p>${safeMsg}</p>
+      <a class="btn" href="/login.html">Request a new link</a>
+    </div>
+  </div>
+</body>
+</html>`;
+}
 
 // ---------- Logout ----------
 router.post('/logout', (req, res) => {
