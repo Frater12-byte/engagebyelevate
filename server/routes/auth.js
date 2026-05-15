@@ -18,7 +18,7 @@ const { getDb } = require('../db/connection');
 const { generateSlotsForUser } = require('../services/slots');
 const email = require('../services/email');
 const actionTokens = require('../services/actionTokens');
-const { sendMagicLinkFor } = require('../services/magicLink');
+const { sendMagicLinkEmail } = require('../services/magicLink');
 
 const router = express.Router();
 
@@ -94,7 +94,7 @@ router.post('/signup', (req, res) => {
     generateSlotsForUser(userId);
 
     // Send magic link right away so they can access dashboard
-    sendMagicLinkFor(userId).catch(console.error);
+    sendMagicLinkEmail(userId).catch(console.error);
 
     // Notify admin of new registration
     const notifyTo = process.env.REPLY_TO_EMAIL || 'engage.meetings@elevatedmc.com';
@@ -130,7 +130,7 @@ router.post('/magic', async (req, res) => {
   // Always return success to prevent email enumeration
   if (user) {
     try {
-      await sendMagicLinkFor(user.id);
+      await sendMagicLinkEmail(user.id);
     } catch (e) {
       console.error('Magic link send failed:', e.message);
     }
@@ -144,7 +144,7 @@ router.post('/resend-magic', async (req, res) => {
   const db = getDb();
   const user = db.prepare('SELECT id FROM users WHERE email = ? AND active = 1').get(email);
   if (user) {
-    try { await sendMagicLinkFor(user.id); } catch (e) { console.error('[resend-magic]', e.message); }
+    try { await sendMagicLinkEmail(user.id); } catch (e) { console.error('[resend-magic]', e.message); }
   }
   res.json({ ok: true });
 });

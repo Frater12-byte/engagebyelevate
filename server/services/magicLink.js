@@ -4,7 +4,7 @@ const { getDb } = require('../db/connection');
 const { nowUtc } = require('../utils/time');
 const email = require('./email');
 
-async function sendMagicLinkFor(userId) {
+function mintMagicToken(userId) {
   const db = getDb();
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
   if (!user) throw new Error('User not found');
@@ -12,7 +12,14 @@ async function sendMagicLinkFor(userId) {
   const expiryHours = parseInt(process.env.MAGIC_LINK_EXPIRY_HOURS || '24', 10);
   const expiresAt = dayjs().add(expiryHours, 'hour').toISOString();
   db.prepare('INSERT INTO magic_tokens (user_id, token, expires_at, created_at) VALUES (?, ?, ?, ?)').run(userId, token, expiresAt, nowUtc());
+  const baseUrl = process.env.BASE_URL || 'https://engagebyelevate.com';
+  const url = `${baseUrl}/auth/verify?token=${token}`;
+  return { user, token, url, expiresAt };
+}
+
+async function sendMagicLinkEmail(userId) {
+  const { user, token } = mintMagicToken(userId);
   await email.sendMagicLink(user, token);
 }
 
-module.exports = { sendMagicLinkFor };
+module.exports = { mintMagicToken, sendMagicLinkEmail };

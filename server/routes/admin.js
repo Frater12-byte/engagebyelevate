@@ -2,7 +2,7 @@ const express = require('express');
 const { getDb } = require('../db/connection');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const { nowUtc } = require('../utils/time');
-const { sendMagicLinkFor } = require('../services/magicLink');
+const { mintMagicToken, sendMagicLinkEmail } = require('../services/magicLink');
 const { generateSlotsForUser } = require('../services/slots');
 const meetings = require('../services/meetings');
 
@@ -180,10 +180,27 @@ router.post('/users/:id/verify', (req, res) => {
 
 router.post('/users/:id/resend-magic', async (req, res) => {
   try {
-    await sendMagicLinkFor(parseInt(req.params.id));
+    await sendMagicLinkEmail(parseInt(req.params.id));
     auditLog(req.admin.id, 'resend_magic', 'user', parseInt(req.params.id), null);
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Mint a magic link for out-of-band delivery (WhatsApp etc.) — does NOT email.
+// Used when corporate scanners burn email-delivered tokens before the user clicks.
+router.post('/users/:id/generate-link', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const user = getDb().prepare('SELECT id, email, active FROM users WHERE id = ?').get(id);
+    if (!user) return res.status(404).json({ ok: false, error: 'User not found' });
+    if (!user.active) return res.status(400).json({ ok: false, error: 'User is inactive' });
+    const { url, expiresAt } = mintMagicToken(id);
+    auditLog(req.admin.id, 'generate_magic_link', 'user', id, { via: 'admin_ui' });
+    res.json({ ok: true, url, expiresAt, email: user.email });
+  } catch (err) {
+    console.error('[ADMIN GENERATE LINK FAIL]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 router.post('/users/:id/regenerate-slots', (req, res) => {
@@ -250,7 +267,7 @@ router.post('/emails/:id/resend', async (req, res) => {
   const user = db.prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?) AND active = 1').get(row.to_email);
   if (!user) return res.status(400).json({ error: 'User not found or inactive for ' + row.to_email });
   try {
-    await sendMagicLinkFor(user.id);
+    await sendMagicLinkEmail(user.id);
     auditLog(req.admin.id, 'resend_email', 'email_log', parseInt(req.params.id), { to: row.to_email });
     res.json({ ok: true, message: 'Magic link resent to ' + row.to_email });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -279,7 +296,7 @@ router.post('/bulk/resend-unverified', async (req, res) => {
   const users = db.prepare("SELECT id FROM users WHERE email_verified_at IS NULL AND active = 1 AND type != 'admin'").all();
   let sent = 0; const errors = [];
   for (const u of users) {
-    try { await sendMagicLinkFor(u.id); sent++; } catch (e) { errors.push({ id: u.id, error: e.message }); }
+    try { await sendMagicLinkEmail(u.id); sent++; } catch (e) { errors.push({ id: u.id, error: e.message }); }
     await new Promise(r => setTimeout(r, 150));
   }
   auditLog(req.admin.id, 'bulk_resend_unverified', 'users', null, { sent, errors: errors.length });
