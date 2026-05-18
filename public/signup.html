@@ -10,18 +10,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0a">
 <title>Register for Engage by Elevate 2026 — Dubai, June 2–4</title>
-<meta name="description" content="Register for Engage by Elevate 2026. Get a personal agenda, direct access to 100+ hotels and 80 agencies, and auto-generated Teams meeting links.">
+<meta name="description" content="Register for Engage by Elevate 2026. Get a personal agenda, direct access to 200+ hotels, 90+ agencies, and 30+ exhibitors, with auto-generated Teams meeting links.">
 <link rel="canonical" href="https://engagebyelevate.com/signup.html">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://engagebyelevate.com/signup.html">
 <meta property="og:title" content="Register for Engage by Elevate 2026 — Dubai, June 2–4">
-<meta property="og:description" content="Register for Engage by Elevate 2026. Get a personal agenda, direct access to 100+ hotels and 80 agencies, and auto-generated Teams meeting links.">
+<meta property="og:description" content="Register for Engage by Elevate 2026. Get a personal agenda, direct access to 200+ hotels, 90+ agencies, and 30+ exhibitors, with auto-generated Teams meeting links.">
 <meta property="og:image" content="https://engagebyelevate.com/img/og-image.png">
 <meta property="og:site_name" content="Engage by Elevate">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Register for Engage by Elevate 2026 — Dubai, June 2–4">
-<meta name="twitter:description" content="Register for Engage by Elevate 2026. Get a personal agenda, direct access to 100+ hotels and 80 agencies, and auto-generated Teams meeting links.">
+<meta name="twitter:description" content="Register for Engage by Elevate 2026. Get a personal agenda, direct access to 200+ hotels, 90+ agencies, and 30+ exhibitors, with auto-generated Teams meeting links.">
 <meta name="twitter:image" content="https://engagebyelevate.com/img/og-image.png">
 <link rel="stylesheet" href="/css/main.css">
 <!-- Google tag (gtag.js) -->
@@ -81,10 +81,11 @@
       <div class="wizard-panel active" data-panel="1">
         <h3 style="margin-bottom:24px">What type of organization?</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="card" style="cursor:pointer;text-align:center;padding:32px 16px" id="pick-hotel">
+          <div class="card" style="cursor:not-allowed;text-align:center;padding:32px 16px;opacity:0.5;filter:grayscale(1)" id="pick-hotel" aria-disabled="true">
             <div style="margin-bottom:12px"><svg width="36" height="36" fill="none" stroke="#4EA8DE" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0v-2M5 21H3m2 0v-2m4-16v2m4-2v2m-4 4v2m4-2v2m-4 4v2m4-2v2"/></svg></div>
             <h4>Hotel</h4>
             <p style="font-size:12px;color:var(--ink-muted);margin-top:4px">Properties & resorts</p>
+            <div style="margin-top:14px;font-size:11px;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:1.5px">We're full — registration closed</div>
           </div>
           <div class="card" style="cursor:pointer;text-align:center;padding:32px 16px" id="pick-agent">
             <div style="margin-bottom:12px"><svg width="36" height="36" fill="none" stroke="#A78BFA" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg></div>
@@ -114,7 +115,7 @@
           <div class="eyebrow" style="margin-bottom:12px">What you get</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px;color:var(--ink-soft)">
             <div>Your personal event agenda</div>
-            <div>Direct access to 100+ hotels & agencies</div>
+            <div>Direct access to 200+ hotels, 90+ agencies & 30+ exhibitors</div>
             <div>Auto-generated Teams meeting links</div>
             <div>Real-time schedule management</div>
           </div>
@@ -326,11 +327,9 @@
     });
   }
 
-  // Step 1: pick type
+  // Step 1: pick type — hotel registration closed (we're full)
   document.getElementById('pick-hotel').addEventListener('click', () => {
-    typeInput.value = 'hotel';
-    document.querySelectorAll('.hotel-only').forEach(el => el.style.display = '');
-    goToStep(2);
+    toast("Hotel registration is closed — we're full.", 'error');
   });
   document.getElementById('pick-agent').addEventListener('click', () => {
     typeInput.value = 'agent';
