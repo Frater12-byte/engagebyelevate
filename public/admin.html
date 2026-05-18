@@ -509,8 +509,14 @@ async function renderUsers(el) {
   const d = await apiGet('/admin/users');
   if (!d) return;
   el.innerHTML = `
-    <h2>Users (${d.users.length})</h2>
-    <div class="filter-row">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <h2 style="margin-bottom:0">Users (${d.users.length})</h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm primary" onclick="adminCreateUser()">+ New User</button>
+        <a class="btn-sm" href="/admin/users.csv" download style="text-decoration:none;display:inline-flex;align-items:center">Export CSV</a>
+      </div>
+    </div>
+    <div class="filter-row" style="margin-top:16px">
       <input id="user-search" placeholder="Search by name, email, country...">
       <select id="user-type-filter"><option value="">All types</option><option value="hotel">Hotels & Experiences</option><option value="agent">Agencies</option><option value="exhibitor">Exhibitors</option><option value="admin">Admins</option></select>
     </div>
@@ -650,21 +656,80 @@ window.adminUserAction = async function(action, id) {
       return;
     }
     if (action === 'delete') {
-      if (!confirm('Delete this user permanently? This cannot be undone.')) return;
-      await apiDelete('/admin/users/' + id);
+      if (!confirm('Delete this user permanently?\n\nAll their assigned meetings will also be deleted. This cannot be undone.')) return;
+      const r = await apiDelete('/admin/users/' + id);
+      showToast('Deleted' + (r && r.meetings_deleted ? ` (${r.meetings_deleted} meeting${r.meetings_deleted===1?'':'s'} removed)` : ''));
+    } else if (action === 'deactivate') {
+      if (!confirm('Deactivate this user?\n\nAll their assigned meetings will be deleted (slots will be freed). The user can be reactivated later, but the meetings will not come back.')) return;
+      const r = await apiPost('/admin/users/' + id + '/' + action);
+      showToast('Deactivated' + (r && r.meetings_deleted ? ` (${r.meetings_deleted} meeting${r.meetings_deleted===1?'':'s'} removed)` : ''));
     } else {
       await apiPost('/admin/users/' + id + '/' + action);
+      showToast('Done');
     }
-    showToast('Done');
     renderTab('users');
   } catch (err) { showToast(err.message, false); }
+};
+
+window.adminCreateUser = function() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg';
+  modal.innerHTML = `<div class="modal-box">
+    <button class="modal-close" onclick="this.closest('.modal-bg').remove()">&times;</button>
+    <h2 style="margin-bottom:8px">Create New User</h2>
+    <p style="color:#6a6a75;font-size:13px;margin:0 0 16px">Account is created active and email-verified. Use "Resend Link" or "Generate Link" afterwards to send sign-in access.</p>
+    <form id="create-user-form">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Type *</label><select name="type" required>
+          <option value="hotel">Hotel</option>
+          <option value="agent">Agent</option>
+          <option value="exhibitor">Exhibitor</option>
+          <option value="admin">Admin</option>
+        </select></div>
+        <div class="field"><label>Region</label><select name="region">
+          <option value="">Auto</option>
+          <option value="UAE">UAE</option>
+          <option value="INTL">INTL</option>
+        </select></div>
+        <div class="field"><label>Organization *</label><input name="org_name" required></div>
+        <div class="field"><label>Contact Name *</label><input name="contact_name" required></div>
+        <div class="field"><label>Email *</label><input name="email" type="email" required></div>
+        <div class="field"><label>Phone</label><input name="phone"></div>
+        <div class="field"><label>Country</label><input name="country"></div>
+        <div class="field"><label>City</label><input name="city"></div>
+        <div class="field"><label>Website</label><input name="website"></div>
+      </div>
+      <div class="field"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn-sm primary">Create User</button>
+        <button type="button" class="btn-sm" onclick="this.closest('.modal-bg').remove()">Cancel</button>
+      </div>
+    </form>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const body = Object.fromEntries(fd.entries());
+    body.email = (body.email || '').toLowerCase().trim();
+    try {
+      const r = await apiPost('/admin/users', body);
+      showToast('User created (#' + r.id + ')');
+      modal.remove();
+      renderTab('users');
+    } catch (err) { showToast(err.message, false); }
+  });
 };
 
 // ========== MEETINGS ==========
 async function renderMeetings(el) {
   el.innerHTML = `
-    <h2>Meetings</h2>
-    <div class="filter-row">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <h2 style="margin-bottom:0">Meetings</h2>
+      <button class="btn-sm" id="mtg-export-csv">Export CSV</button>
+    </div>
+    <div class="filter-row" style="margin-top:16px">
       <input id="mtg-search" placeholder="Search by participant name or org...">
       <select id="mtg-status"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option><option value="expired">Expired</option></select>
       <input id="mtg-date" type="date" style="color-scheme:dark" title="Filter by date">
@@ -728,6 +793,16 @@ async function renderMeetings(el) {
     searchTimer = setTimeout(fetchMeetings, 250);
   });
   document.getElementById('mtg-date').addEventListener('change', fetchMeetings);
+  document.getElementById('mtg-export-csv').addEventListener('click', () => {
+    const status = document.getElementById('mtg-status').value;
+    const dateVal = document.getElementById('mtg-date').value;
+    const q = document.getElementById('mtg-search').value.trim();
+    const params = [];
+    if (status) params.push('status=' + encodeURIComponent(status));
+    if (dateVal) params.push('day=' + encodeURIComponent(dateVal));
+    if (q) params.push('q=' + encodeURIComponent(q));
+    window.location.href = '/admin/meetings.csv' + (params.length ? '?' + params.join('&') : '');
+  });
 }
 
 window.adminMtgAction = async function(action, id) {

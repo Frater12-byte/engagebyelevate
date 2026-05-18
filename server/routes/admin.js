@@ -5,6 +5,7 @@ const { nowUtc } = require('../utils/time');
 const { mintMagicToken, sendMagicLinkEmail } = require('../services/magicLink');
 const { generateSlotsForUser } = require('../services/slots');
 const meetings = require('../services/meetings');
+const { countryToTimezone, regionToAttendanceMode } = require('../utils/timezone');
 
 const router = express.Router();
 router.use(requireAdmin);
@@ -13,6 +14,20 @@ function auditLog(adminId, action, entityType, entityId, details) {
   getDb().prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
     adminId, action, entityType, entityId, details ? JSON.stringify(details) : null, nowUtc()
   );
+}
+
+function csvCell(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function csvLine(arr) { return arr.map(csvCell).join(',') + '\r\n'; }
+
+// Wipe everything tied to a user except the row itself — used by both delete and deactivate.
+function cascadeDeleteUserMeetings(db, id) {
+  db.prepare("UPDATE slots SET status = 'free', meeting_id = NULL WHERE meeting_id IN (SELECT id FROM meetings WHERE requester_id = ? OR recipient_id = ?)").run(id, id);
+  const r = db.prepare('DELETE FROM meetings WHERE requester_id = ? OR recipient_id = ?').run(id, id);
+  return r.changes;
 }
 
 // === STATS ===
@@ -104,6 +119,61 @@ router.get('/users', (req, res) => {
   res.json({ users });
 });
 
+router.get('/users.csv', (req, res) => {
+  const db = getDb();
+  const users = db.prepare('SELECT id, type, email, contact_name, org_name, country, city, region, timezone, attendance_mode, active, email_verified_at, created_at, phone, website FROM users ORDER BY created_at DESC').all();
+  const cols = ['id','type','org_name','contact_name','email','phone','country','city','region','timezone','attendance_mode','active','email_verified_at','created_at','website'];
+  let out = csvLine(cols);
+  for (const u of users) out += csvLine(cols.map(c => u[c]));
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="users-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send(out);
+});
+
+router.post('/users', (req, res) => {
+  try {
+    const db = getDb();
+    const {
+      type, email: emailAddr, contact_name, org_name,
+      phone, country, city, website, region, description
+    } = req.body;
+    if (!['hotel','agent','exhibitor','admin'].includes(type)) return res.status(400).json({ error: 'Invalid type' });
+    if (!emailAddr || !contact_name || !org_name) return res.status(400).json({ error: 'email, contact_name, org_name required' });
+    const emailNorm = String(emailAddr).toLowerCase().trim();
+
+    let userRegion = region || null;
+    if (type === 'hotel' && !userRegion) {
+      userRegion = (country || '').toLowerCase().includes('uae') ||
+                   (country || '').toLowerCase().includes('emirates') ? 'UAE' : 'INTL';
+    }
+    if (type === 'agent') userRegion = null;
+
+    const now = nowUtc();
+    const info = db.prepare(`
+      INSERT INTO users (
+        type, email, contact_name, phone, org_name, country, city, website,
+        description, region, timezone, attendance_mode, active, email_verified_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+    `).run(
+      type, emailNorm, contact_name, phone || null, org_name,
+      country || null, city || null, website || null,
+      description || null, userRegion,
+      countryToTimezone(country), regionToAttendanceMode(userRegion),
+      now, now, now
+    );
+    const userId = info.lastInsertRowid;
+    if (type === 'hotel' || type === 'agent') {
+      try { generateSlotsForUser(userId); } catch (e) { console.error('[ADMIN CREATE slot gen]', e.message); }
+    }
+    auditLog(req.admin.id, 'create_user', 'user', userId, { type, email: emailNorm });
+    res.json({ ok: true, id: userId });
+  } catch (err) {
+    if (err.message && err.message.includes('UNIQUE')) return res.status(409).json({ error: 'A user with this email already exists.' });
+    console.error('[ADMIN CREATE USER FAIL]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/users/:id', (req, res) => {
   const db = getDb();
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
@@ -146,22 +216,22 @@ router.delete('/users/:id', (req, res) => {
   const db = getDb();
   const id = parseInt(req.params.id);
   if (id === req.admin.id) return res.status(400).json({ error: 'Cannot delete yourself' });
-  // Release slots held by meetings with this user, then delete everything
-  db.prepare("UPDATE slots SET status = 'free', meeting_id = NULL WHERE meeting_id IN (SELECT id FROM meetings WHERE requester_id = ? OR recipient_id = ?)").run(id, id);
-  db.prepare('DELETE FROM meetings WHERE requester_id = ? OR recipient_id = ?').run(id, id);
+  const meetingsDeleted = cascadeDeleteUserMeetings(db, id);
   db.prepare('DELETE FROM slots WHERE user_id = ?').run(id);
   db.prepare('DELETE FROM magic_tokens WHERE user_id = ?').run(id);
   db.prepare('DELETE FROM action_tokens WHERE user_id = ?').run(id);
   db.prepare('DELETE FROM users WHERE id = ?').run(id);
-  auditLog(req.admin.id, 'delete_user', 'user', id, null);
-  res.json({ ok: true });
+  auditLog(req.admin.id, 'delete_user', 'user', id, { meetings_deleted: meetingsDeleted });
+  res.json({ ok: true, meetings_deleted: meetingsDeleted });
 });
 
 router.post('/users/:id/deactivate', (req, res) => {
   const db = getDb();
-  db.prepare('UPDATE users SET active = 0, updated_at = ? WHERE id = ?').run(nowUtc(), req.params.id);
-  auditLog(req.admin.id, 'deactivate_user', 'user', parseInt(req.params.id), null);
-  res.json({ ok: true });
+  const id = parseInt(req.params.id);
+  const meetingsDeleted = cascadeDeleteUserMeetings(db, id);
+  db.prepare('UPDATE users SET active = 0, updated_at = ? WHERE id = ?').run(nowUtc(), id);
+  auditLog(req.admin.id, 'deactivate_user', 'user', id, { meetings_deleted: meetingsDeleted });
+  res.json({ ok: true, meetings_deleted: meetingsDeleted });
 });
 
 router.post('/users/:id/activate', (req, res) => {
@@ -228,6 +298,35 @@ router.get('/meetings', (req, res) => {
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   sql += ' ORDER BY m.start_time ASC LIMIT 1000';
   res.json({ meetings: db.prepare(sql).all(...params) });
+});
+
+router.get('/meetings.csv', (req, res) => {
+  const db = getDb();
+  let sql = `SELECT m.id, m.day, m.start_time, m.end_time, m.status, m.teams_join_url,
+                    ru.org_name AS requester_org, ru.contact_name AS requester_name, ru.email AS requester_email,
+                    eu.org_name AS recipient_org, eu.contact_name AS recipient_name, eu.email AS recipient_email,
+                    m.created_at
+             FROM meetings m
+             JOIN users ru ON m.requester_id=ru.id
+             JOIN users eu ON m.recipient_id=eu.id`;
+  const where = []; const params = [];
+  if (req.query.status) { where.push('m.status = ?'); params.push(req.query.status); }
+  if (req.query.day) { where.push('m.day = ?'); params.push(req.query.day); }
+  if (req.query.user_id) { where.push('(m.requester_id = ? OR m.recipient_id = ?)'); params.push(req.query.user_id, req.query.user_id); }
+  if (req.query.q) {
+    const like = `%${String(req.query.q).toLowerCase()}%`;
+    where.push('(LOWER(ru.org_name) LIKE ? OR LOWER(eu.org_name) LIKE ? OR LOWER(ru.contact_name) LIKE ? OR LOWER(eu.contact_name) LIKE ?)');
+    params.push(like, like, like, like);
+  }
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  sql += ' ORDER BY m.start_time ASC';
+  const rows = db.prepare(sql).all(...params);
+  const cols = ['id','day','start_time','end_time','status','requester_org','requester_name','requester_email','recipient_org','recipient_name','recipient_email','teams_join_url','created_at'];
+  let out = csvLine(cols);
+  for (const r of rows) out += csvLine(cols.map(c => r[c]));
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="meetings-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send(out);
 });
 
 router.post('/meetings/:id/force-cancel', async (req, res) => {
