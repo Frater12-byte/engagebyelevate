@@ -5,6 +5,7 @@ const { nowUtc } = require('../utils/time');
 const { mintMagicToken, sendMagicLinkEmail } = require('../services/magicLink');
 const { generateSlotsForUser } = require('../services/slots');
 const meetings = require('../services/meetings');
+const teams = require('../services/teams');
 const { countryToTimezone, regionToAttendanceMode } = require('../utils/timezone');
 
 const router = express.Router();
@@ -343,6 +344,37 @@ router.post('/meetings/:id/force-approve', async (req, res) => {
     auditLog(req.admin.id, 'force_approve', 'meeting', parseInt(req.params.id), null);
     res.json({ ok: true, meeting: m });
   } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// Ad-hoc Teams meeting link generator. Not stored in the meetings table.
+router.post('/meetings/teams-link', async (req, res) => {
+  try {
+    const { subject, start_time, end_time, duration_minutes, attendee_emails } = req.body;
+    if (!start_time) return res.status(400).json({ error: 'start_time is required (ISO string)' });
+    const startIso = new Date(start_time).toISOString();
+    if (isNaN(Date.parse(startIso))) return res.status(400).json({ error: 'Invalid start_time' });
+    let endIso = end_time ? new Date(end_time).toISOString() : null;
+    if (!endIso) {
+      const mins = parseInt(duration_minutes, 10) || 30;
+      endIso = new Date(new Date(startIso).getTime() + mins * 60_000).toISOString();
+    }
+    let emails = [];
+    if (Array.isArray(attendee_emails)) emails = attendee_emails;
+    else if (typeof attendee_emails === 'string' && attendee_emails.trim()) {
+      emails = attendee_emails.split(/[,\n;]+/).map(s => s.trim()).filter(Boolean);
+    }
+    const { joinUrl, meetingId } = await teams.createMeeting({
+      subject: subject || 'Engage by Elevate Meeting',
+      startTime: startIso,
+      endTime: endIso,
+      attendeeEmails: emails
+    });
+    auditLog(req.admin.id, 'create_teams_link', 'meeting', null, { subject, start: startIso, end: endIso, attendees: emails.length, meeting_id: meetingId });
+    res.json({ ok: true, joinUrl, meetingId, startTime: startIso, endTime: endIso });
+  } catch (err) {
+    console.error('[ADMIN TEAMS LINK FAIL]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // === GET MAGIC LINK for a user by email ===

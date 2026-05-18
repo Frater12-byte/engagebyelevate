@@ -727,7 +727,10 @@ async function renderMeetings(el) {
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
       <h2 style="margin-bottom:0">Meetings</h2>
-      <button class="btn-sm" id="mtg-export-csv">Export CSV</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm primary" onclick="adminCreateTeamsLink()">+ New Meeting</button>
+        <button class="btn-sm" id="mtg-export-csv">Export CSV</button>
+      </div>
     </div>
     <div class="filter-row" style="margin-top:16px">
       <input id="mtg-search" placeholder="Search by participant name or org...">
@@ -812,6 +815,89 @@ window.adminMtgAction = async function(action, id) {
     showToast('Done');
     renderTab('meetings');
   } catch (err) { showToast(err.message, false); }
+};
+
+window.adminCreateTeamsLink = function() {
+  // Default start: next round 15min in Dubai time
+  const nowDxb = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
+  nowDxb.setMinutes(Math.ceil(nowDxb.getMinutes() / 15) * 15, 0, 0);
+  const pad = n => String(n).padStart(2, '0');
+  const dflt = `${nowDxb.getFullYear()}-${pad(nowDxb.getMonth()+1)}-${pad(nowDxb.getDate())}T${pad(nowDxb.getHours())}:${pad(nowDxb.getMinutes())}`;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg';
+  modal.innerHTML = `<div class="modal-box">
+    <button class="modal-close" onclick="this.closest('.modal-bg').remove()">&times;</button>
+    <h2 style="margin-bottom:8px">Create Teams Meeting Link</h2>
+    <p style="color:#6a6a75;font-size:13px;margin:0 0 16px">Generates a one-off Microsoft Teams meeting via Graph API. The link is returned for you to copy/share — it's not saved as a booking in the meetings table.</p>
+    <form id="teams-link-form">
+      <div class="field"><label>Subject</label><input name="subject" placeholder="Engage by Elevate Meeting" style="width:100%"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Start (Dubai time)</label><input name="start" type="datetime-local" required value="${dflt}" style="color-scheme:dark"></div>
+        <div class="field"><label>Duration</label><select name="duration">
+          <option value="20">20 minutes</option>
+          <option value="30" selected>30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">60 minutes</option>
+          <option value="90">90 minutes</option>
+          <option value="120">2 hours</option>
+        </select></div>
+      </div>
+      <div class="field"><label>Attendee emails (optional, comma or newline separated)</label><textarea name="attendees" rows="3" placeholder="alice@example.com, bob@example.com"></textarea></div>
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn-sm primary" id="teams-link-submit">Create Link</button>
+        <button type="button" class="btn-sm" onclick="this.closest('.modal-bg').remove()">Cancel</button>
+      </div>
+    </form>
+    <div id="teams-link-result" style="display:none;margin-top:20px"></div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+  document.getElementById('teams-link-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('teams-link-submit');
+    btn.disabled = true; btn.textContent = 'Creating...';
+    const fd = new FormData(e.target);
+    const subject = fd.get('subject') || 'Engage by Elevate Meeting';
+    const localStart = fd.get('start');
+    const duration = parseInt(fd.get('duration'), 10) || 30;
+    const attendees = fd.get('attendees') || '';
+    // Treat the datetime-local input as Dubai time (+04:00)
+    const startIso = new Date(localStart + ':00+04:00').toISOString();
+    try {
+      const r = await apiPost('/admin/meetings/teams-link', {
+        subject, start_time: startIso, duration_minutes: duration, attendee_emails: attendees
+      });
+      const result = document.getElementById('teams-link-result');
+      const startLocal = new Date(r.startTime).toLocaleString('en-GB', { timeZone: 'Asia/Dubai', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const endLocal = new Date(r.endTime).toLocaleString('en-GB', { timeZone: 'Asia/Dubai', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      result.innerHTML = `
+        <div style="padding:14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:4px">
+          <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#22c55e;font-weight:700;margin-bottom:8px">Created</div>
+          <div style="font-size:12px;color:#b0b0b8;margin-bottom:10px">${esc(startLocal)} → ${esc(endLocal)} (Dubai)</div>
+          <div style="display:flex;gap:8px;align-items:stretch">
+            <input id="teams-link-url" type="text" readonly value="${esc(r.joinUrl)}" style="flex:1;font-family:ui-monospace,Menlo,monospace;font-size:12px;padding:10px 12px;background:#0f0f0f;border:1px solid #2a2a2a;border-radius:4px;color:#f5f5f5">
+            <button type="button" class="btn-sm primary" id="teams-link-copy" style="white-space:nowrap">Copy</button>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:#6a6a75">Meeting ID: <code>${esc(r.meetingId)}</code></div>
+        </div>
+      `;
+      result.style.display = 'block';
+      btn.textContent = 'Create Another'; btn.disabled = false;
+      const urlInput = document.getElementById('teams-link-url');
+      urlInput.addEventListener('focus', () => urlInput.select());
+      document.getElementById('teams-link-copy').addEventListener('click', async (ev) => {
+        try { await navigator.clipboard.writeText(r.joinUrl); }
+        catch { urlInput.select(); document.execCommand('copy'); }
+        const b = ev.currentTarget; const orig = b.textContent;
+        b.textContent = 'Copied!'; setTimeout(() => { b.textContent = orig; }, 1500);
+      });
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Create Link';
+      showToast(err.message, false);
+    }
+  });
 };
 
 // ========== EMAILS ==========
