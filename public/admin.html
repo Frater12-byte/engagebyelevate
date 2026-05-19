@@ -31,6 +31,9 @@
   .tab { padding: 14px 16px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6a6a75; cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; white-space: nowrap; }
   .tab:hover { color: #b0b0b8; }
   .tab.active { color: #EC672C; border-bottom-color: #EC672C; }
+  .tab-cta { margin-left: auto; align-self: center; padding: 7px 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; background: #EC672C; color: #fff; border: 1px solid #EC672C; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .tab-cta:hover { background: #d4551f; border-color: #d4551f; }
+  @media (max-width: 768px) { .tab-cta { display: none; } }
   .content { padding: 20px 16px; max-width: 1200px; margin: 0 auto; }
   .card { background: #141416; border: 1px solid #27272a; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
@@ -161,6 +164,7 @@
   <button class="tab" data-tab="meetings">Meetings</button>
   <button class="tab" data-tab="emails">Emails</button>
   <button class="tab" data-tab="bulk">Bulk</button>
+  <button class="tab-cta" id="cta-feedback" onclick="showFeedbackQR()">Feedback Form</button>
 </div>
 
 <div class="mobile-menu" id="mobile-menu">
@@ -175,6 +179,7 @@
     <button class="mobile-menu-item" data-tab="meetings">Meetings</button>
     <button class="mobile-menu-item" data-tab="emails">Emails</button>
     <button class="mobile-menu-item" data-tab="bulk">Bulk</button>
+    <button class="mobile-menu-item" onclick="showFeedbackQR();document.getElementById('mobile-menu').classList.remove('open');" style="color:#EC672C">Feedback Form</button>
   </div>
   <div class="mobile-menu-section">
     <div class="mobile-menu-label">World Clocks</div>
@@ -669,6 +674,24 @@ window.adminUserAction = async function(action, id) {
     }
     renderTab('users');
   } catch (err) { showToast(err.message, false); }
+};
+
+window.showFeedbackQR = function() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg';
+  modal.innerHTML = `<div class="modal-box" style="max-width:480px;text-align:center">
+    <button class="modal-close" onclick="this.closest('.modal-bg').remove()">&times;</button>
+    <h2 style="margin-bottom:8px">Feedback Form</h2>
+    <p style="color:#6a6a75;font-size:13px;margin:0 0 20px">Ask attendees to scan this code with their phone camera to open the feedback form.</p>
+    <div style="background:#fff;padding:16px;border-radius:8px;display:inline-block">
+      <img src="/img/feedback-qr.svg" alt="Feedback form QR code" style="display:block;width:320px;max-width:100%;height:auto">
+    </div>
+    <div style="margin-top:20px">
+      <button class="btn-sm" onclick="this.closest('.modal-bg').remove()">Close</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 };
 
 window.adminCreateUser = function() {
