@@ -594,7 +594,24 @@ window.adminUserAction = async function(action, id) {
             <div class="field"><label>Country</label><input name="country" value="${esc(u.country||'')}"></div>
             <div class="field"><label>City</label><input name="city" value="${esc(u.city||'')}"></div>
             <div class="field"><label>Website</label><input name="website" value="${esc(u.website||'')}"></div>
-            <div class="field"><label>Timezone</label><input name="timezone" value="${esc(u.timezone||'')}"></div>
+            <div class="field"><label>Timezone</label>${(() => {
+              const zones = [
+                ['Asia/Dubai','Dubai'],['Asia/Riyadh','Riyadh'],['Asia/Bangkok','Bangkok'],
+                ['Asia/Bishkek','Bishkek'],['Asia/Jerusalem','Jerusalem'],
+                ['Europe/London','London'],['Europe/Paris','Paris'],['Europe/Madrid','Madrid'],
+                ['Europe/Lisbon','Lisbon'],['Europe/Bucharest','Bucharest'],['Europe/Berlin','Berlin'],
+                ['Europe/Rome','Rome'],['Europe/Brussels','Brussels'],['Europe/Amsterdam','Amsterdam'],
+                ['Europe/Stockholm','Stockholm'],['Europe/Bratislava','Bratislava'],
+                ['Europe/Sofia','Sofia'],['Europe/Minsk','Minsk'],['Europe/Moscow','Moscow'],
+                ['Indian/Maldives','Maldives'],['Indian/Mauritius','Mauritius']
+              ];
+              const cur = u.timezone || '';
+              const inList = zones.some(z => z[0] === cur);
+              let html = '<select name="timezone"><option value="">-</option>';
+              if (cur && !inList) html += `<option value="${esc(cur)}" selected>${esc(cur)}</option>`;
+              for (const [tz, city] of zones) html += `<option value="${tz}"${cur===tz?' selected':''}>${tz} (${city})</option>`;
+              return html + '</select>';
+            })()}</div>
             <div class="field"><label>Attendance</label><select name="attendance_mode"><option value="">-</option><option value="on_site" ${u.attendance_mode==='on_site'?'selected':''}>On-site</option><option value="remote" ${u.attendance_mode==='remote'?'selected':''}>Remote</option></select></div>
             <div class="field"><label>Star Rating</label><input name="star_rating" type="number" value="${u.star_rating||''}"></div>
           </div>
