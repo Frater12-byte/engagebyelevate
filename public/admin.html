@@ -165,6 +165,8 @@
   <button class="tab" data-tab="emails">Emails</button>
   <button class="tab" data-tab="bulk">Bulk</button>
   <button class="tab-cta" id="cta-feedback" onclick="showFeedbackQR()">Feedback Form</button>
+  <button class="tab-cta" id="cta-wifi" onclick="showWifiQR()">Wi-Fi</button>
+  <button class="tab-cta" id="cta-msft" onclick="showMicrosoftSignupQR()">Microsoft Sign-up</button>
 </div>
 
 <div class="mobile-menu" id="mobile-menu">
@@ -180,6 +182,8 @@
     <button class="mobile-menu-item" data-tab="emails">Emails</button>
     <button class="mobile-menu-item" data-tab="bulk">Bulk</button>
     <button class="mobile-menu-item" onclick="showFeedbackQR();document.getElementById('mobile-menu').classList.remove('open');" style="color:#EC672C">Feedback Form</button>
+    <button class="mobile-menu-item" onclick="showWifiQR();document.getElementById('mobile-menu').classList.remove('open');" style="color:#EC672C">Wi-Fi</button>
+    <button class="mobile-menu-item" onclick="showMicrosoftSignupQR();document.getElementById('mobile-menu').classList.remove('open');" style="color:#EC672C">Microsoft Sign-up</button>
   </div>
   <div class="mobile-menu-section">
     <div class="mobile-menu-label">World Clocks</div>
@@ -693,15 +697,15 @@ window.adminUserAction = async function(action, id) {
   } catch (err) { showToast(err.message, false); }
 };
 
-window.showFeedbackQR = function() {
+function showQRModal({ title, subtitle, src, alt }) {
   const modal = document.createElement('div');
   modal.className = 'modal-bg';
   modal.innerHTML = `<div class="modal-box" style="max-width:480px;text-align:center">
     <button class="modal-close" onclick="this.closest('.modal-bg').remove()">&times;</button>
-    <h2 style="margin-bottom:8px">Feedback Form</h2>
-    <p style="color:#6a6a75;font-size:13px;margin:0 0 20px">Ask attendees to scan this code with their phone camera to open the feedback form.</p>
+    <h2 style="margin-bottom:8px">${title}</h2>
+    <p style="color:#6a6a75;font-size:13px;margin:0 0 20px">${subtitle}</p>
     <div style="background:#fff;padding:16px;border-radius:8px;display:inline-block">
-      <img src="/img/feedback-qr.svg" alt="Feedback form QR code" style="display:block;width:320px;max-width:100%;height:auto">
+      <img src="${src}" alt="${alt}" style="display:block;width:320px;max-width:100%;height:auto">
     </div>
     <div style="margin-top:20px">
       <button class="btn-sm" onclick="this.closest('.modal-bg').remove()">Close</button>
@@ -709,6 +713,33 @@ window.showFeedbackQR = function() {
   </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+window.showFeedbackQR = function() {
+  showQRModal({
+    title: 'Feedback Form',
+    subtitle: 'Ask attendees to scan this code with their phone camera to open the feedback form.',
+    src: '/img/feedback-qr.svg',
+    alt: 'Feedback form QR code'
+  });
+};
+
+window.showWifiQR = function() {
+  showQRModal({
+    title: 'Wi-Fi',
+    subtitle: 'Scan to connect to the event Wi-Fi network.',
+    src: '/img/wifi-qr.jpeg',
+    alt: 'Wi-Fi QR code'
+  });
+};
+
+window.showMicrosoftSignupQR = function() {
+  showQRModal({
+    title: 'Microsoft Sign-up',
+    subtitle: 'Scan to register with Microsoft for the event.',
+    src: '/img/microsoft-signup-qr.png',
+    alt: 'Microsoft sign-up QR code'
+  });
 };
 
 window.adminCreateUser = function() {
