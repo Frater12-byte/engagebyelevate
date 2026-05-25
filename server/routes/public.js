@@ -75,8 +75,12 @@ router.get('/tourism-boards', (req, res) => {
 
 router.get('/agenda', (req, res) => {
   const db = getDb();
+  // Explicit column list — public response must NOT include teams_link
+  // (audience gating happens in /api/me/agenda) or the audience flags.
   const rows = db.prepare(`
-    SELECT * FROM sessions WHERE visible = 1
+    SELECT id, title, speaker, organization, description, day, start_time, end_time,
+           location, type, is_online, is_hybrid
+    FROM sessions WHERE visible = 1
     ORDER BY day, start_time
   `).all();
   // Group by day
