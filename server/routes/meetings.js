@@ -41,13 +41,27 @@ router.get('/me/agenda', requireAuth, (req, res) => {
     ORDER BY s.start_time
   `).all(me.id);
 
-  // Get public sessions for eligible days
+  // Get public sessions for eligible days, with teams_link + audience flags.
+  // teams_link is gated below: returned only when the user's type matches
+  // the session's accepts_* column. Sessions are still visible to everyone.
   const eDays = eligibleDaysFor(me);
   const publicSessions = eDays.length > 0 ? db.prepare(`
-    SELECT id, title, organization, description, day, start_time, end_time, location, type, is_hybrid
+    SELECT id, title, speaker, organization, description, day, start_time, end_time, location, type, is_hybrid,
+           accepts_hotels, accepts_agencies, accepts_exhibitors, teams_link
     FROM sessions WHERE visible = 1 AND type != 'networking' AND day IN (${eDays.map(() => '?').join(',')})
     ORDER BY start_time
   `).all(...eDays) : [];
+
+  function canAttend(s) {
+    if (me.type === 'hotel')     return s.accepts_hotels === 1;
+    if (me.type === 'agent')     return s.accepts_agencies === 1;
+    if (me.type === 'exhibitor') return s.accepts_exhibitors === 1;
+    return false;
+  }
+  const gatedSessions = publicSessions.map(s => ({
+    ...s,
+    teams_link: canAttend(s) ? s.teams_link : null
+  }));
 
   // Group by day — merge slots and public sessions
   const byDay = {};
@@ -55,7 +69,7 @@ router.get('/me/agenda', requireAuth, (req, res) => {
     if (!byDay[s.day]) byDay[s.day] = [];
     byDay[s.day].push({ ...s, item_type: 'slot' });
   }
-  for (const s of publicSessions) {
+  for (const s of gatedSessions) {
     if (!byDay[s.day]) byDay[s.day] = [];
     byDay[s.day].push({ ...s, item_type: 'session', start_time: s.start_time, end_time: s.end_time });
   }
