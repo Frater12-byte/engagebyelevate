@@ -2,10 +2,22 @@
 # Test SMTP credentials against whatever's currently in .env, using swaks.
 # Usage:  bash scripts/test-smtp.sh [recipient@example.com]
 # Default recipient: francesco.terragni@elevatedmc.com
-set -euo pipefail
+#
+# Parses SMTP_* values from .env via grep instead of sourcing it directly,
+# because the .env contains a bcrypt hash ($2b$10$...) that breaks
+# `. ./.env` under set -u.
+set -eo pipefail
 
-cd /home/engagebyelevate/htdocs/engagebyelevate.com
-set -a; . ./.env; set +a
+ENV_FILE=/home/engagebyelevate/htdocs/engagebyelevate.com/.env
+
+read_env() {
+  grep "^$1=" "$ENV_FILE" | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/'
+}
+
+SMTP_HOST=$(read_env SMTP_HOST)
+SMTP_PORT=$(read_env SMTP_PORT)
+SMTP_USER=$(read_env SMTP_USER)
+SMTP_PASS=$(read_env SMTP_PASS)
 
 TO="${1:-francesco.terragni@elevatedmc.com}"
 
