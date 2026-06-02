@@ -47,6 +47,12 @@ const DELAY_MS = 600;
 
   // Pull every approved Day-1 meeting with both sides' identity, in the shape
   // sendMeetingApproved() expects.
+  //
+  // Resumable: skip rows whose teams_join_url_old is already populated. A
+  // populated _old column means the regen script already ran on this row
+  // (COALESCE in the UPDATE means it can only be set by us). So if the
+  // process is interrupted (SSH drop, kill, etc.), re-running picks up
+  // where we left off without re-processing or re-emailing.
   const meetings = db.prepare(`
     SELECT
       m.id, m.day, m.start_time, m.end_time, m.status,
@@ -59,7 +65,9 @@ const DELAY_MS = 600;
     FROM meetings m
     JOIN users ru ON ru.id = m.requester_id
     JOIN users ri ON ri.id = m.recipient_id
-    WHERE m.day = '2026-06-02' AND m.status = 'approved'
+    WHERE m.day = '2026-06-02'
+      AND m.status = 'approved'
+      AND (m.teams_join_url_old IS NULL OR m.teams_join_url_old = '')
     ORDER BY m.start_time, m.id
   `).all();
 
